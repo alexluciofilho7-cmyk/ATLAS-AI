@@ -1,6 +1,36 @@
 "use client"
 
-import { ClipboardCheck, Cpu, RefreshCw, ArrowRight } from "lucide-react"
+import { ClipboardCheck, RefreshCw, ArrowRight } from "lucide-react"
+
+function BrainIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {/* Left hemisphere */}
+      <path d="M9.5 2C7 2 5 4 5 6.5c0 1 .3 1.9.8 2.7C4.7 9.8 4 10.9 4 12.2c0 1.5.8 2.8 2 3.5-.5.7-.8 1.5-.8 2.3 0 2.2 1.8 4 4 4h.5" />
+
+      {/* Right hemisphere */}
+      <path d="M14.5 2c2.5 0 4.5 2 4.5 4.5c0 1-.3 1.9-.8 2.7.9.6 1.6 1.7 1.6 3 0 1.5-.8 2.8-2 3.5.5.7.8 1.5.8 2.3 0 2.2-1.8 4-4 4H13.5" />
+
+      {/* Center connection and neural pathways */}
+      <path d="M9.5 22c.8-.5 1.5-1.3 1.5-2.5V8c0-1-.5-2-1.5-2.5" />
+      <path d="M14.5 22c-.8-.5-1.5-1.3-1.5-2.5V8c0-1 .5-2 1.5-2.5" />
+
+      {/* Neural circuit details - subtle tech touch */}
+      <circle cx="8" cy="9" r="0.5" opacity="0.6" />
+      <circle cx="16" cy="9" r="0.5" opacity="0.6" />
+      <circle cx="8" cy="15" r="0.5" opacity="0.6" />
+      <circle cx="16" cy="15" r="0.5" opacity="0.6" />
+    </svg>
+  )
+}
 
 const steps = [
   {
@@ -13,7 +43,7 @@ const steps = [
   },
   {
     number: "02",
-    icon: Cpu,
+    icon: BrainIcon, // Replaced Cpu icon with custom BrainIcon
     title: "Protocolo Inteligente",
     description:
       "A Atlas gera seu protocolo personalizado: treino, dieta, estratégias de sono e otimização hormonal natural. Tudo integrado e ajustado para você.",
@@ -74,7 +104,7 @@ export function HowItWorksSection() {
                 <div className="relative">
                   <div className="absolute -inset-4 rounded-full bg-blue-500/20 blur-xl" />
                   <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30">
-                    <step.icon className="h-10 w-10 text-white" />
+                    {step.icon && <step.icon className="h-10 w-10 text-white" />}
                   </div>
                   <div className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-blue-400 ring-2 ring-blue-500/50">
                     {step.number}
