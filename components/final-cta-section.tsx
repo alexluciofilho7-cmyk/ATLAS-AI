@@ -13,29 +13,101 @@ export function FinalCtaSection() {
 
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
         <svg
-          width="400"
-          height="400"
+          width="500"
+          height="500"
           viewBox="0 0 200 200"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="opacity-10"
+          className="opacity-[0.08]"
         >
-          <circle cx="100" cy="100" r="80" stroke="url(#ctaAtlasGradient)" strokeWidth="1" opacity="0.3" />
-          <circle cx="100" cy="100" r="65" stroke="url(#ctaAtlasGradient)" strokeWidth="0.5" opacity="0.5" />
-          <path
-            d="M100 50 L130 110 L70 110 Z M100 60 L100 110"
-            stroke="url(#ctaAtlasGradient)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
           <defs>
             <linearGradient id="ctaAtlasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#06b6d4" />
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#3b82f6" />
             </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
+
+          {/* Outer orbital ring - tilted ellipse */}
+          <ellipse
+            cx="100"
+            cy="100"
+            rx="85"
+            ry="35"
+            stroke="url(#ctaAtlasGradient)"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.6"
+            transform="rotate(30 100 100)"
+            filter="url(#glow)"
+          />
+
+          {/* Middle orbital ring - tilted ellipse */}
+          <ellipse
+            cx="100"
+            cy="100"
+            rx="85"
+            ry="35"
+            stroke="url(#ctaAtlasGradient)"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.6"
+            transform="rotate(-30 100 100)"
+            filter="url(#glow)"
+          />
+
+          {/* Inner orbital ring */}
+          <ellipse
+            cx="100"
+            cy="100"
+            rx="85"
+            ry="35"
+            stroke="url(#ctaAtlasGradient)"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.6"
+            filter="url(#glow)"
+          />
+
+          {/* Orbital glow points */}
+          <circle cx="185" cy="100" r="3" fill="#06b6d4" opacity="0.8" filter="url(#glow)" />
+          <circle cx="15" cy="100" r="3" fill="#06b6d4" opacity="0.8" filter="url(#glow)" />
+          <circle cx="142" cy="60" r="3" fill="#3b82f6" opacity="0.8" filter="url(#glow)" />
+          <circle cx="58" cy="140" r="3" fill="#3b82f6" opacity="0.8" filter="url(#glow)" />
+
+          {/* Large "A" letter with serif structure */}
+          <g stroke="#ffffff" strokeWidth="8" fill="none" strokeLinecap="square" strokeLinejoin="miter">
+            {/* Left leg of A with serif */}
+            <path d="M 55 150 L 55 145 L 100 45 L 100 45" />
+            <path d="M 50 150 L 60 150" />
+
+            {/* Right leg of A with serif */}
+            <path d="M 145 150 L 145 145 L 100 45 L 100 45" />
+            <path d="M 140 150 L 150 150" />
+
+            {/* Crossbar of A */}
+            <path d="M 70 110 L 130 110" strokeWidth="7" />
+
+            {/* Top serif */}
+            <path d="M 95 45 L 105 45" strokeWidth="6" />
+          </g>
+
+          {/* Central heartbeat line inside A */}
+          <path
+            d="M 95 100 L 100 90 L 105 100"
+            stroke="#06b6d4"
+            strokeWidth="2.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.7"
+          />
         </svg>
       </div>
 
