@@ -1,10 +1,17 @@
 "use client"
-
-import { Dumbbell, Utensils, Moon, Zap, Bone, Brain, Activity } from "lucide-react"
+import {
+  TrainingIcon,
+  DietIcon,
+  SleepIcon,
+  TestosteroneIcon,
+  PostureIcon,
+  CompulsionIcon,
+  VisionIcon,
+} from "./module-icons"
 
 const modules = [
   {
-    icon: Dumbbell,
+    icon: TrainingIcon,
     title: "Treino Inteligente",
     description:
       "Periodização que prioriza pontos fracos, evita overtraining e foca em proporção estética. Progressão de carga calculada pela IA.",
@@ -12,7 +19,7 @@ const modules = [
     shadowColor: "shadow-blue-500/20",
   },
   {
-    icon: Utensils,
+    icon: DietIcon,
     title: "Dieta Para Estética",
     description:
       "Nutrição flexível que considera sua vida social. Trocas inteligentes, ciclo de carboidratos automático e recálculo após deslizes.",
@@ -20,7 +27,7 @@ const modules = [
     shadowColor: "shadow-emerald-500/20",
   },
   {
-    icon: Moon,
+    icon: SleepIcon,
     title: "Sono e Recuperação",
     description:
       "Monitoramento da qualidade do sono, protocolos de higiene do sono e ajuste do treino baseado na sua prontidão diária.",
@@ -28,7 +35,7 @@ const modules = [
     shadowColor: "shadow-violet-500/20",
   },
   {
-    icon: Zap,
+    icon: TestosteroneIcon,
     title: "Testosterona Natural",
     description:
       "Estratégias baseadas em ciência para otimizar seus hormônios naturalmente. Micronutrientes, timing e hábitos que fazem diferença.",
@@ -36,15 +43,15 @@ const modules = [
     shadowColor: "shadow-amber-500/20",
   },
   {
-    icon: Bone,
-    title: "Postura e Dor",
+    icon: PostureIcon,
+    title: "Postura, Dor & Fisioterapia",
     description:
       "Correção postural, mobilidade e prevenção de lesões. Protocolos de fisioterapia integrados ao seu treino principal.",
     color: "from-rose-600 to-rose-500",
     shadowColor: "shadow-rose-500/20",
   },
   {
-    icon: Brain,
+    icon: CompulsionIcon,
     title: "Compulsão Alimentar",
     description:
       "Estratégias cognitivo-comportamentais para controlar a fome emocional. Recalibração do protocolo sem culpa após deslizes.",
@@ -52,7 +59,7 @@ const modules = [
     shadowColor: "shadow-cyan-500/20",
   },
   {
-    icon: Activity,
+    icon: VisionIcon,
     title: "Visão 360°",
     description:
       "Dashboard completo com medidas, fotos de progresso, consistência e indicadores de saúde metabólica. Tudo em um lugar.",
