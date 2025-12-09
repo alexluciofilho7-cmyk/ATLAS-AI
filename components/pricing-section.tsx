@@ -2,13 +2,16 @@
 
 import { Button } from "@/components/ui/button"
 import { Check, Sparkles, Zap } from "lucide-react"
+import { useState } from "react"
 
 const plans = [
   {
     name: "Básico",
     subtitle: "O Essencial",
-    price: "59",
-    cents: "90",
+    monthlyPrice: "59",
+    monthlyCents: "90",
+    annualPrice: "599",
+    annualCents: "00",
     period: "/mês",
     description: "Para quem está começando sua jornada de transformação.",
     features: [
@@ -23,8 +26,10 @@ const plans = [
   {
     name: "Performance",
     subtitle: "O Mais Popular",
-    price: "89",
-    cents: "90",
+    monthlyPrice: "89",
+    monthlyCents: "90",
+    annualPrice: "899",
+    annualCents: "00",
     period: "/mês",
     description: "Para praticantes sérios que buscam resultados acelerados.",
     features: [
@@ -42,8 +47,10 @@ const plans = [
   {
     name: "Elite",
     subtitle: "O Completo",
-    price: "119",
-    cents: "90",
+    monthlyPrice: "119",
+    monthlyCents: "90",
+    annualPrice: "1.199",
+    annualCents: "00",
     period: "/mês",
     description: "Para quem quer domínio total sobre corpo e mente.",
     features: [
@@ -60,6 +67,8 @@ const plans = [
 ]
 
 export function PricingSection() {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly")
+
   return (
     <section id="planos" className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
       {/* Background effects */}
@@ -82,6 +91,33 @@ export function PricingSection() {
           <p className="mx-auto max-w-2xl text-lg text-slate-400">
             Todos os planos incluem 7 dias de teste grátis. Cancele quando quiser.
           </p>
+
+          <div className="mt-8 flex justify-center">
+            <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-slate-900/50 p-1 backdrop-blur-sm">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`relative rounded-full px-6 py-2 text-sm font-medium transition-all ${
+                  billingPeriod === "monthly" ? "text-white" : "text-slate-400 hover:text-slate-300"
+                }`}
+              >
+                {billingPeriod === "monthly" && (
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25" />
+                )}
+                <span className="relative">Mensal</span>
+              </button>
+              <button
+                onClick={() => setBillingPeriod("annual")}
+                className={`relative rounded-full px-6 py-2 text-sm font-medium transition-all ${
+                  billingPeriod === "annual" ? "text-white" : "text-slate-400 hover:text-slate-300"
+                }`}
+              >
+                {billingPeriod === "annual" && (
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25" />
+                )}
+                <span className="relative">Anual</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
@@ -123,10 +159,21 @@ export function PricingSection() {
                 <div className="mb-8">
                   <div className="flex items-baseline">
                     <span className="text-sm text-slate-400">R$</span>
-                    <span className="text-5xl font-bold text-white">{plan.price}</span>
-                    <span className="text-xl font-bold text-white">,{plan.cents}</span>
-                    <span className="ml-1 text-slate-400">{plan.period}</span>
+                    <span className="text-5xl font-bold text-white">
+                      {billingPeriod === "monthly" ? plan.monthlyPrice : plan.annualPrice}
+                    </span>
+                    <span className="text-xl font-bold text-white">
+                      ,{billingPeriod === "monthly" ? plan.monthlyCents : plan.annualCents}
+                    </span>
+                    <span className="ml-1 text-slate-400">{billingPeriod === "monthly" ? "/mês" : "/ano"}</span>
                   </div>
+                  {billingPeriod === "annual" && (
+                    <div className="mt-2">
+                      <span className="inline-block rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
+                        2 meses grátis
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}
