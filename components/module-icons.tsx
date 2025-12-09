@@ -3,16 +3,19 @@
 export function TrainingIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Tech barbell with load indicators */}
-      <rect x="3" y="10" width="18" height="2" fill="currentColor" />
-      <rect x="2" y="8" width="2" height="6" rx="1" fill="currentColor" />
-      <rect x="20" y="8" width="2" height="6" rx="1" fill="currentColor" />
-      <circle cx="6" cy="9" r="1.5" fill="currentColor" opacity="0.7" />
-      <circle cx="12" cy="9" r="1.5" fill="currentColor" opacity="0.7" />
-      <circle cx="18" cy="9" r="1.5" fill="currentColor" opacity="0.7" />
-      <line x1="6" y1="13" x2="6" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="12" y1="13" x2="12" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="18" y1="13" x2="18" y2="19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Periodização estilizada com marcações de carga - barra de progressão com intelligence */}
+      <rect x="4" y="10" width="16" height="3" rx="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Marcações de carga progressiva */}
+      <circle cx="6" cy="11.5" r="2" fill="currentColor" opacity="0.8" />
+      <circle cx="12" cy="11.5" r="2.5" fill="currentColor" opacity="0.9" />
+      <circle cx="18" cy="11.5" r="3" fill="currentColor" opacity="1" />
+
+      {/* Setas de progressão */}
+      <path d="M6 8 L6 6 M12 7.5 L12 5 M18 7 L18 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Base de apoio */}
+      <line x1="2" y1="15" x2="22" y2="15" stroke="currentColor" strokeWidth="1" opacity="0.4" />
     </svg>
   )
 }
@@ -20,14 +23,21 @@ export function TrainingIcon() {
 export function DietIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Macro grid nutrition plate */}
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <path d="M12 3 A9 9 0 0 1 20.1 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <path d="M20.1 18 A9 9 0 0 1 12 21" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <path d="M3.9 18 A9 9 0 0 1 3.9 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.6" />
+      {/* Prato circular dividido em 3 segmentos de macros - precisão alimentar */}
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Divisão em 3 macros principais */}
+      <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M21 12 A9 9 0 0 1 3 12" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M3 12 A9 9 0 0 1 18 5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Centro de balanceamento */}
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" opacity="0.7" />
+
+      {/* Marcas de precisão */}
+      <circle cx="12" cy="4.5" r="0.8" fill="currentColor" opacity="0.6" />
+      <circle cx="20" cy="12" r="0.8" fill="currentColor" opacity="0.6" />
+      <circle cx="12" cy="19.5" r="0.8" fill="currentColor" opacity="0.6" />
     </svg>
   )
 }
@@ -35,17 +45,26 @@ export function DietIcon() {
 export function SleepIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Sleep cycle moon with orbital ring */}
+      {/* Lua com anel orbital e ondas de ciclo - qualidade do sono */}
       <path
-        d="M19.5 10c0 5.247-4.254 9.5-9.5 9.5-4.87 0-8.931-3.67-9.447-8.387"
+        d="M18 10c1.5 2 2.5 4.5 2.5 7.5 0 5.2-4.3 9.5-9.5 9.5-3 0-5.5-1-7.5-2.5"
         stroke="currentColor"
         strokeWidth="1.5"
         fill="none"
       />
-      <circle cx="12" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <circle cx="12" cy="9" r="2" fill="currentColor" opacity="0.6" />
-      <path d="M16 6 Q17 7 16.5 8" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-      <path d="M8 6 Q7 7 7.5 8" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+
+      {/* Anel orbital ao redor da lua */}
+      <circle cx="12" cy="12.5" r="8" stroke="currentColor" strokeWidth="1" opacity="0.5" fill="none" />
+
+      {/* Ponto focal da lua */}
+      <circle cx="13" cy="11" r="2" fill="currentColor" opacity="0.8" />
+
+      {/* Ondas de ciclo de sono */}
+      <path d="M6 16 Q7 15 8 16 T10 16" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <path d="M5 18.5 Q6.5 17 8 18.5 T11 18.5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+
+      {/* Halo sutil */}
+      <circle cx="12" cy="12.5" r="5.5" stroke="currentColor" strokeWidth="0.8" opacity="0.3" fill="none" />
     </svg>
   )
 }
@@ -53,21 +72,23 @@ export function SleepIcon() {
 export function TestosteroneIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Biomedical energy with shield */}
+      {/* Onda elétrica dentro de hexágono biomédico */}
+      <path d="M12 2 L18 6 L18 14 L12 18 L6 14 L6 6 Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Raio de energia dentro */}
       <path
-        d="M8 2L12 4L16 2V8C16 14 12 18 12 18C12 18 8 14 8 8V2Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <path
-        d="M10 10 L12 13 L14 9"
+        d="M11 7 L13 10 L11 13"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+
+      {/* Núcleo energético */}
+      <circle cx="12" cy="10" r="1.2" fill="currentColor" opacity="0.8" />
+
+      {/* Aura de energia */}
+      <circle cx="12" cy="10" r="4.5" stroke="currentColor" strokeWidth="0.8" opacity="0.3" fill="none" />
     </svg>
   )
 }
@@ -75,16 +96,25 @@ export function TestosteroneIcon() {
 export function PostureIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Spine with alignment guides */}
-      <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-      <line x1="12" y1="5.5" x2="12" y2="18" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="7" r="1" fill="currentColor" opacity="0.6" />
-      <circle cx="12" cy="9.5" r="1" fill="currentColor" opacity="0.6" />
-      <circle cx="12" cy="12" r="1.2" fill="currentColor" opacity="0.8" />
-      <circle cx="12" cy="14.5" r="1" fill="currentColor" opacity="0.6" />
-      <circle cx="12" cy="17" r="1" fill="currentColor" opacity="0.6" />
-      <line x1="8" y1="12" x2="10.5" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <line x1="13.5" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      {/* Coluna estilizada com linhas de alinhamento - biomecânica */}
+      {/* Cabeça */}
+      <circle cx="12" cy="3" r="1.8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Coluna vertebral */}
+      <line x1="12" y1="4.8" x2="12" y2="18" stroke="currentColor" strokeWidth="1.5" />
+
+      {/* Vértebras */}
+      <circle cx="12" cy="7" r="0.9" fill="currentColor" opacity="0.8" />
+      <circle cx="12" cy="10" r="1" fill="currentColor" opacity="0.8" />
+      <circle cx="12" cy="13" r="1.1" fill="currentColor" opacity="0.9" />
+      <circle cx="12" cy="16" r="0.9" fill="currentColor" opacity="0.8" />
+
+      {/* Linhas de alinhamento biomecânico */}
+      <line x1="8" y1="13" x2="10.5" y2="13" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      <line x1="13.5" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+
+      {/* Eixo de postura */}
+      <line x1="6" y1="13" x2="18" y2="13" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
     </svg>
   )
 }
@@ -92,19 +122,23 @@ export function PostureIcon() {
 export function CompulsionIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Brain circuit with control */}
-      <path
-        d="M6 8c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2h-8c-1.1 0-2-.9-2-2V8z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.6" />
-      <line x1="8" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-      <line x1="14" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-      <line x1="12" y1="8" x2="12" y2="10" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-      <line x1="12" y1="14" x2="12" y2="16" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-      <path d="M8 6 L6 8 M16 6 L18 8 M16 18 L18 16 M8 18 L6 16" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+      {/* Cérebro com circuito regulador - controle comportamental */}
+      {/* Forma geral do cérebro estilizado */}
+      <path d="M7 12 C7 9 8 6 12 5 C16 6 17 9 17 12" stroke="currentColor" strokeWidth="1.5" fill="none" />
+
+      {/* Lobos */}
+      <circle cx="9" cy="10" r="1.8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.8" />
+      <circle cx="15" cy="10" r="1.8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.8" />
+
+      {/* Núcleo central (pré-frontal) - controle */}
+      <circle cx="12" cy="10" r="2" fill="currentColor" opacity="0.7" />
+
+      {/* Circuito regulador em volta */}
+      <circle cx="12" cy="10" r="5" stroke="currentColor" strokeWidth="0.8" opacity="0.4" fill="none" />
+
+      {/* Conexões neurais sutis */}
+      <path d="M9 10 L12 10 M15 10 L12 10" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <path d="M12 5.5 L12 8 M12 12 L12 14.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
     </svg>
   )
 }
@@ -112,23 +146,26 @@ export function CompulsionIcon() {
 export function VisionIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6">
-      {/* Radar scanner dashboard */}
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="6.5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <circle cx="12" cy="12" r="0.8" fill="currentColor" />
-      <path
-        d="M12 2 L12 6 M12 18 L12 22 M2 12 L6 12 M18 12 L22 12"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity="0.6"
-      />
-      <path
-        d="M6 6 L8.5 8.5 M17.5 15.5 L15.5 17.5 M17.5 6 L15.5 8.5 M6 17.5 L8.5 15.5"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity="0.5"
-      />
+      {/* Scanner radar com camadas e marcações de medição - dashboard 360° */}
+      {/* Anéis concêntricos do radar */}
+      <circle cx="12" cy="12" r="10.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1" opacity="0.6" fill="none" />
+      <circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="1" opacity="0.4" fill="none" />
+
+      {/* Centro do scanner */}
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+
+      {/* Marcas de medição (cardeais) */}
+      <line x1="12" y1="0.5" x2="12" y2="2.5" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+      <line x1="12" y1="21.5" x2="12" y2="23.5" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+      <line x1="0.5" y1="12" x2="2.5" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+      <line x1="21.5" y1="12" x2="23.5" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+
+      {/* Pontos diagonais */}
+      <line x1="3" y1="3" x2="4.5" y2="4.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <line x1="20" y1="20" x2="21.5" y2="21.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <line x1="21" y1="3" x2="20" y2="4.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+      <line x1="3" y1="21" x2="4.5" y2="19.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
     </svg>
   )
 }
