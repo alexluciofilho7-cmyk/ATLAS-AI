@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Play, Zap } from "lucide-react"
+import { ArrowRight, Play } from "lucide-react"
 import Image from "next/image"
 import { AtlasCoreVisual } from "@/components/atlas-core-visual"
 
@@ -74,9 +74,18 @@ export function HeroSection() {
         {/* Hero Content */}
         <div className="flex flex-col items-center text-center">
           {/* Badge */}
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-5 py-2.5 backdrop-blur-sm">
-            <Zap className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-medium text-blue-300">Inteligência Artificial para Estética Elite</span>
+          <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-5 py-2.5 backdrop-blur-sm">
+            <svg
+              className="h-4 w-4 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 18H3L12 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v10" />
+            </svg>
+            <span className="text-sm font-medium tracking-wide text-blue-300">ATLAS CORE • IA DE EVIDÊNCIA</span>
           </div>
 
           {/* Main Headline */}
