@@ -13,11 +13,6 @@ const faqs = [
       "O sistema adapta para ambos. Você informa quais equipamentos tem (ou se não tem nenhum) e a IA cria o treino mais eficiente possível com o que está disponível.",
   },
   {
-    question: "A Atlas substitui um personal trainer ou nutricionista?",
-    answer:
-      "A Atlas é um sistema de suporte inteligente, não um substituto de profissionais. Ela potencializa seus resultados com personalização e ajustes contínuos. Se você tem condições médicas específicas, sempre consulte um profissional.",
-  },
-  {
     question: "É uma IA de verdade ou um chatbot genérico?",
     answer:
       "É uma IA avançada, treinada especificamente com conhecimento de treinadores de elite, nutricionistas esportivos e fisiologistas. Ela está disponível 24/7 com a precisão da máquina e linguagem natural.",
@@ -33,11 +28,6 @@ const faqs = [
       "O módulo trabalha com estratégias comprovadas por ciência: otimização de micronutrientes (zinco, magnésio, vitamina D), timing de alimentação, qualidade do sono e redução de estresse. Tudo natural, sem substâncias.",
   },
   {
-    question: "Posso usar a Atlas junto com o acompanhamento de um médico?",
-    answer:
-      "Sim, e recomendamos. A Atlas gera relatórios que você pode compartilhar com seu médico ou nutricionista. O sistema é um complemento ao acompanhamento profissional, não um substituto.",
-  },
-  {
     question: "E se eu não gostar? Tem garantia?",
     answer:
       "Sim. Você tem 7 dias de teste gratuito e depois mais 7 dias de garantia incondicional. Se achar que a Atlas não é para você, devolvemos 100% do seu investimento. Sem burocracia, sem letras miúdas.",
@@ -50,7 +40,7 @@ const faqs = [
   {
     question: "A Atlas funciona para mulheres também?",
     answer:
-      "A Atlas foi otimizada para homens que buscam estética e performance natural. Estamos desenvolvendo uma versão específica para mulheres com considerações hormonais e objetivos diferentes. Em breve.",
+      "Sim. A plataforma atende mulheres de 18 a 45 anos com protocolos adaptados às suas necessidades hormonais e objetivos específicos. O sistema personaliza treino, dieta e recuperação considerando o ciclo menstrual e características femininas.",
   },
   {
     question: "Preciso de equipamentos ou apps adicionais?",
