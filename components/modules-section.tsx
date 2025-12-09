@@ -23,47 +23,47 @@ const modules = [
     title: "Dieta Para Estética",
     description:
       "Nutrição flexível que considera sua vida social. Trocas inteligentes, ciclo de carboidratos automático e recálculo após deslizes.",
-    color: "from-emerald-600 to-emerald-500",
-    shadowColor: "shadow-emerald-500/20",
+    color: "from-blue-600 to-blue-500",
+    shadowColor: "shadow-blue-500/20",
   },
   {
     icon: SleepIcon,
     title: "Sono e Recuperação",
     description:
       "Monitoramento da qualidade do sono, protocolos de higiene do sono e ajuste do treino baseado na sua prontidão diária.",
-    color: "from-violet-600 to-violet-500",
-    shadowColor: "shadow-violet-500/20",
+    color: "from-blue-600 to-blue-500",
+    shadowColor: "shadow-blue-500/20",
   },
   {
     icon: TestosteroneIcon,
     title: "Testosterona Natural",
     description:
       "Estratégias baseadas em ciência para otimizar seus hormônios naturalmente. Micronutrientes, timing e hábitos que fazem diferença.",
-    color: "from-amber-600 to-amber-500",
-    shadowColor: "shadow-amber-500/20",
+    color: "from-blue-600 to-blue-500",
+    shadowColor: "shadow-blue-500/20",
   },
   {
     icon: PostureIcon,
     title: "Postura, Dor & Fisioterapia",
     description:
       "Correção postural, mobilidade e prevenção de lesões. Protocolos de fisioterapia integrados ao seu treino principal.",
-    color: "from-rose-600 to-rose-500",
-    shadowColor: "shadow-rose-500/20",
+    color: "from-blue-600 to-blue-500",
+    shadowColor: "shadow-blue-500/20",
   },
   {
     icon: CompulsionIcon,
     title: "Compulsão Alimentar",
     description:
       "Estratégias cognitivo-comportamentais para controlar a fome emocional. Recalibração do protocolo sem culpa após deslizes.",
-    color: "from-cyan-600 to-cyan-500",
-    shadowColor: "shadow-cyan-500/20",
+    color: "from-blue-600 to-blue-500",
+    shadowColor: "shadow-blue-500/20",
   },
   {
     icon: VisionIcon,
     title: "Visão 360°",
     description:
       "Dashboard completo com medidas, fotos de progresso, consistência e indicadores de saúde metabólica. Tudo em um lugar.",
-    color: "from-blue-600 to-cyan-500",
+    color: "from-blue-600 to-blue-500",
     shadowColor: "shadow-blue-500/20",
   },
 ]
