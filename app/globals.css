@@ -164,6 +164,71 @@
   }
 }
 
+/* Add new animations for Atlas Hub premium elements */
+@keyframes pulse-line {
+  0%,
+  100% {
+    opacity: 0.6;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes pulse-node {
+  0%,
+  100% {
+    r: 3.5;
+    opacity: 0.6;
+  }
+  50% {
+    r: 5;
+    opacity: 0.95;
+  }
+}
+
+@keyframes pulse-halo-outer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes rotate-slow-10 {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-icon-bg {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-particle {
+  0%,
+  100% {
+    opacity: 0.3;
+    r: 1;
+  }
+  50% {
+    opacity: 0.9;
+    r: 1.8;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
