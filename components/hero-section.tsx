@@ -118,11 +118,57 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mb-16 text-center text-sm text-slate-500">
-            <p>
-              Garantia de 7 dias, configuração em menos de 60 segundos e baseado em evidências cientificamente
-              comprovados
-            </p>
+          <div className="mb-16 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                />
+              </svg>
+              <span className="text-sm text-slate-400">Garantia de 7 dias</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
+              </svg>
+              <span className="text-sm text-slate-400">Configuração em menos de 60 segundos</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                />
+              </svg>
+              <span className="text-sm text-slate-400">Baseado em evidências científicas</span>
+            </div>
           </div>
 
           {/* Stats */}
