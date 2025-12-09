@@ -11,6 +11,47 @@ export function FinalCtaSection() {
         <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/10 blur-3xl" />
       </div>
 
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <svg
+          width="400"
+          height="400"
+          viewBox="0 0 200 200"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="opacity-10"
+        >
+          {/* Outer glow ring */}
+          <circle cx="100" cy="100" r="80" stroke="url(#atlasGradient)" strokeWidth="1" opacity="0.3" />
+          {/* Inner ring */}
+          <circle cx="100" cy="100" r="65" stroke="url(#atlasGradient)" strokeWidth="0.5" opacity="0.5" />
+
+          {/* Atlas "A" symbol - minimalist triangle with vertical line */}
+          <path
+            d="M100 50 L130 110 L70 110 Z M100 60 L100 110"
+            stroke="url(#atlasGradient)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="atlasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#3b82f6" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+        </svg>
+      </div>
+
       <div className="relative mx-auto max-w-4xl px-6 text-center">
         <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5">
           <Shield className="h-4 w-4 text-blue-400" />
@@ -39,13 +80,83 @@ export function FinalCtaSection() {
           >
             <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
             <span className="relative flex items-center">
-              Começar Meu Projeto Agora
+              Acessar Atlas Agora
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </span>
           </Button>
         </div>
 
-        <p className="mt-6 text-sm text-slate-500">7 dias grátis. Sem cartão de crédito. Cancele quando quiser.</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
+          {/* Guarantee */}
+          <div className="flex items-center gap-2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-blue-400"
+            >
+              <path
+                d="M12 2L4 6V12C4 16.5 7 20.5 12 22C17 20.5 20 16.5 20 12V6L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+              <path
+                d="M9 12L11 14L15 10"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Garantia de 7 dias</span>
+          </div>
+
+          {/* Setup Speed */}
+          <div className="flex items-center gap-2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-blue-400"
+            >
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M19 8L21 6M21 6L19 4M21 6H17"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Configuração em menos de 60 segundos</span>
+          </div>
+
+          {/* Evidence-based */}
+          <div className="flex items-center gap-2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-blue-400"
+            >
+              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="none" />
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M12 3V5M12 19V21M3 12H5M19 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+            <span>IA baseada em evidências</span>
+          </div>
+        </div>
 
         {/* Trust badges */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-8">
