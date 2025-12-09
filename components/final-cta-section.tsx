@@ -20,34 +20,21 @@ export function FinalCtaSection() {
           xmlns="http://www.w3.org/2000/svg"
           className="opacity-10"
         >
-          {/* Outer glow ring */}
-          <circle cx="100" cy="100" r="80" stroke="url(#atlasGradient)" strokeWidth="1" opacity="0.3" />
-          {/* Inner ring */}
-          <circle cx="100" cy="100" r="65" stroke="url(#atlasGradient)" strokeWidth="0.5" opacity="0.5" />
-
-          {/* Atlas "A" symbol - minimalist triangle with vertical line */}
+          <circle cx="100" cy="100" r="80" stroke="url(#ctaAtlasGradient)" strokeWidth="1" opacity="0.3" />
+          <circle cx="100" cy="100" r="65" stroke="url(#ctaAtlasGradient)" strokeWidth="0.5" opacity="0.5" />
           <path
             d="M100 50 L130 110 L70 110 Z M100 60 L100 110"
-            stroke="url(#atlasGradient)"
+            stroke="url(#ctaAtlasGradient)"
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
-
-          {/* Gradient definition */}
           <defs>
-            <linearGradient id="atlasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="ctaAtlasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#3b82f6" />
               <stop offset="100%" stopColor="#06b6d4" />
             </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
         </svg>
       </div>
@@ -87,7 +74,6 @@ export function FinalCtaSection() {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
-          {/* Guarantee */}
           <div className="flex items-center gap-2">
             <svg
               width="16"
@@ -116,7 +102,6 @@ export function FinalCtaSection() {
             <span>Garantia de 7 dias</span>
           </div>
 
-          {/* Setup Speed */}
           <div className="flex items-center gap-2">
             <svg
               width="16"
@@ -139,7 +124,6 @@ export function FinalCtaSection() {
             <span>Configuração em menos de 60 segundos</span>
           </div>
 
-          {/* Evidence-based */}
           <div className="flex items-center gap-2">
             <svg
               width="16"
@@ -158,7 +142,6 @@ export function FinalCtaSection() {
           </div>
         </div>
 
-        {/* Trust badges */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-8">
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <div className="h-2 w-2 rounded-full bg-green-500" />
