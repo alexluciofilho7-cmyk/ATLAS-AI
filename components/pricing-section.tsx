@@ -7,7 +7,7 @@ const plans = [
   {
     name: "Básico",
     subtitle: "O Essencial",
-    price: "49",
+    price: "59",
     cents: "90",
     period: "/mês",
     description: "Para quem está começando sua jornada de transformação.",
@@ -23,7 +23,7 @@ const plans = [
   {
     name: "Performance",
     subtitle: "O Mais Popular",
-    price: "79",
+    price: "89",
     cents: "90",
     period: "/mês",
     description: "Para praticantes sérios que buscam resultados acelerados.",
@@ -51,8 +51,8 @@ const plans = [
       "Módulo Correção Postural & Fisio",
       "Módulo Gestão de Compulsão",
       "Dashboard Visão 360°",
-      "Relatórios para seu médico",
-      "Consultoria mensal com especialista",
+      "Relatórios exportáveis de saúde e performance (PDF)",
+      "Análise mensal avançada por IA",
       "Acesso antecipado a novos recursos",
     ],
     highlighted: false,
