@@ -81,17 +81,18 @@ export function HeroSection() {
 
           {/* Main Headline */}
           <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-7xl">
-            Substitua o Caos Por Um{" "}
+            Substitua o caos por uma{" "}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300 bg-clip-text text-transparent">
-              Protocolo Inteligente
+              IA que governa
             </span>{" "}
-            Guiado Por IA
+            sua evolução física.
           </h1>
 
           {/* Subtitle */}
           <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-400 lg:text-xl">
-            Treino, dieta, sono, testosterona natural e postura integrados em uma única plataforma. A Atlas IA analisa
-            seus dados e ajusta seu protocolo diariamente para resultados que você nunca conseguiria sozinho.
+            Treino, dieta, sono, testosterona natural e postura integrados em um só comando. A Atlas IA cruza seus
+            dados, corrige rota diariamente e aplica protocolos inspirados pelas evidências mais sólidas da ciência
+            (PubMed/Harvard) — como se você tivesse uma equipe de elite no bolso, sem achismo e sem enrolação.
           </p>
 
           {/* CTA Buttons */}
