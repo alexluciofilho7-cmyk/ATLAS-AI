@@ -3,41 +3,41 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Complete redesign with dark navy/teal color palette matching the logo */
+/* New dark theme with dominant blue color palette for Atlas IA */
 :root {
-  --background: oklch(0.13 0.02 240);
+  --background: oklch(0.08 0.02 250);
   --foreground: oklch(0.98 0 0);
-  --card: oklch(0.16 0.02 240);
+  --card: oklch(0.12 0.02 250);
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.16 0.02 240);
+  --popover: oklch(0.12 0.02 250);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.75 0.15 180);
-  --primary-foreground: oklch(0.13 0.02 240);
-  --secondary: oklch(0.2 0.02 240);
+  --primary: oklch(0.6 0.2 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.15 0.02 250);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.22 0.02 240);
-  --muted-foreground: oklch(0.65 0.02 240);
-  --accent: oklch(0.75 0.15 180);
-  --accent-foreground: oklch(0.13 0.02 240);
+  --muted: oklch(0.18 0.02 250);
+  --muted-foreground: oklch(0.6 0.02 250);
+  --accent: oklch(0.6 0.2 250);
+  --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.25 0.03 240);
-  --input: oklch(0.2 0.02 240);
-  --ring: oklch(0.75 0.15 180);
-  --chart-1: oklch(0.75 0.15 180);
-  --chart-2: oklch(0.65 0.12 200);
-  --chart-3: oklch(0.55 0.1 220);
-  --chart-4: oklch(0.8 0.18 170);
-  --chart-5: oklch(0.7 0.14 190);
+  --border: oklch(0.22 0.03 250);
+  --input: oklch(0.15 0.02 250);
+  --ring: oklch(0.6 0.2 250);
+  --chart-1: oklch(0.6 0.2 250);
+  --chart-2: oklch(0.55 0.15 220);
+  --chart-3: oklch(0.5 0.12 200);
+  --chart-4: oklch(0.65 0.18 240);
+  --chart-5: oklch(0.58 0.16 230);
   --radius: 0.75rem;
-  --sidebar: oklch(0.16 0.02 240);
+  --sidebar: oklch(0.12 0.02 250);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.75 0.15 180);
-  --sidebar-primary-foreground: oklch(0.13 0.02 240);
-  --sidebar-accent: oklch(0.22 0.02 240);
+  --sidebar-primary: oklch(0.6 0.2 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.18 0.02 250);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.25 0.03 240);
-  --sidebar-ring: oklch(0.75 0.15 180);
+  --sidebar-border: oklch(0.22 0.03 250);
+  --sidebar-ring: oklch(0.6 0.2 250);
 }
 
 @theme inline {
@@ -90,28 +90,31 @@
   }
 }
 
-/* Enhanced glow and animation utilities for 3D tech aesthetic */
+/* Updated glow utilities for blue theme */
 @layer utilities {
-  .glow-teal {
-    box-shadow: 0 0 40px rgba(20, 184, 166, 0.3), 0 0 80px rgba(20, 184, 166, 0.1), 0 0 120px rgba(20, 184, 166, 0.05);
+  .glow-blue {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3), 0 0 80px rgba(59, 130, 246, 0.1), 0 0 120px rgba(59, 130, 246, 0.05);
   }
-  .glow-teal-sm {
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.2);
+  .glow-blue-sm {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
   }
-  .glow-teal-intense {
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.5), 0 0 40px rgba(20, 184, 166, 0.3), 0 0 60px rgba(20, 184, 166, 0.2);
+  .glow-blue-intense {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.2);
   }
   .text-glow {
-    text-shadow: 0 0 30px rgba(20, 184, 166, 0.5);
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
   }
   .text-glow-strong {
-    text-shadow: 0 0 20px rgba(20, 184, 166, 0.8), 0 0 40px rgba(20, 184, 166, 0.4);
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4);
   }
   .gradient-border {
-    background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(6, 182, 212, 0.1));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.1));
   }
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
+  }
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s ease-in-out infinite;
   }
   .animate-float {
     animation: float 6s ease-in-out infinite;
@@ -124,10 +127,21 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(20, 184, 166, 0.5);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.5);
+  }
+}
+
+/* Add subtle pulse animation for Atlas Hub connecting lines */
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
   }
 }
 
@@ -161,7 +175,7 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a1628;
+  background: #030712;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -170,5 +184,5 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #14b8a6;
+  background: #3b82f6;
 }
