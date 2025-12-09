@@ -11,7 +11,7 @@ export function AtlasHubDiagram() {
   ]
 
   return (
-    <div className="relative h-96 w-full max-w-3xl mx-auto">
+    <div className="relative h-[32rem] lg:h-[42rem] w-full max-w-5xl mx-auto">
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet">
         {/* Define all gradients and filters */}
         <defs>
@@ -299,7 +299,7 @@ export function AtlasHubDiagram() {
                 transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
               }}
             >
-              <span className="text-sm font-semibold text-blue-200 tracking-wide">{module.label}</span>
+              <span className="text-base font-semibold text-blue-200 tracking-wide">{module.label}</span>
             </div>
           )
         })}

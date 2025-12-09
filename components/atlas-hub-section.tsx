@@ -4,14 +4,14 @@ import { AtlasHubDiagram } from "@/components/atlas-hub-diagram"
 
 export function AtlasHubSection() {
   return (
-    <section className="relative bg-[#050a14] py-24 lg:py-32 overflow-hidden">
+    <section className="relative bg-[#050a14] py-32 lg:py-48 overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/5 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/5 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6">
-        <div className="mb-16 text-center">
+        <div className="mb-20 lg:mb-24 text-center">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-blue-400">Sistema Integrado</p>
           <h2 className="mb-6 text-3xl font-bold tracking-tight text-white lg:text-5xl">
             O Núcleo da{" "}
