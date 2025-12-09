@@ -103,7 +103,7 @@ export function HeroSection() {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative flex items-center">
-                Começar Meu Projeto Agora
+                Acessar Atlas Agora
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </span>
             </Button>
@@ -118,19 +118,11 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mb-16 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-              <span>7 dias grátis</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-              <span>Sem cartão de crédito</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-              <span>Cancele quando quiser</span>
-            </div>
+          <div className="mb-16 text-center text-sm text-slate-500">
+            <p>
+              Garantia de 7 dias, configuração em menos de 60 segundos e baseado em evidências cientificamente
+              comprovados
+            </p>
           </div>
 
           {/* Stats */}
