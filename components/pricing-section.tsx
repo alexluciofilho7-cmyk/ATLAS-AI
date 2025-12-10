@@ -207,7 +207,7 @@ export function PricingSection() {
                   }`}
                   size="lg"
                 >
-                  Começar Teste Grátis
+                  Ativar Atlas 7D
                 </Button>
 
                 {/* Decorative line */}

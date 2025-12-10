@@ -150,10 +150,10 @@ export function HeroSection() {
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <rect x="3" y="6" width="18" height="12" rx="2" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 15h4M7 11h6" />
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
               </svg>
-              <span className="text-sm text-slate-400">Vira crédito no seu plano</span>
+              <span className="text-sm text-slate-400">Configuração em menos de 60 segundos</span>
             </div>
 
             <div className="flex items-center gap-2">
