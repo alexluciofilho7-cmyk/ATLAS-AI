@@ -112,7 +112,7 @@ export function HeroSection() {
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative flex items-center">
-                Acessar Atlas Agora
+                Ativar Atlas 7D
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </span>
             </Button>
@@ -126,7 +126,7 @@ export function HeroSection() {
             </Button>
           </div>
 
-          {/* Trust indicators */}
+          {/* Trust indicators - Atlas 7D Entry Point */}
           <div className="mb-16 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
             <div className="flex items-center gap-2">
               <svg
@@ -136,13 +136,10 @@ export function HeroSection() {
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                />
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
               </svg>
-              <span className="text-sm text-slate-400">Garantia de 7 dias</span>
+              <span className="text-sm text-slate-400">R$ 9,90 por 7 dias</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -153,13 +150,10 @@ export function HeroSection() {
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-                />
+                <rect x="3" y="6" width="18" height="12" rx="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 15h4M7 11h6" />
               </svg>
-              <span className="text-sm text-slate-400">Configuração em menos de 60 segundos</span>
+              <span className="text-sm text-slate-400">Vira crédito no seu plano</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -170,13 +164,11 @@ export function HeroSection() {
                 stroke="currentColor"
                 strokeWidth={2}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
-                />
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="12" r="8" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M2 12h2M20 12h2" />
               </svg>
-              <span className="text-sm text-slate-400">Baseado em evidências científicas</span>
+              <span className="text-sm text-slate-400">IA baseada em evidências</span>
             </div>
           </div>
 

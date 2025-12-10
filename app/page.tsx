@@ -6,6 +6,7 @@ import { AtlasHubSection } from "@/components/atlas-hub-section"
 import { ModulesSection } from "@/components/modules-section"
 import { Vision360Section } from "@/components/vision-360-section"
 import { ProofSection } from "@/components/proof-section"
+import { Atlas7DTransition } from "@/components/atlas-7d-transition"
 import { PricingSection } from "@/components/pricing-section"
 import { FaqSection } from "@/components/faq-section"
 import { FinalCtaSection } from "@/components/final-cta-section"
@@ -22,6 +23,7 @@ export default function Home() {
       <ModulesSection />
       <Vision360Section />
       <ProofSection />
+      <Atlas7DTransition />
       <PricingSection />
       <FaqSection />
       <FinalCtaSection />

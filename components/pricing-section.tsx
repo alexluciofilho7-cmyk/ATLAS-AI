@@ -77,6 +77,10 @@ export function PricingSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6">
+        <div className="mb-8 text-center">
+          <p className="text-sm text-slate-500">O valor do Atlas 7D (R$ 9,90) vira crédito no seu primeiro mês.</p>
+        </div>
+
         <div className="mb-16 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5">
             <Zap className="h-4 w-4 text-blue-400" />
