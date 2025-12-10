@@ -25,13 +25,6 @@ export function FinalCtaSection() {
               <stop offset="0%" stopColor="#06b6d4" />
               <stop offset="100%" stopColor="#3b82f6" />
             </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
           {/* Outer orbital ring - tilted ellipse */}
@@ -45,7 +38,6 @@ export function FinalCtaSection() {
             fill="none"
             opacity="0.6"
             transform="rotate(30 100 100)"
-            filter="url(#glow)"
           />
 
           {/* Middle orbital ring - tilted ellipse */}
@@ -59,7 +51,6 @@ export function FinalCtaSection() {
             fill="none"
             opacity="0.6"
             transform="rotate(-30 100 100)"
-            filter="url(#glow)"
           />
 
           {/* Inner orbital ring */}
@@ -72,14 +63,13 @@ export function FinalCtaSection() {
             strokeWidth="1.5"
             fill="none"
             opacity="0.6"
-            filter="url(#glow)"
           />
 
           {/* Orbital glow points */}
-          <circle cx="185" cy="100" r="3" fill="#06b6d4" opacity="0.8" filter="url(#glow)" />
-          <circle cx="15" cy="100" r="3" fill="#06b6d4" opacity="0.8" filter="url(#glow)" />
-          <circle cx="142" cy="60" r="3" fill="#3b82f6" opacity="0.8" filter="url(#glow)" />
-          <circle cx="58" cy="140" r="3" fill="#3b82f6" opacity="0.8" filter="url(#glow)" />
+          <circle cx="185" cy="100" r="3" fill="#06b6d4" opacity="0.8" />
+          <circle cx="15" cy="100" r="3" fill="#06b6d4" opacity="0.8" />
+          <circle cx="142" cy="60" r="3" fill="#3b82f6" opacity="0.8" />
+          <circle cx="58" cy="140" r="3" fill="#3b82f6" opacity="0.8" />
 
           {/* Large "A" letter with serif structure */}
           <g stroke="#ffffff" strokeWidth="8" fill="none" strokeLinecap="square" strokeLinejoin="miter">
