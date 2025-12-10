@@ -70,19 +70,35 @@ export function ProofSection() {
         </div>
 
         {/* Data Points */}
-        <div className="rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 backdrop-blur-sm">
-          <h3 className="mb-8 text-center text-xl font-semibold text-white">Resultados Médios dos Usuários Atlas</h3>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-20">
+          <h3 className="mb-10 text-center text-2xl font-semibold text-white">Resultados Médios dos Usuários Atlas</h3>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
             {dataPoints.map((point) => (
-              <div key={point.label} className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                    {point.value}
-                  </span>
+              <div
+                key={point.label}
+                className="group relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-800/40 via-slate-900/60 to-blue-950/80 p-8 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]"
+              >
+                {/* Inner glow effect */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+                {/* Content */}
+                <div className="relative flex items-start gap-4">
+                  {/* Check icon with enhanced styling */}
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 ring-1 ring-green-500/20 transition-all duration-300 group-hover:bg-green-500/20 group-hover:ring-green-500/40">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    </div>
+                  </div>
+
+                  {/* Text content */}
+                  <div className="flex-1">
+                    <div className="mb-3 text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                      {point.value}
+                    </div>
+                    <p className="text-base font-medium text-white leading-snug mb-1">{point.label}</p>
+                    <p className="text-sm text-blue-400/80 italic">{point.period}</p>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-white">{point.label}</p>
-                <p className="text-xs text-slate-500">{point.period}</p>
               </div>
             ))}
           </div>
