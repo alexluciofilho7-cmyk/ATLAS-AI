@@ -16,7 +16,7 @@ const modules = [
     description:
       "Periodização que prioriza pontos fracos, evita overtraining e foca em proporção estética. Progressão de carga calculada pela IA.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: DietIcon,
@@ -24,7 +24,7 @@ const modules = [
     description:
       "Nutrição flexível que considera sua vida social. Trocas inteligentes, ciclo de carboidratos automático e recálculo após deslizes.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: SleepIcon,
@@ -32,7 +32,7 @@ const modules = [
     description:
       "Monitoramento da qualidade do sono, protocolos de higiene do sono e ajuste do treino baseado na sua prontidão diária.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: TestosteroneIcon,
@@ -40,7 +40,7 @@ const modules = [
     description:
       "Estratégias baseadas em ciência para otimizar seus hormônios naturalmente. Micronutrientes, timing e hábitos que fazem diferença.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: PostureIcon,
@@ -48,7 +48,7 @@ const modules = [
     description:
       "Correção postural, mobilidade e prevenção de lesões. Protocolos de fisioterapia integrados ao seu treino principal.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: CompulsionIcon,
@@ -56,7 +56,7 @@ const modules = [
     description:
       "Estratégias cognitivo-comportamentais para controlar a fome emocional. Recalibração do protocolo sem culpa após deslizes.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
   {
     icon: VisionIcon,
@@ -64,7 +64,7 @@ const modules = [
     description:
       "Dashboard completo com medidas, fotos de progresso, consistência e indicadores de saúde metabólica. Tudo em um lugar.",
     color: "from-blue-600 to-blue-500",
-    shadowColor: "shadow-blue-500/20",
+    shadowColor: "shadow-blue-500/50",
   },
 ]
 
@@ -95,20 +95,29 @@ export function ModulesSection() {
           {modules.map((module, index) => (
             <div
               key={module.title}
-              className={`group relative overflow-hidden rounded-2xl border border-slate-800/50 bg-slate-900/30 p-6 backdrop-blur-sm transition-all duration-500 hover:border-blue-500/30 hover:bg-slate-900/50 ${index === 6 ? "sm:col-span-2 lg:col-span-1" : ""}`}
+              className={`group relative overflow-hidden rounded-3xl transition-all duration-300 hover:-translate-y-1 ${index === 6 ? "sm:col-span-2 lg:col-span-1" : ""}`}
             >
-              {/* Glow on hover */}
-              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 blur transition-all duration-500 group-hover:opacity-20" />
+              {/* Furion-style gradient background with glass effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-800/40 via-slate-900/60 to-blue-950/80 backdrop-blur-xl" />
 
-              <div className="relative">
+              {/* Border glow */}
+              <div className="absolute inset-0 rounded-3xl border border-blue-400/20 group-hover:border-blue-400/40 transition-colors duration-300" />
+
+              {/* Hover glow effect */}
+              <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-blue-400/0 via-blue-500/0 to-blue-600/0 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
+
+              {/* Soft inner glow at bottom */}
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-blue-500/10 to-transparent" />
+
+              <div className="relative p-6">
                 <div
-                  className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${module.color} shadow-lg ${module.shadowColor}`}
+                  className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${module.color} shadow-lg ${module.shadowColor}`}
                 >
                   <module.icon className="h-6 w-6 text-white" />
                 </div>
 
                 <h3 className="mb-2 text-lg font-semibold text-white">{module.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{module.description}</p>
+                <p className="text-sm text-slate-300 leading-relaxed">{module.description}</p>
               </div>
             </div>
           ))}

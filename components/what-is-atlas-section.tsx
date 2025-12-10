@@ -50,18 +50,27 @@ export function WhatIsAtlasSection() {
           {pillars.map((pillar) => (
             <div
               key={pillar.title}
-              className="group relative rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 backdrop-blur-sm transition-all duration-500 hover:border-blue-500/30 hover:bg-slate-900/50"
+              className="group relative rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
-              {/* Glow on hover */}
-              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 blur transition-all duration-500 group-hover:opacity-20" />
+              {/* Furion-style gradient background with glass effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-800/40 via-slate-900/60 to-blue-950/80 backdrop-blur-xl" />
 
-              <div className="relative">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg shadow-blue-500/20">
+              {/* Border glow */}
+              <div className="absolute inset-0 rounded-3xl border border-blue-400/20 group-hover:border-blue-400/40 transition-colors duration-300" />
+
+              {/* Hover glow effect */}
+              <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-blue-400/0 via-blue-500/0 to-blue-600/0 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
+
+              {/* Soft inner glow at bottom */}
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-blue-500/10 to-transparent" />
+
+              <div className="relative p-8">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50">
                   <pillar.icon className="h-7 w-7 text-white" />
                 </div>
 
                 <h3 className="mb-3 text-xl font-semibold text-white">{pillar.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{pillar.description}</p>
+                <p className="text-slate-300 leading-relaxed">{pillar.description}</p>
               </div>
             </div>
           ))}

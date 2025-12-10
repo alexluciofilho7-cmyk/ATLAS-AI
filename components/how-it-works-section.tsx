@@ -102,11 +102,11 @@ export function HowItWorksSection() {
 
                 {/* Icon */}
                 <div className="relative">
-                  <div className="absolute -inset-4 rounded-full bg-blue-500/20 blur-xl" />
-                  <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30">
+                  <div className="absolute -inset-6 rounded-full bg-blue-500/30 blur-2xl" />
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl shadow-blue-500/50">
                     {step.icon && <step.icon className="h-10 w-10 text-white" />}
                   </div>
-                  <div className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-blue-400 ring-2 ring-blue-500/50">
+                  <div className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-blue-400 ring-2 ring-blue-500/50 shadow-lg shadow-blue-500/30">
                     {step.number}
                   </div>
                 </div>
