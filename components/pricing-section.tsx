@@ -93,7 +93,7 @@ export function PricingSection() {
             </span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-slate-400">
-            Todos os planos incluem 7 dias de teste grátis. Cancele quando quiser.
+            Todos os planos incluem o Atlas 7D. Ative em menos de 60 segundos.
           </p>
 
           <div className="mt-8 flex justify-center">
