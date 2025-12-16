@@ -170,10 +170,11 @@ export function HeroSection() {
           </div>
 
           <div className="relative w-full max-w-4xl mb-16">
-            <div className="absolute left-1/2 bottom-[15px] -translate-x-1/2 translate-y-[37.5%] w-[120%] aspect-square pointer-events-none overflow-hidden">
-              {/* Half-sun radial gradient effect */}
+            {/* Wave positioned at video bottom with top clipping */}
+            <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[50%] w-[120%] aspect-square pointer-events-none">
+              {/* Half-sun radial gradient effect - only bottom half visible */}
               <div className="absolute inset-0">
-                {/* Outer ambient glow - reduced to fade faster on edges */}
+                {/* Outer ambient glow */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[130%] h-[130%]">
                   <div
                     className="w-full h-full rounded-full opacity-35 blur-3xl"
@@ -188,7 +189,7 @@ export function HeroSection() {
                   />
                 </div>
 
-                {/* Core glow - concentrated in center, faster fade */}
+                {/* Core glow */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full h-full">
                   <div
                     className="w-full h-full rounded-full opacity-95"
@@ -205,7 +206,7 @@ export function HeroSection() {
                   />
                 </div>
 
-                {/* Outer halo - faster fade on bottom and sides */}
+                {/* Outer halo */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[110%] h-[110%]">
                   <div
                     className="w-full h-full rounded-full opacity-65"
@@ -220,7 +221,7 @@ export function HeroSection() {
                   />
                 </div>
 
-                {/* Inner bright core - maximum intensity, tight concentration */}
+                {/* Inner bright core */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[45%] h-[45%]">
                   <div
                     className="w-full h-full rounded-full opacity-100 blur-2xl"
@@ -235,7 +236,7 @@ export function HeroSection() {
                   />
                 </div>
 
-                {/* Center point - sharp, bright nucleus */}
+                {/* Center point */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[20%] h-[20%]">
                   <div
                     className="w-full h-full rounded-full opacity-95 blur-xl"
@@ -250,8 +251,6 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-            {/* </CHANGE> */}
-
             {/* Video player container */}
             <div className="relative z-10 overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-blue-950/40 backdrop-blur-sm shadow-2xl shadow-blue-500/10">
               {/* 16:9 aspect ratio container */}
