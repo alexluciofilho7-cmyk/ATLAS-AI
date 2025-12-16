@@ -172,6 +172,39 @@ export function HeroSection() {
             </div>
           </div>
 
+          <div className="relative w-full max-w-5xl mb-16">
+            {/* Atlas Core Visual positioned behind video */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full h-full scale-150">
+                <AtlasCoreVisual />
+              </div>
+            </div>
+
+            {/* Video player container */}
+            <div className="relative z-10 overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-blue-950/40 backdrop-blur-sm shadow-2xl shadow-blue-500/10">
+              {/* 16:9 aspect ratio container */}
+              <div className="relative aspect-video">
+                {/* Video background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-blue-950/60" />
+
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:scale-110 hover:shadow-xl hover:shadow-blue-500/40">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                    <Play className="relative h-8 w-8 fill-white text-white translate-x-0.5" />
+                  </button>
+                </div>
+
+                {/* Video label */}
+                <div className="absolute bottom-6 left-6">
+                  <span className="inline-block rounded-lg bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm border border-slate-700/50">
+                    Vídeo de Apresentação da Atlas IA
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Stats */}
           <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-8 lg:gap-16">
             <div className="text-center">
