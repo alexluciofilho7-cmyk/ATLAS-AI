@@ -31,7 +31,7 @@ export function AtlasCoreVisual() {
       const w = canvas.offsetWidth
       const h = canvas.offsetHeight
       const centerX = w / 2
-      const centerY = h / 2.2 // Slightly higher for visual balance
+      const centerY = h / 1.5 // Adjusted from h / 2.2 to h / 1.5 to position core lower for bottom emanation effect
 
       // Clear with subtle trail
       ctx.fillStyle = "rgba(3, 7, 18, 0.05)"
@@ -40,10 +40,10 @@ export function AtlasCoreVisual() {
       const time = Date.now() / 1000
       const pulseScale = 1 + Math.sin(time * 1.5) * 0.12
 
-      const haloRadius = 200 * pulseScale
+      const haloRadius = 280 * pulseScale // Increased from 200 to 280 for stronger, more visible glow
       const haloGradient = ctx.createRadialGradient(centerX, centerY - 30, 0, centerX, centerY, haloRadius)
-      haloGradient.addColorStop(0, "rgba(165, 242, 254, 0.08)")
-      haloGradient.addColorStop(0.6, "rgba(59, 130, 246, 0.04)")
+      haloGradient.addColorStop(0, "rgba(165, 242, 254, 0.15)") // Increased opacity from 0.08 to 0.15
+      haloGradient.addColorStop(0.6, "rgba(59, 130, 246, 0.08)") // Increased opacity from 0.04 to 0.08
       haloGradient.addColorStop(1, "rgba(6, 182, 212, 0)")
       ctx.fillStyle = haloGradient
       ctx.beginPath()
@@ -51,9 +51,9 @@ export function AtlasCoreVisual() {
       ctx.fill()
 
       const ringColors = [
-        { color: "rgba(59, 130, 246, 0.15)", radiusMult: 1.2 },
-        { color: "rgba(59, 130, 246, 0.1)", radiusMult: 1.5 },
-        { color: "rgba(6, 182, 212, 0.08)", radiusMult: 1.8 },
+        { color: "rgba(59, 130, 246, 0.25)", radiusMult: 1.2 }, // Increased opacity from 0.15 to 0.25
+        { color: "rgba(59, 130, 246, 0.18)", radiusMult: 1.5 }, // Increased opacity from 0.1 to 0.18
+        { color: "rgba(6, 182, 212, 0.12)", radiusMult: 1.8 }, // Increased opacity from 0.08 to 0.12
       ]
 
       for (const ring of ringColors) {
@@ -65,12 +65,12 @@ export function AtlasCoreVisual() {
         ctx.stroke()
       }
 
-      const coreRadius = 75 * pulseScale
+      const coreRadius = 95 * pulseScale // Increased from 75 to 95 for larger, more prominent core
       const coreGradient = ctx.createRadialGradient(centerX - 15, centerY - 15, 0, centerX, centerY, coreRadius)
-      coreGradient.addColorStop(0, "rgba(255, 255, 255, 0.5)")
-      coreGradient.addColorStop(0.3, "rgba(191, 219, 254, 0.6)")
-      coreGradient.addColorStop(0.7, "rgba(59, 130, 246, 0.4)")
-      coreGradient.addColorStop(1, "rgba(6, 182, 212, 0.1)")
+      coreGradient.addColorStop(0, "rgba(255, 255, 255, 0.7)") // Increased opacity from 0.5 to 0.7
+      coreGradient.addColorStop(0.3, "rgba(191, 219, 254, 0.75)") // Increased opacity from 0.6 to 0.75
+      coreGradient.addColorStop(0.7, "rgba(59, 130, 246, 0.5)") // Increased opacity from 0.4 to 0.5
+      coreGradient.addColorStop(1, "rgba(6, 182, 212, 0.15)") // Increased opacity from 0.1 to 0.15
       ctx.fillStyle = coreGradient
       ctx.beginPath()
       ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2)

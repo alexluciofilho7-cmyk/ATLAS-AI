@@ -103,7 +103,7 @@ export function HeroSection() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row">
+          <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row">
             <Button
               size="lg"
               className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-8 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-lg shadow-blue-500/25"
@@ -125,7 +125,7 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators - Atlas 7D Entry Point */}
-          <div className="mb-10 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+          <div className="mb-12 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
             <div className="flex items-center gap-2">
               <svg
                 className="h-5 w-5 text-blue-400"
@@ -171,8 +171,7 @@ export function HeroSection() {
           </div>
 
           <div className="relative w-full max-w-4xl mb-16">
-            {/* Atlas Core Visual positioned behind video - scaled and positioned properly */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] pointer-events-none">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[20%] w-[160%] h-[160%] pointer-events-none overflow-hidden">
               <AtlasCoreVisual />
             </div>
 
