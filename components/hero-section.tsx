@@ -8,8 +8,6 @@ import { AtlasCoreVisual } from "@/components/atlas-core-visual"
 export function HeroSection() {
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#030712]">
-      <AtlasCoreVisual />
-
       {/* Background gradient effects */}
       <div className="absolute inset-0">
         <div className="absolute left-1/2 top-0 h-[800px] w-[1200px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl" />
@@ -127,7 +125,7 @@ export function HeroSection() {
           </div>
 
           {/* Trust indicators - Atlas 7D Entry Point */}
-          <div className="mb-16 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+          <div className="mb-10 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
             <div className="flex items-center gap-2">
               <svg
                 className="h-5 w-5 text-blue-400"
@@ -172,12 +170,10 @@ export function HeroSection() {
             </div>
           </div>
 
-          <div className="relative w-full max-w-5xl mb-16">
-            {/* Atlas Core Visual positioned behind video */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-full scale-150">
-                <AtlasCoreVisual />
-              </div>
+          <div className="relative w-full max-w-4xl mb-16">
+            {/* Atlas Core Visual positioned behind video - scaled and positioned properly */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] pointer-events-none">
+              <AtlasCoreVisual />
             </div>
 
             {/* Video player container */}
