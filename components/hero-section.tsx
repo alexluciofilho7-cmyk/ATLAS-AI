@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, Play } from "lucide-react"
 import Image from "next/image"
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onOpenModal: () => void
+}
+
+export function HeroSection({ onOpenModal }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#030712]">
       {/* Background gradient effects */}
@@ -62,7 +66,10 @@ export function HeroSection() {
             <Button variant="ghost" className="hidden text-slate-300 hover:bg-white/5 hover:text-white sm:flex">
               Entrar
             </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:opacity-90 font-semibold shadow-lg shadow-blue-500/25">
+            <Button
+              onClick={onOpenModal}
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:opacity-90 font-semibold shadow-lg shadow-blue-500/25"
+            >
               Começar Agora
             </Button>
           </div>
@@ -104,6 +111,7 @@ export function HeroSection() {
           {/* CTA Buttons */}
           <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row">
             <Button
+              onClick={onOpenModal}
               size="lg"
               className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-8 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-lg shadow-blue-500/25"
             >

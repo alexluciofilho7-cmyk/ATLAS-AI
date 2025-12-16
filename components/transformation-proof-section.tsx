@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 
-export function TransformationProofSection() {
+interface TransformationProofSectionProps {
+  onOpenModal: () => void
+}
+
+export function TransformationProofSection({ onOpenModal }: TransformationProofSectionProps) {
   return (
     <section className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
       {/* Background effects */}
@@ -168,6 +172,7 @@ export function TransformationProofSection() {
         {/* CTA Button */}
         <div className="text-center">
           <Button
+            onClick={onOpenModal}
             size="lg"
             className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-10 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-xl shadow-blue-500/30"
           >

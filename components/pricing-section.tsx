@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Check, Sparkles, Zap } from "lucide-react"
 import { useState } from "react"
 
+interface PricingSectionProps {
+  onOpenModal: () => void
+}
+
 const plans = [
   {
     name: "Básico",
@@ -66,15 +70,8 @@ const plans = [
   },
 ]
 
-export function PricingSection() {
+export function PricingSection({ onOpenModal }: PricingSectionProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly")
-
-  const scrollToForm = () => {
-    const formSection = document.getElementById("formulario-atlas")
-    if (formSection) {
-      formSection.scrollIntoView({ behavior: "smooth", block: "center" })
-    }
-  }
 
   return (
     <section id="planos" className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
@@ -207,7 +204,7 @@ export function PricingSection() {
 
                 {/* CTA */}
                 <Button
-                  onClick={scrollToForm}
+                  onClick={onOpenModal}
                   className={`w-full ${
                     plan.highlighted
                       ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:opacity-90"

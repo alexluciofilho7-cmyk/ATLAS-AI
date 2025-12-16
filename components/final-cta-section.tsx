@@ -3,7 +3,11 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Shield } from "lucide-react"
 
-export function FinalCtaSection() {
+interface FinalCtaSectionProps {
+  onOpenModal: () => void
+}
+
+export function FinalCtaSection({ onOpenModal }: FinalCtaSectionProps) {
   return (
     <section className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
       {/* Background effects */}
@@ -34,6 +38,7 @@ export function FinalCtaSection() {
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Button
+            onClick={onOpenModal}
             size="lg"
             className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-10 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-lg shadow-blue-500/25"
           >

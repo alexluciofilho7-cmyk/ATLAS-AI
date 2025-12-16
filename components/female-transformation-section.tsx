@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 
-export function FemaleTransformationSection() {
+interface FemaleTransformationSectionProps {
+  onOpenModal: () => void
+}
+
+export function FemaleTransformationSection({ onOpenModal }: FemaleTransformationSectionProps) {
   return (
     <section className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
       {/* Background effects */}
@@ -124,6 +128,7 @@ export function FemaleTransformationSection() {
         {/* CTA Button */}
         <div className="text-center">
           <Button
+            onClick={onOpenModal}
             size="lg"
             className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-10 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-xl shadow-blue-500/30"
           >
