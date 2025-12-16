@@ -173,44 +173,76 @@ export function HeroSection() {
             <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[50%] w-[120%] aspect-square pointer-events-none overflow-hidden">
               {/* Half-sun radial gradient effect */}
               <div className="absolute inset-0">
-                {/* Core glow */}
+                {/* Outer ambient glow layer - new */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[130%] h-[130%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-50 blur-3xl"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(14, 165, 233, 0.35) 0%,
+                        rgba(59, 130, 246, 0.2) 25%,
+                        rgba(37, 99, 235, 0.1) 50%,
+                        transparent 70%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Core glow - increased intensity */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full h-full">
                   <div
-                    className="w-full h-full rounded-full opacity-60"
+                    className="w-full h-full rounded-full opacity-90"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(14, 165, 233, 0.4) 0%,
-                        rgba(59, 130, 246, 0.3) 20%,
-                        rgba(37, 99, 235, 0.15) 40%,
-                        rgba(30, 64, 175, 0.05) 60%,
-                        transparent 80%
+                        rgba(56, 189, 248, 0.8) 0%,
+                        rgba(14, 165, 233, 0.65) 15%,
+                        rgba(59, 130, 246, 0.5) 30%,
+                        rgba(37, 99, 235, 0.3) 50%,
+                        rgba(30, 64, 175, 0.15) 70%,
+                        transparent 85%
                       )`,
                     }}
                   />
                 </div>
 
-                {/* Outer halo */}
+                {/* Outer halo - increased */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[110%] h-[110%]">
                   <div
-                    className="w-full h-full rounded-full opacity-40"
+                    className="w-full h-full rounded-full opacity-70"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(6, 182, 212, 0.2) 0%,
-                        rgba(14, 165, 233, 0.1) 30%,
-                        transparent 60%
+                        rgba(6, 182, 212, 0.5) 0%,
+                        rgba(14, 165, 233, 0.35) 25%,
+                        rgba(59, 130, 246, 0.2) 45%,
+                        transparent 65%
                       )`,
                     }}
                   />
                 </div>
 
-                {/* Inner bright core */}
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[40%] h-[40%]">
+                {/* Inner bright core - maximum intensity */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[50%] h-[50%]">
                   <div
-                    className="w-full h-full rounded-full opacity-70 blur-2xl"
+                    className="w-full h-full rounded-full opacity-100 blur-2xl"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(56, 189, 248, 0.6) 0%,
-                        rgba(14, 165, 233, 0.3) 50%,
+                        rgba(125, 211, 252, 0.95) 0%,
+                        rgba(56, 189, 248, 0.8) 30%,
+                        rgba(14, 165, 233, 0.5) 60%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Additional sharp center point */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[25%] h-[25%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-90 blur-xl"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(186, 230, 253, 1) 0%,
+                        rgba(125, 211, 252, 0.8) 40%,
                         transparent 100%
                       )`,
                     }}
@@ -218,6 +250,7 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
+            {/* </CHANGE> */}
 
             {/* Video player container */}
             <div className="relative z-10 overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-blue-950/40 backdrop-blur-sm shadow-2xl shadow-blue-500/10">
