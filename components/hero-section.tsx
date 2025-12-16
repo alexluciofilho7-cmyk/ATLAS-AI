@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Play } from "lucide-react"
 import Image from "next/image"
-import { AtlasCoreVisual } from "@/components/atlas-core-visual"
 
 export function HeroSection() {
   return (
@@ -171,8 +170,53 @@ export function HeroSection() {
           </div>
 
           <div className="relative w-full max-w-4xl mb-16">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[20%] w-[160%] h-[160%] pointer-events-none overflow-hidden">
-              <AtlasCoreVisual />
+            <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[50%] w-[120%] aspect-square pointer-events-none overflow-hidden">
+              {/* Half-sun radial gradient effect */}
+              <div className="absolute inset-0">
+                {/* Core glow */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full h-full">
+                  <div
+                    className="w-full h-full rounded-full opacity-60"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(14, 165, 233, 0.4) 0%,
+                        rgba(59, 130, 246, 0.3) 20%,
+                        rgba(37, 99, 235, 0.15) 40%,
+                        rgba(30, 64, 175, 0.05) 60%,
+                        transparent 80%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Outer halo */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[110%] h-[110%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-40"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(6, 182, 212, 0.2) 0%,
+                        rgba(14, 165, 233, 0.1) 30%,
+                        transparent 60%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Inner bright core */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[40%] h-[40%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-70 blur-2xl"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(56, 189, 248, 0.6) 0%,
+                        rgba(14, 165, 233, 0.3) 50%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Video player container */}
