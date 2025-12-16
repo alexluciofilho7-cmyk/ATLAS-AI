@@ -11,11 +11,13 @@ import { PricingSection } from "@/components/pricing-section"
 import { FaqSection } from "@/components/faq-section"
 import { FinalCtaSection } from "@/components/final-cta-section"
 import { Footer } from "@/components/footer"
+import { TransformationProofSection } from "@/components/transformation-proof-section"
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       <HeroSection />
+      <TransformationProofSection />
       <WhatIsAtlasSection />
       <WhyMostFailSection />
       <HowItWorksSection />
