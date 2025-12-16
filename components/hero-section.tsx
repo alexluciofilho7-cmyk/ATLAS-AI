@@ -170,82 +170,125 @@ export function HeroSection() {
           </div>
 
           <div className="relative w-full max-w-4xl mb-16">
-            {/* Wave positioned at video bottom with top clipping */}
             <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[50%] w-[120%] aspect-square pointer-events-none">
               {/* Half-sun radial gradient effect - only bottom half visible */}
               <div className="absolute inset-0">
-                {/* Outer ambient glow */}
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[130%] h-[130%]">
+                {/* Outer ambient glow - extends furthest */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[135%] h-[135%]">
                   <div
-                    className="w-full h-full rounded-full opacity-35 blur-3xl"
+                    className="w-full h-full rounded-full opacity-30 blur-3xl"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(14, 165, 233, 0.4) 0%,
-                        rgba(59, 130, 246, 0.25) 18%,
-                        rgba(37, 99, 235, 0.12) 35%,
+                        rgba(14, 165, 233, 0.35) 0%,
+                        rgba(59, 130, 246, 0.2) 20%,
+                        rgba(37, 99, 235, 0.1) 38%,
                         transparent 55%
                       )`,
                     }}
                   />
                 </div>
 
-                {/* Core glow */}
+                {/* Horizontal glow/flare along horizon */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[140%] h-[8%]">
+                  <div
+                    className="w-full h-full opacity-70 blur-2xl"
+                    style={{
+                      background: `linear-gradient(90deg, 
+                        transparent 0%,
+                        rgba(56, 189, 248, 0.4) 25%,
+                        rgba(125, 211, 252, 0.6) 50%,
+                        rgba(56, 189, 248, 0.4) 75%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Main sphere body with defined edge */}
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full h-full">
                   <div
-                    className="w-full h-full rounded-full opacity-95"
+                    className="w-full h-full rounded-full opacity-90"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(56, 189, 248, 0.9) 0%,
-                        rgba(14, 165, 233, 0.75) 12%,
-                        rgba(59, 130, 246, 0.55) 22%,
-                        rgba(37, 99, 235, 0.35) 35%,
-                        rgba(30, 64, 175, 0.15) 50%,
-                        transparent 65%
+                        rgba(125, 211, 252, 0.95) 0%,
+                        rgba(56, 189, 248, 0.85) 8%,
+                        rgba(14, 165, 233, 0.7) 18%,
+                        rgba(59, 130, 246, 0.5) 28%,
+                        rgba(37, 99, 235, 0.32) 38%,
+                        rgba(30, 64, 175, 0.15) 48%,
+                        transparent 62%
                       )`,
                     }}
                   />
                 </div>
 
-                {/* Outer halo */}
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[110%] h-[110%]">
+                {/* Concentric arc ring 1 (outermost) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[90%] h-[90%]">
                   <div
-                    className="w-full h-full rounded-full opacity-65"
+                    className="w-full h-full rounded-full border-t-2 border-cyan-400/20 opacity-60"
                     style={{
-                      background: `radial-gradient(circle at center top, 
-                        rgba(6, 182, 212, 0.6) 0%,
-                        rgba(14, 165, 233, 0.4) 20%,
-                        rgba(59, 130, 246, 0.2) 35%,
-                        transparent 50%
-                      )`,
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
                     }}
                   />
                 </div>
 
-                {/* Inner bright core */}
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[45%] h-[45%]">
+                {/* Concentric arc ring 2 (middle) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[70%] h-[70%]">
+                  <div
+                    className="w-full h-full rounded-full border-t-2 border-blue-300/25 opacity-70"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                    }}
+                  />
+                </div>
+
+                {/* Concentric arc ring 3 (innermost) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[50%] h-[50%]">
+                  <div
+                    className="w-full h-full rounded-full border-t-2 border-cyan-200/30 opacity-75"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                    }}
+                  />
+                </div>
+
+                {/* Core luminous center */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[40%] h-[40%]">
                   <div
                     className="w-full h-full rounded-full opacity-100 blur-2xl"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(125, 211, 252, 1) 0%,
-                        rgba(56, 189, 248, 0.9) 25%,
-                        rgba(14, 165, 233, 0.6) 50%,
+                        rgba(186, 230, 253, 1) 0%,
+                        rgba(125, 211, 252, 0.95) 15%,
+                        rgba(56, 189, 248, 0.8) 35%,
+                        rgba(14, 165, 233, 0.5) 55%,
                         transparent 100%
                       )`,
                     }}
                   />
                 </div>
 
-                {/* Center point */}
-                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[20%] h-[20%]">
+                {/* Intense center point - "heart of the system" */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[18%] h-[18%]">
                   <div
-                    className="w-full h-full rounded-full opacity-95 blur-xl"
+                    className="w-full h-full rounded-full opacity-100 blur-lg"
                     style={{
                       background: `radial-gradient(circle at center top, 
-                        rgba(186, 230, 253, 1) 0%,
-                        rgba(125, 211, 252, 0.9) 35%,
+                        rgba(224, 242, 254, 1) 0%,
+                        rgba(186, 230, 253, 1) 20%,
+                        rgba(125, 211, 252, 0.9) 50%,
                         transparent 100%
                       )`,
+                    }}
+                  />
+                </div>
+
+                {/* Sharp center nucleus */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[8%] h-[8%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-100 blur-sm"
+                    style={{
+                      background: `rgba(240, 249, 255, 1)`,
                     }}
                   />
                 </div>
