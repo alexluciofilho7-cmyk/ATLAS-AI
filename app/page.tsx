@@ -8,6 +8,7 @@ import { Vision360Section } from "@/components/vision-360-section"
 import { ProofSection } from "@/components/proof-section"
 import { Atlas7DTransition } from "@/components/atlas-7d-transition"
 import { PricingSection } from "@/components/pricing-section"
+import { AtlasActivationForm } from "@/components/atlas-activation-form"
 import { FaqSection } from "@/components/faq-section"
 import { FinalCtaSection } from "@/components/final-cta-section"
 import { Footer } from "@/components/footer"
@@ -29,6 +30,7 @@ export default function Home() {
       <ProofSection />
       <Atlas7DTransition />
       <PricingSection />
+      <AtlasActivationForm />
       <FaqSection />
       <FinalCtaSection />
       <Footer />

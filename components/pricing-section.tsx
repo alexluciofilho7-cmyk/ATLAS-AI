@@ -69,6 +69,13 @@ const plans = [
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly")
 
+  const scrollToForm = () => {
+    const formSection = document.getElementById("formulario-atlas")
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }
+
   return (
     <section id="planos" className="relative bg-[#030712] py-24 lg:py-32 overflow-hidden">
       {/* Background effects */}
@@ -200,6 +207,7 @@ export function PricingSection() {
 
                 {/* CTA */}
                 <Button
+                  onClick={scrollToForm}
                   className={`w-full ${
                     plan.highlighted
                       ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:opacity-90"
