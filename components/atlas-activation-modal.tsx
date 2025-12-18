@@ -64,9 +64,13 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
         return
       }
 
-      // Success! Redirect to Kiwify checkout
+      // Success! Open checkout in new tab
       const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
-      window.location.href = checkoutUrl
+      window.open(checkoutUrl, "_blank")
+
+      // Close modal after opening checkout
+      onClose()
+      setIsSubmitting(false)
     } catch (err) {
       console.error("[Atlas 7D] Form submission error:", err)
       setError("Erro inesperado. Tente novamente.")
