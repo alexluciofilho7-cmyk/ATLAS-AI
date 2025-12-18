@@ -5,6 +5,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Shield, X } from "lucide-react"
 import { useState, useEffect } from "react"
+import { submitLead } from "@/app/actions/submit-lead"
 
 interface AtlasActivationModalProps {
   isOpen: boolean
@@ -18,6 +19,8 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
     countryCode: "+55",
     phone: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -33,13 +36,42 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
     }
   }, [isOpen, onClose])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Integration point - Submit to API or redirect to checkout
-    console.log("[Atlas 7D] Form submitted:", formData)
-    // For now, show success message
-    alert("Formulário enviado! Em breve você receberá as instruções de ativação.")
-    onClose()
+    setError(null)
+
+    // Validate fields
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      setError("Por favor, preencha todos os campos.")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Submit lead data to server
+      const result = await submitLead({
+        name: formData.name,
+        email: formData.email,
+        countryCode: formData.countryCode,
+        phone: formData.phone,
+        timestamp: new Date().toISOString(),
+      })
+
+      if (!result.success) {
+        setError(result.error || "Erro ao enviar. Tente novamente.")
+        setIsSubmitting(false)
+        return
+      }
+
+      // Success! Redirect to Kiwify checkout
+      const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
+      window.location.href = checkoutUrl
+    } catch (err) {
+      console.error("[Atlas 7D] Form submission error:", err)
+      setError("Erro inesperado. Tente novamente.")
+      setIsSubmitting(false)
+    }
   }
 
   if (!isOpen) return null
@@ -138,13 +170,20 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
               </div>
             </div>
 
+            {error && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
             {/* Submit button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:opacity-90 transition-all py-6 text-base font-semibold rounded-2xl mt-6"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:opacity-90 transition-all py-6 text-base font-semibold rounded-2xl mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               size="lg"
             >
-              Continuar para ativar a Atlas 7D
+              {isSubmitting ? "Enviando..." : "Continuar para ativar a Atlas 7D"}
             </Button>
 
             {/* Security note */}
