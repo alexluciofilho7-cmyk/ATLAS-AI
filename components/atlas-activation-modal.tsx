@@ -73,12 +73,7 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
           return
         }
 
-        const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
-        if (window.top) {
-          window.top.location.href = checkoutUrl
-        } else {
-          window.location.href = checkoutUrl
-        }
+        window.location.href = "https://pay.kiwify.com.br/7t3JoKg"
 
         // Note: No code runs after this line since the page redirects
       } catch (err) {
