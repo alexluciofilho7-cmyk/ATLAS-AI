@@ -10,6 +10,8 @@ interface AtlasActivationModalProps {
   onClose: () => void
 }
 
+const KIWIFY_CHECKOUT_URL = "https://pay.kiwify.com.br/7t3JoKg"
+
 export function AtlasActivationModal(props: AtlasActivationModalProps) {
   const { isOpen, onClose } = props
   const [name, setName] = React.useState("")
@@ -59,16 +61,21 @@ export function AtlasActivationModal(props: AtlasActivationModalProps) {
     }
 
     try {
+      // Save lead in background (non-blocking)
       submitLead({
         name: name,
         email: email,
         countryCode: countryCode,
         phone: phone,
         timestamp: new Date().toISOString(),
+      }).catch((err) => {
+        console.error("[Atlas 7D] Error saving lead:", err)
       })
 
-      window.location.href = "https://pay.kiwify.com.br/7t3JoKg"
+      // Redirect immediately to Kiwify checkout
+      window.location.href = KIWIFY_CHECKOUT_URL
     } catch (err) {
+      console.error("[Atlas 7D] Form submission error:", err)
       setError("Erro inesperado. Tente novamente.")
     }
   }
