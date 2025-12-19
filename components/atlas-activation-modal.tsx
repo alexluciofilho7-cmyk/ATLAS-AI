@@ -61,7 +61,6 @@ export function AtlasActivationModal(props: AtlasActivationModalProps) {
     }
 
     try {
-      // Save lead in background (non-blocking)
       submitLead({
         name: name,
         email: email,
@@ -72,8 +71,7 @@ export function AtlasActivationModal(props: AtlasActivationModalProps) {
         console.error("[Atlas 7D] Error saving lead:", err)
       })
 
-      // Redirect immediately to Kiwify checkout
-      window.location.href = KIWIFY_CHECKOUT_URL
+      window.location.assign(KIWIFY_CHECKOUT_URL)
     } catch (err) {
       console.error("[Atlas 7D] Form submission error:", err)
       setError("Erro inesperado. Tente novamente.")
