@@ -77,11 +77,12 @@ export default function ObrigadoPage() {
                 { icon: Activity, label: "Dieta", color: "text-cyan-400" },
                 { icon: Moon, label: "Sono", color: "text-indigo-400" },
                 { icon: Activity, label: "Testosterona", color: "text-blue-300" },
-                { icon: Shield, label: "Postura", color: "text-cyan-300" },
+                { icon: Shield, label: "Fisioterapia", color: "text-cyan-300" },
               ].map((pillar, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary/50 border border-border/50"
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary/50 border border-border/50 cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(0,200,255,0.45)] focus-visible:-translate-y-0.5 focus-visible:scale-[1.03] focus-visible:shadow-[0_0_20px_rgba(0,200,255,0.45)] focus-visible:outline-none"
+                  tabIndex={0}
                 >
                   <pillar.icon className={`w-6 h-6 ${pillar.color}`} />
                   <span className="text-sm text-foreground font-medium">{pillar.label}</span>
