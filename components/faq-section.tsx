@@ -1,41 +1,70 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { HelpCircle } from "lucide-react"
 
 const faqs = [
   {
-    question: "O Atlas monta treino para casa ou só academia?",
+    question: "A Atlas IA funciona para iniciantes ou só para quem já treina?",
     answer:
-      "O sistema adapta para ambos. No cadastro, você informa quais equipamentos tem (ou se não tem nenhum) e a IA cria o treino mais eficiente possível com o que está disponível.",
+      "Funciona para ambos. No onboarding, você informa seu nível de experiência. Para iniciantes, a Atlas começa com uma fase de base e aprendizado motor. Para avançados, ela otimiza o que você já faz com ajustes baseados em dados.",
   },
   {
-    question: "Sou iniciante total, consigo usar?",
+    question: "Preciso de equipamentos de academia ou funciona em casa?",
     answer:
-      "Sim. O onboarding do app nivela sua experiência. Se você nunca treinou, o Atlas começa com uma fase de base e aprendizado motor para evitar lesões.",
+      "O sistema adapta para ambos. Você informa quais equipamentos tem (ou se não tem nenhum) e a IA cria o treino mais eficiente possível com o que está disponível.",
   },
   {
-    question: "É um robô ou tem um humano por trás?",
+    question: "É uma IA de verdade ou um chatbot genérico?",
     answer:
-      "É uma Inteligência Artificial avançada, treinada com conhecimento de treinadores de elite e nutricionistas. Ela está disponível 24/7 com a precisão da máquina e linguagem natural.",
+      "É uma IA avançada, treinada especificamente com conhecimento de treinadores de elite, nutricionistas esportivos e fisiologistas. Ela está disponível 24/7 com a precisão da máquina e linguagem natural.",
+  },
+  {
+    question: "O que acontece se eu errar uma refeição ou faltar um treino?",
+    answer:
+      "Nada. A Atlas recalcula seu protocolo automaticamente. Um deslize não mata seu progresso. O sistema adapta as próximas refeições/treinos para compensar e manter você no caminho certo.",
+  },
+  {
+    question: "Como funciona o módulo de testosterona natural?",
+    answer:
+      "O módulo trabalha com estratégias comprovadas por ciência: otimização de micronutrientes (zinco, magnésio, vitamina D), timing de alimentação, qualidade do sono e redução de estresse. Tudo natural, sem substâncias.",
+  },
+  {
+    question: "E se eu não gostar? Tem garantia?",
+    answer:
+      "Sim. Você tem 7 dias de teste gratuito e depois mais 7 dias de garantia incondicional. Se achar que a Atlas não é para você, devolvemos 100% do seu investimento. Sem burocracia, sem letras miúdas.",
   },
   {
     question: "Como funciona o cancelamento?",
     answer:
-      "Sem burocracia. Você pode cancelar sua assinatura direto pelo painel do usuário a qualquer momento. Sem ligações, sem letras miúdas.",
+      "Sem burocracia. Você pode cancelar sua assinatura direto pelo painel do usuário a qualquer momento. Sem ligações, sem emails de retenção, sem letras miúdas. Cancelou, acabou.",
   },
   {
-    question: "O que acontece se eu não gostar?",
+    question: "A Atlas funciona para mulheres também?",
     answer:
-      "Você tem 7 dias de garantia incondicional. Se achar que o Atlas não é para você, devolvemos 100% do seu investimento.",
+      "Sim. A plataforma atende mulheres de 18 a 45 anos com protocolos adaptados às suas necessidades hormonais e objetivos específicos. O sistema personaliza treino, dieta e recuperação considerando o ciclo menstrual e características femininas.",
+  },
+  {
+    question: "Preciso de equipamentos ou apps adicionais?",
+    answer:
+      "Não. A Atlas funciona 100% no navegador ou app. Se você tiver um smartwatch ou dispositivo de sono, pode integrá-lo para dados mais precisos, mas não é obrigatório.",
+  },
+  {
+    question: "Quanto tempo leva para ver resultados?",
+    answer:
+      "Depende do seu ponto de partida e consistência. Usuários que seguem o protocolo por 90 dias reportam em média +4kg de massa magra e -6% de gordura corporal. Primeiras mudanças visíveis geralmente em 4-6 semanas.",
   },
 ]
 
 export function FaqSection() {
   return (
-    <section className="relative bg-[#0a1628] py-32">
+    <section id="faq" className="relative bg-[#050a14] py-24 lg:py-32">
       <div className="mx-auto max-w-3xl px-6">
         <div className="mb-16 text-center">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-teal-400">FAQ</p>
-          <h2 className="mb-6 text-4xl font-bold tracking-tight text-white lg:text-5xl">Dúvidas Frequentes</h2>
-          <p className="text-lg text-slate-400">Tudo que você precisa saber antes de começar.</p>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5">
+            <HelpCircle className="h-4 w-4 text-blue-400" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-blue-400">FAQ</span>
+          </div>
+          <h2 className="mb-6 text-3xl font-bold tracking-tight text-white lg:text-5xl">Dúvidas Frequentes</h2>
+          <p className="text-lg text-slate-400">Tudo que você precisa saber antes de começar sua transformação.</p>
         </div>
 
         <Accordion type="single" collapsible className="space-y-4">
@@ -43,9 +72,9 @@ export function FaqSection() {
             <AccordionItem
               key={index}
               value={`item-${index}`}
-              className="rounded-xl border border-slate-800 bg-[#0d1f35]/50 px-6 backdrop-blur-sm data-[state=open]:border-teal-500/30"
+              className="rounded-xl border border-slate-800/50 bg-slate-900/30 px-6 backdrop-blur-sm data-[state=open]:border-blue-500/30"
             >
-              <AccordionTrigger className="py-5 text-left font-semibold text-white hover:text-teal-400 hover:no-underline [&[data-state=open]]:text-teal-400">
+              <AccordionTrigger className="py-5 text-left font-semibold text-white hover:text-blue-400 hover:no-underline [&[data-state=open]]:text-blue-400">
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="pb-5 text-slate-400 leading-relaxed">{faq.answer}</AccordionContent>

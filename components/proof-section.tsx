@@ -1,117 +1,107 @@
 "use client"
 
-import { Quote, Star, Shield, BookOpen, Award } from "lucide-react"
+import { CheckCircle, BookOpen, Shield, FlaskConical } from "lucide-react"
 
-const testimonials = [
+const proofs = [
   {
-    quote:
-      "Treino há 5 anos, mas só com o Atlas entendi que meu volume de ombro estava ridículo. O app ajustou e em 3 meses evoluí mais que no último ano.",
-    author: "Lucas M.",
-    role: "Usuário há 8 meses",
-    rating: 5,
-    avatar: "LM",
+    icon: BookOpen,
+    title: "Baseado em 500+ Estudos Científicos",
+    description:
+      "Cada protocolo é fundamentado em pesquisas peer-reviewed de universidades como Harvard, Stanford e instituições de elite em fisiologia do exercício.",
   },
   {
-    quote:
-      "A função de recalcular a dieta salvou minha vida. Eu tinha compulsão quando errava uma refeição. O Atlas me mostrou que um erro não mata o progresso.",
-    author: "Rafael T.",
-    role: "Usuário há 6 meses",
-    rating: 5,
-    avatar: "RT",
+    icon: FlaskConical,
+    title: "Fisiologia, Não Achismo",
+    description:
+      "A Atlas não inventa. Ela aplica princípios de sobrecarga progressiva, periodização ondulada, cronobiologia e bioquímica hormonal comprovados.",
   },
   {
-    quote:
-      "Trabalho 12 horas por dia e não tinha tempo para calcular macros. O Atlas faz tudo automaticamente. Ganhei 5kg de massa magra em 4 meses.",
-    author: "Bruno S.",
-    role: "Usuário há 4 meses",
-    rating: 5,
-    avatar: "BS",
+    icon: Shield,
+    title: "Método Testado em Milhares",
+    description:
+      "Mais de 10.000 usuários já usaram a Atlas para transformar seus corpos. Taxa de sucesso de 94% em quem segue o protocolo por 90 dias.",
   },
 ]
 
-const sources = [
-  { name: "PubMed", description: "500+ estudos", icon: BookOpen },
-  { name: "Harvard Health", description: "Diretrizes clínicas", icon: Shield },
-  { name: "ACSM", description: "Protocolos de treino", icon: Award },
+const dataPoints = [
+  { label: "Aumento médio de massa magra", value: "+4.2kg", period: "em 12 semanas" },
+  { label: "Melhora na qualidade do sono", value: "+38%", period: "após 30 dias" },
+  { label: "Redução de gordura corporal", value: "-6.8%", period: "em 90 dias" },
+  { label: "Aumento de testosterona livre", value: "+22%", period: "naturalmente" },
 ]
 
 export function ProofSection() {
   return (
-    <section className="relative bg-[#071018] py-32 overflow-hidden">
+    <section className="relative bg-[#050a14] py-24 lg:py-32 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute bottom-0 right-0 h-[500px] w-[500px] rounded-full bg-cyan-500/5 blur-3xl" />
-        <div className="absolute top-0 left-0 h-[400px] w-[400px] rounded-full bg-teal-500/5 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-3xl" />
+        <div className="absolute top-0 left-0 h-[400px] w-[400px] rounded-full bg-cyan-500/5 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6">
-        <div className="mb-20 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-1.5">
-            <Shield className="h-4 w-4 text-teal-400" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-teal-400">Prova Social</span>
-          </div>
-          <h2 className="mb-6 text-4xl font-bold tracking-tight text-white lg:text-6xl">
-            Método validado
-            <br />
-            <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">na prática</span>
+        <div className="mb-16 text-center">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-blue-400">Prova Lógica</p>
+          <h2 className="mb-6 text-3xl font-bold tracking-tight text-white lg:text-5xl">
+            Ciência Aplicada,{" "}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Resultados Reais
+            </span>
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-slate-400">
-            Baseado em princípios científicos de Harvard, PubMed e as melhores práticas de fisiologia do mundo.
+            Não prometemos milagres. Prometemos um sistema que funciona quando você segue.
           </p>
         </div>
 
-        {/* Scientific Sources */}
-        <div className="mb-16 flex flex-wrap items-center justify-center gap-4">
-          {sources.map((source) => (
+        {/* Proof Cards */}
+        <div className="mb-16 grid gap-6 md:grid-cols-3">
+          {proofs.map((proof) => (
             <div
-              key={source.name}
-              className="group flex items-center gap-3 rounded-full border border-slate-700/50 bg-slate-800/30 px-6 py-3 backdrop-blur-sm transition-all hover:border-teal-500/30 hover:bg-teal-500/5"
+              key={proof.title}
+              className="group rounded-2xl border border-slate-800/50 bg-slate-900/30 p-8 transition-all duration-500 hover:border-blue-500/30 hover:bg-slate-900/50"
             >
-              <source.icon className="h-5 w-5 text-teal-400" />
-              <div>
-                <span className="font-semibold text-white">{source.name}</span>
-                <span className="mx-2 text-slate-600">•</span>
-                <span className="text-sm text-slate-400">{source.description}</span>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20">
+                <proof.icon className="h-6 w-6 text-blue-400" />
               </div>
+              <h3 className="mb-3 text-lg font-semibold text-white">{proof.title}</h3>
+              <p className="text-slate-400 leading-relaxed">{proof.description}</p>
             </div>
           ))}
         </div>
 
-        {/* Testimonials */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className="group relative overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-[#0d1f35]/80 to-[#0a1628]/80 p-6 backdrop-blur-sm transition-all duration-500 hover:border-teal-500/30"
-            >
-              {/* Glow effect */}
-              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-teal-500/5 blur-2xl transition-all group-hover:bg-teal-500/10" />
+        {/* Data Points */}
+        <div className="mt-20">
+          <h3 className="mb-10 text-center text-2xl font-semibold text-white">Resultados Médios dos Usuários Atlas</h3>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
+            {dataPoints.map((point) => (
+              <div
+                key={point.label}
+                className="group relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-800/40 via-slate-900/60 to-blue-950/80 p-8 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]"
+              >
+                {/* Inner glow effect */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-              {/* Quote icon */}
-              <Quote className="mb-4 h-10 w-10 text-teal-500/20" />
+                {/* Content */}
+                <div className="relative flex items-start gap-4">
+                  {/* Check icon with enhanced styling */}
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 ring-1 ring-green-500/20 transition-all duration-300 group-hover:bg-green-500/20 group-hover:ring-green-500/40">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    </div>
+                  </div>
 
-              {/* Rating */}
-              <div className="mb-4 flex gap-1">
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-teal-400 text-teal-400" />
-                ))}
-              </div>
-
-              {/* Quote */}
-              <p className="mb-6 text-slate-300 leading-relaxed">"{testimonial.quote}"</p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3 border-t border-slate-700/50 pt-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 text-sm font-bold text-[#0a1628]">
-                  {testimonial.avatar}
-                </div>
-                <div>
-                  <p className="font-semibold text-white">{testimonial.author}</p>
-                  <p className="text-sm text-slate-500">{testimonial.role}</p>
+                  {/* Text content */}
+                  <div className="flex-1">
+                    <div className="mb-3 text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                      {point.value}
+                    </div>
+                    <p className="text-base font-medium text-white leading-snug mb-1">{point.label}</p>
+                    <p className="text-sm text-blue-400/80 italic">{point.period}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,178 +1,354 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Play, Sparkles } from "lucide-react"
+import { ArrowRight, Play } from "lucide-react"
 import Image from "next/image"
-import dynamic from "next/dynamic"
 
-const HeroScene = dynamic(() => import("@/components/3d/hero-scene").then((mod) => ({ default: mod.HeroScene })), {
-  ssr: false,
-  loading: () => <div className="absolute inset-0 bg-[#0a1628]" />,
-})
+interface HeroSectionProps {
+  onOpenModal: () => void
+}
 
-export function HeroSection() {
+export function HeroSection({ onOpenModal }: HeroSectionProps) {
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[#0a1628]">
-      <HeroScene />
+    <section className="relative min-h-screen overflow-hidden bg-[#030712]">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0">
+        <div className="absolute left-1/2 top-0 h-[800px] w-[1200px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-3xl" />
+        <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-blue-500/5 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-[300px] w-[300px] rounded-full bg-cyan-500/5 blur-3xl" />
+      </div>
 
-      {/* Gradient overlays for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628] via-[#0a1628]/80 to-transparent z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-[#0a1628]/50 z-[1]" />
+      {/* Grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(59, 130, 246, 0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: "60px 60px",
+        }}
+      />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 py-6">
         {/* Navigation */}
-        <nav className="mb-16 flex items-center justify-between lg:mb-20">
+        <nav className="mb-16 flex items-center justify-between lg:mb-24">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 opacity-50 blur-sm" />
+              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 opacity-50 blur-sm" />
               <Image
                 src="/images/whatsapp-20image-202025-12-01-20at-2015.jpeg"
                 alt="Atlas AI Logo"
-                width={48}
-                height={48}
+                width={44}
+                height={44}
                 className="relative rounded-xl"
               />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              Atlas <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
+              Atlas <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">IA</span>
             </span>
           </div>
+          <div className="hidden items-center gap-8 md:flex">
+            <a href="#modulos" className="text-sm text-slate-400 transition-colors hover:text-white">
+              Módulos
+            </a>
+            <a href="#como-funciona" className="text-sm text-slate-400 transition-colors hover:text-white">
+              Como Funciona
+            </a>
+            <a href="#planos" className="text-sm text-slate-400 transition-colors hover:text-white">
+              Planos
+            </a>
+            <a href="#faq" className="text-sm text-slate-400 transition-colors hover:text-white">
+              FAQ
+            </a>
+          </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="text-slate-300 hover:bg-white/5 hover:text-white">
+            <Button variant="ghost" className="hidden text-slate-300 hover:bg-white/5 hover:text-white sm:flex">
               Entrar
             </Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-[#0a1628] hover:opacity-90 font-semibold shadow-lg shadow-teal-500/25">
-              Começar Grátis
+            <Button
+              onClick={onOpenModal}
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:opacity-90 font-semibold shadow-lg shadow-blue-500/25"
+            >
+              Começar Agora
             </Button>
           </div>
         </nav>
 
         {/* Hero Content */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl pt-8 lg:pt-16">
-            {/* Badge */}
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-5 py-2.5 backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-teal-400" />
-              <span className="text-sm font-medium text-teal-300">Inteligência Artificial de Alta Performance</span>
-            </div>
+        <div className="flex flex-col items-center text-center">
+          {/* Badge */}
+          <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-5 py-2.5 backdrop-blur-sm">
+            <svg
+              className="h-4 w-4 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 18H3L12 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v10" />
+            </svg>
+            <span className="text-sm font-medium tracking-wide text-blue-300">ATLAS CORE • IA DE EVIDÊNCIA</span>
+          </div>
 
-            {/* Main Headline */}
-            <h1 className="mb-6 text-5xl font-bold leading-[1.05] tracking-tight text-white lg:text-7xl">
-              <span className="block">O Cérebro</span>
-              <span className="block">Estratégico</span>
-              <span className="block bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(20,184,166,0.5)]">
-                do Seu Corpo.
+          {/* Main Headline */}
+          <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-7xl">
+            Substitua o caos por uma{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-300 bg-clip-text text-transparent">
+              IA que governa
+            </span>{" "}
+            sua evolução física.
+          </h1>
+
+          {/* Subtitle */}
+          <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-400 lg:text-xl">
+            Treino, dieta, sono, testosterona natural e postura integrados em um só comando. A Atlas IA cruza seus
+            dados, corrige rota diariamente e aplica protocolos inspirados pelas evidências mais sólidas da ciência
+            (PubMed/Harvard) — como se você tivesse uma equipe de elite no bolso, sem achismo e sem enrolação.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row">
+            <Button
+              onClick={onOpenModal}
+              size="lg"
+              className="group relative h-14 overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 px-8 text-base font-semibold text-white transition-all hover:scale-[1.02] shadow-lg shadow-blue-500/25"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
+              <span className="relative flex items-center">
+                Ativar Atlas 7D
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </span>
-            </h1>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 border-slate-700/50 bg-white/5 px-8 text-base text-slate-300 backdrop-blur-sm hover:bg-white/10 hover:text-white hover:border-slate-600"
+            >
+              <Play className="mr-2 h-5 w-5" />
+              Ver Como Funciona
+            </Button>
+          </div>
 
-            {/* Subtitle */}
-            <p className="mb-10 max-w-xl text-lg leading-relaxed text-slate-400 lg:text-xl">
-              Pare de adivinhar. Tenha um plano de{" "}
-              <span className="font-medium text-white">treino, dieta, sono e hormônios</span> ajustado diariamente por
-              uma IA que entende sua biologia.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row">
-              <Button
-                size="lg"
-                className="group relative h-14 overflow-hidden bg-gradient-to-r from-teal-500 to-cyan-500 px-8 text-base font-semibold text-[#0a1628] transition-all hover:scale-[1.02]"
+          {/* Trust indicators - Atlas 7D Entry Point */}
+          <div className="mb-12 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-teal-400 to-cyan-400 opacity-0 transition-opacity group-hover:opacity-100" />
-                <span className="relative flex items-center">
-                  Começar Meu Projeto Agora
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-14 border-slate-700/50 bg-white/5 px-8 text-base text-slate-300 backdrop-blur-sm hover:bg-white/10 hover:text-white hover:border-slate-600"
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Ver Como Funciona
-              </Button>
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+              </svg>
+              <span className="text-sm text-slate-400">R$ 9,90 por 7 dias</span>
             </div>
 
-            {/* Trust text */}
-            <p className="text-sm text-slate-500">Teste grátis por 7 dias. Sem cartão de crédito.</p>
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+              </svg>
+              <span className="text-sm text-slate-400">Configuração em menos de 60 segundos</span>
+            </div>
 
-            {/* Stats */}
-            <div className="mt-12 flex items-center gap-8 border-t border-slate-800 pt-8">
-              <div>
-                <p className="text-3xl font-bold text-white">10k+</p>
-                <p className="text-sm text-slate-500">Usuários ativos</p>
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="12" r="8" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+              </svg>
+              <span className="text-sm text-slate-400">IA baseada em evidências</span>
+            </div>
+          </div>
+
+          <div className="relative w-full max-w-4xl mb-16">
+            <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-[50%] w-[120%] aspect-square pointer-events-none">
+              {/* Half-sun radial gradient effect - only bottom half visible */}
+              <div className="absolute inset-0">
+                {/* Outer ambient glow - extends furthest */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[135%] h-[135%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-30 blur-3xl"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(14, 165, 233, 0.35) 0%,
+                        rgba(59, 130, 246, 0.2) 20%,
+                        rgba(37, 99, 235, 0.1) 38%,
+                        transparent 55%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Horizontal glow/flare along horizon */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[140%] h-[8%]">
+                  <div
+                    className="w-full h-full opacity-70 blur-2xl"
+                    style={{
+                      background: `linear-gradient(90deg, 
+                        transparent 0%,
+                        rgba(56, 189, 248, 0.4) 25%,
+                        rgba(125, 211, 252, 0.6) 50%,
+                        rgba(56, 189, 248, 0.4) 75%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Main sphere body with defined edge */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full h-full">
+                  <div
+                    className="w-full h-full rounded-full opacity-90"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(125, 211, 252, 0.95) 0%,
+                        rgba(56, 189, 248, 0.85) 8%,
+                        rgba(14, 165, 233, 0.7) 18%,
+                        rgba(59, 130, 246, 0.5) 28%,
+                        rgba(37, 99, 235, 0.32) 38%,
+                        rgba(30, 64, 175, 0.15) 48%,
+                        transparent 62%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Concentric arc ring 1 (outermost) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[90%] h-[90%]">
+                  <div
+                    className="w-full h-full rounded-full border-t-2 border-cyan-400/20 opacity-60"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                    }}
+                  />
+                </div>
+
+                {/* Concentric arc ring 2 (middle) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[70%] h-[70%]">
+                  <div
+                    className="w-full h-full rounded-full border-t-2 border-blue-300/25 opacity-70"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                    }}
+                  />
+                </div>
+
+                {/* Concentric arc ring 3 (innermost) */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[50%] h-[50%]">
+                  <div
+                    className="w-full h-full rounded-full border-t-2 border-cyan-200/30 opacity-75"
+                    style={{
+                      clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+                    }}
+                  />
+                </div>
+
+                {/* Core luminous center */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[40%] h-[40%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-100 blur-2xl"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(186, 230, 253, 1) 0%,
+                        rgba(125, 211, 252, 0.95) 15%,
+                        rgba(56, 189, 248, 0.8) 35%,
+                        rgba(14, 165, 233, 0.5) 55%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Intense center point - "heart of the system" */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[18%] h-[18%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-100 blur-lg"
+                    style={{
+                      background: `radial-gradient(circle at center top, 
+                        rgba(224, 242, 254, 1) 0%,
+                        rgba(186, 230, 253, 1) 20%,
+                        rgba(125, 211, 252, 0.9) 50%,
+                        transparent 100%
+                      )`,
+                    }}
+                  />
+                </div>
+
+                {/* Sharp center nucleus */}
+                <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[8%] h-[8%]">
+                  <div
+                    className="w-full h-full rounded-full opacity-100 blur-sm"
+                    style={{
+                      background: `rgba(240, 249, 255, 1)`,
+                    }}
+                  />
+                </div>
               </div>
-              <div className="h-10 w-px bg-slate-800" />
-              <div>
-                <p className="text-3xl font-bold text-white">4.9</p>
-                <p className="text-sm text-slate-500">Avaliação média</p>
-              </div>
-              <div className="h-10 w-px bg-slate-800" />
-              <div>
-                <p className="text-3xl font-bold text-white">98%</p>
-                <p className="text-sm text-slate-500">Satisfação</p>
+            </div>
+            {/* Video player container */}
+            <div className="relative z-10 overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-blue-950/40 backdrop-blur-sm shadow-2xl shadow-blue-500/10">
+              {/* 16:9 aspect ratio container */}
+              <div className="relative aspect-video">
+                {/* Video background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-blue-950/60" />
+
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:scale-110 hover:shadow-xl hover:shadow-blue-500/40">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                    <Play className="relative h-8 w-8 fill-white text-white translate-x-0.5" />
+                  </button>
+                </div>
+
+                {/* Video label */}
+                <div className="absolute bottom-6 left-6">
+                  <span className="inline-block rounded-lg bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm border border-slate-700/50">
+                    Vídeo de Apresentação da Atlas IA
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Dashboard Preview */}
-          <div className="mt-12 lg:mt-0 lg:w-1/2">
-            <div className="relative">
-              {/* Glow effect */}
-              <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-teal-500/30 via-cyan-500/20 to-teal-500/30 blur-2xl" />
-
-              <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-[#0d1f35]/90 p-2 shadow-2xl backdrop-blur-xl">
-                <div className="mb-3 flex items-center gap-2 px-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-green-500/80" />
-                  <span className="ml-4 text-xs text-slate-500">Atlas AI Dashboard</span>
-                </div>
-                <div className="overflow-hidden rounded-xl bg-[#0a1628]/80 p-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {/* Stats Cards */}
-                    <div className="rounded-xl border border-teal-500/20 bg-gradient-to-br from-teal-500/10 to-transparent p-4">
-                      <p className="text-xs text-slate-500 mb-1">Taxa de Execução</p>
-                      <p className="text-2xl font-bold text-teal-400">92%</p>
-                      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-700">
-                        <div className="h-1.5 w-[92%] rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-transparent p-4">
-                      <p className="text-xs text-slate-500 mb-1">Massa Magra</p>
-                      <p className="text-2xl font-bold text-cyan-400">+4.2kg</p>
-                      <p className="mt-2 text-xs text-green-400">+12% este mês</p>
-                    </div>
-                    <div className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent p-4">
-                      <p className="text-xs text-slate-500 mb-1">Score de Prontidão</p>
-                      <p className="text-2xl font-bold text-white">
-                        85<span className="text-sm text-slate-500">/100</span>
-                      </p>
-                      <p className="mt-2 text-xs text-teal-400">Ótimo para treinar</p>
-                    </div>
-                  </div>
-                  {/* AI Message */}
-                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 shadow-lg shadow-teal-500/30">
-                      <span className="text-xs font-bold text-[#0a1628]">AI</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-300">
-                        <span className="font-semibold text-teal-400">Atlas:</span> Sua qualidade de sono melhorou 23%
-                        esta semana. Aumentei o volume do treino de hoje.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Stats */}
+          <div className="flex flex-wrap items-center justify-center gap-8 border-t border-slate-800 pt-8 lg:gap-16">
+            <div className="text-center">
+              <p className="text-3xl font-bold text-white lg:text-4xl">10.000+</p>
+              <p className="text-sm text-slate-500">Usuários ativos</p>
+            </div>
+            <div className="hidden h-12 w-px bg-slate-800 lg:block" />
+            <div className="text-center">
+              <p className="text-3xl font-bold text-white lg:text-4xl">4.9/5</p>
+              <p className="text-sm text-slate-500">Avaliação média</p>
+            </div>
+            <div className="hidden h-12 w-px bg-slate-800 lg:block" />
+            <div className="text-center">
+              <p className="text-3xl font-bold text-white lg:text-4xl">98%</p>
+              <p className="text-sm text-slate-500">Taxa de satisfação</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a1628] to-transparent z-[1]" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#030712] to-transparent z-[1]" />
     </section>
   )
 }
