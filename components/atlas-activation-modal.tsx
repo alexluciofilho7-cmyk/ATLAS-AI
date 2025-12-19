@@ -60,22 +60,19 @@ export function AtlasActivationModal(props: AtlasActivationModalProps) {
       return
     }
 
-    try {
-      submitLead({
-        name: name,
-        email: email,
-        countryCode: countryCode,
-        phone: phone,
-        timestamp: new Date().toISOString(),
-      }).catch((err) => {
-        console.error("[Atlas 7D] Error saving lead:", err)
-      })
-
-      window.location.assign(KIWIFY_CHECKOUT_URL)
-    } catch (err) {
-      console.error("[Atlas 7D] Form submission error:", err)
-      setError("Erro inesperado. Tente novamente.")
+    const leadData = {
+      name: name,
+      email: email,
+      countryCode: countryCode,
+      phone: phone,
+      timestamp: new Date().toISOString(),
     }
+
+    submitLead(leadData).catch((err) => {
+      console.error("[Atlas 7D] Error saving lead:", err)
+    })
+
+    window.location.href = KIWIFY_CHECKOUT_URL
   }
 
   if (!isOpen) {
