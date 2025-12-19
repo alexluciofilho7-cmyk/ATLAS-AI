@@ -59,7 +59,6 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
       setIsSubmitting(true)
 
       try {
-        // Submit lead data to server
         const result = await submitLead({
           name: formData.name,
           email: formData.email,
@@ -76,6 +75,8 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
 
         const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
         window.location.href = checkoutUrl
+
+        // Note: No code runs after this line since the page redirects
       } catch (err) {
         console.error("[Atlas 7D] Form submission error:", err)
         setError("Erro inesperado. Tente novamente.")
