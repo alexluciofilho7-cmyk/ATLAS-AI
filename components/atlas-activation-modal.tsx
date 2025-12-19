@@ -64,13 +64,8 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
         return
       }
 
-      // Success! Open checkout in new tab
       const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
-      window.open(checkoutUrl, "_blank")
-
-      // Close modal after opening checkout
-      onClose()
-      setIsSubmitting(false)
+      window.location.href = checkoutUrl
     } catch (err) {
       console.error("[Atlas 7D] Form submission error:", err)
       setError("Erro inesperado. Tente novamente.")
@@ -187,7 +182,9 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
               className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:opacity-90 transition-all py-6 text-base font-semibold rounded-2xl mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               size="lg"
             >
-              {isSubmitting ? "Enviando..." : "Continuar para ativar a Atlas 7D"}
+              {isSubmitting
+                ? "Dados enviados. Levando você para a página de pagamento..."
+                : "Continuar para ativar a Atlas 7D"}
             </Button>
 
             {/* Security note */}
