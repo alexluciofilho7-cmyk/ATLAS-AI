@@ -17,13 +17,8 @@ const HalfSunEffect = memo(() => (
         <div
           className="w-full h-full rounded-full opacity-90"
           style={{
-            background: `radial-gradient(circle at center top, 
-              rgba(125, 211, 252, 0.95) 0%,
-              rgba(56, 189, 248, 0.7) 12%,
-              rgba(14, 165, 233, 0.5) 22%,
-              rgba(37, 99, 235, 0.3) 35%,
-              transparent 55%
-            )`,
+            background:
+              "radial-gradient(circle at center top, rgba(125, 211, 252, 0.95) 0%, rgba(56, 189, 248, 0.7) 12%, rgba(14, 165, 233, 0.5) 22%, rgba(37, 99, 235, 0.3) 35%, transparent 55%)",
           }}
         />
       </div>
@@ -33,13 +28,8 @@ const HalfSunEffect = memo(() => (
         <div
           className="w-full h-full opacity-70 blur-2xl"
           style={{
-            background: `linear-gradient(90deg, 
-              transparent 0%,
-              rgba(56, 189, 248, 0.4) 25%,
-              rgba(125, 211, 252, 0.6) 50%,
-              rgba(56, 189, 248, 0.4) 75%,
-              transparent 100%
-            )`,
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.4) 25%, rgba(125, 211, 252, 0.6) 50%, rgba(56, 189, 248, 0.4) 75%, transparent 100%)",
           }}
         />
       </div>
@@ -49,12 +39,8 @@ const HalfSunEffect = memo(() => (
         <div
           className="w-full h-full rounded-full opacity-100 blur-2xl"
           style={{
-            background: `radial-gradient(circle at center top, 
-              rgba(186, 230, 253, 1) 0%,
-              rgba(125, 211, 252, 0.95) 15%,
-              rgba(56, 189, 248, 0.7) 40%,
-              transparent 80%
-            )`,
+            background:
+              "radial-gradient(circle at center top, rgba(186, 230, 253, 1) 0%, rgba(125, 211, 252, 0.95) 15%, rgba(56, 189, 248, 0.7) 40%, transparent 80%)",
           }}
         />
       </div>
@@ -70,6 +56,19 @@ const HalfSunEffect = memo(() => (
 HalfSunEffect.displayName = "HalfSunEffect"
 
 export function HeroSection({ onOpenModal }: HeroSectionProps) {
+  const navLinks = [
+    { href: "#modulos", label: "Módulos" },
+    { href: "#como-funciona", label: "Como Funciona" },
+    { href: "#planos", label: "Planos" },
+    { href: "#faq", label: "FAQ" },
+  ]
+
+  const trustIndicators = [
+    { icon: "circle-check", text: "R$ 9,90 por 7 dias" },
+    { icon: "clock", text: "Configuração em menos de 60 segundos" },
+    { icon: "target", text: "IA baseada em evidências" },
+  ]
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#030712]">
       {/* Background gradient effects */}
@@ -83,10 +82,8 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.5) 1px, transparent 1px)
-          `,
+          backgroundImage:
+            "linear-gradient(rgba(59, 130, 246, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.5) 1px, transparent 1px)",
           backgroundSize: "60px 60px",
         }}
       />
@@ -110,18 +107,11 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
             </span>
           </div>
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#modulos" className="text-sm text-slate-400 transition-colors hover:text-white">
-              Módulos
-            </a>
-            <a href="#como-funciona" className="text-sm text-slate-400 transition-colors hover:text-white">
-              Como Funciona
-            </a>
-            <a href="#planos" className="text-sm text-slate-400 transition-colors hover:text-white">
-              Planos
-            </a>
-            <a href="#faq" className="text-sm text-slate-400 transition-colors hover:text-white">
-              FAQ
-            </a>
+            {navLinks.map((link) => (
+              <a key={link.href} href={link.href} className="text-sm text-slate-400 transition-colors hover:text-white">
+                {link.label}
+              </a>
+            ))}
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" className="hidden text-slate-300 hover:bg-white/5 hover:text-white sm:flex">
@@ -194,48 +184,38 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
 
           {/* Trust indicators - Atlas 7D Entry Point */}
           <div className="mb-12 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
-            <div className="flex items-center gap-2">
-              <svg
-                className="h-5 w-5 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
-              </svg>
-              <span className="text-sm text-slate-400">R$ 9,90 por 7 dias</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <svg
-                className="h-5 w-5 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
-              </svg>
-              <span className="text-sm text-slate-400">Configuração em menos de 60 segundos</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <svg
-                className="h-5 w-5 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <circle cx="12" cy="12" r="3" />
-                <circle cx="12" cy="12" r="8" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M2 12h2M20 12h2" />
-              </svg>
-              <span className="text-sm text-slate-400">IA baseada em evidências</span>
-            </div>
+            {trustIndicators.map((indicator, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <svg
+                  className="h-5 w-5 text-blue-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  {indicator.icon === "circle-check" && (
+                    <>
+                      <circle cx="12" cy="12" r="9" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                    </>
+                  )}
+                  {indicator.icon === "clock" && (
+                    <>
+                      <circle cx="12" cy="12" r="10" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+                    </>
+                  )}
+                  {indicator.icon === "target" && (
+                    <>
+                      <circle cx="12" cy="12" r="3" />
+                      <circle cx="12" cy="12" r="8" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+                    </>
+                  )}
+                </svg>
+                <span className="text-sm text-slate-400">{indicator.text}</span>
+              </div>
+            ))}
           </div>
 
           <div className="relative w-full max-w-4xl mb-16">
@@ -243,12 +223,9 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
 
             {/* Video player container */}
             <div className="relative z-10 overflow-hidden rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-blue-950/40 backdrop-blur-sm shadow-2xl shadow-blue-500/10">
-              {/* 16:9 aspect ratio container */}
               <div className="relative aspect-video">
-                {/* Video background gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-blue-950/60" />
 
-                {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <button className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:scale-110 hover:shadow-xl hover:shadow-blue-500/40">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -256,7 +233,6 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
                   </button>
                 </div>
 
-                {/* Video label */}
                 <div className="absolute bottom-6 left-6">
                   <span className="inline-block rounded-lg bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm border border-slate-700/50">
                     Vídeo de Apresentação da Atlas IA
@@ -286,7 +262,6 @@ export function HeroSection({ onOpenModal }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#030712] to-transparent z-[1]" />
     </section>
   )
