@@ -16,16 +16,19 @@ import { Footer } from "@/components/footer"
 import { TransformationProofSection } from "@/components/transformation-proof-section"
 import { FemaleTransformationSection } from "@/components/female-transformation-section"
 import { AtlasActivationModal } from "@/components/atlas-activation-modal"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const handleOpenModal = useCallback(() => setIsModalOpen(true), [])
+  const handleCloseModal = useCallback(() => setIsModalOpen(false), [])
+
   return (
     <main className="min-h-screen bg-background">
-      <HeroSection onOpenModal={() => setIsModalOpen(true)} />
-      <TransformationProofSection onOpenModal={() => setIsModalOpen(true)} />
-      <FemaleTransformationSection onOpenModal={() => setIsModalOpen(true)} />
+      <HeroSection onOpenModal={handleOpenModal} />
+      <TransformationProofSection onOpenModal={handleOpenModal} />
+      <FemaleTransformationSection onOpenModal={handleOpenModal} />
       <WhatIsAtlasSection />
       <WhyMostFailSection />
       <HowItWorksSection />
@@ -34,12 +37,12 @@ export default function Home() {
       <Vision360Section />
       <ProofSection />
       <Atlas7DTransition />
-      <PricingSection onOpenModal={() => setIsModalOpen(true)} />
+      <PricingSection onOpenModal={handleOpenModal} />
       <FaqSection />
-      <FinalCtaSection onOpenModal={() => setIsModalOpen(true)} />
+      <FinalCtaSection onOpenModal={handleOpenModal} />
       <Footer />
 
-      <AtlasActivationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AtlasActivationModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </main>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Shield, X } from "lucide-react"
 import { useState, useEffect } from "react"
@@ -22,9 +22,18 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const handleClose = useCallback(() => {
+    onClose()
+    // Reset form after modal closes
+    setTimeout(() => {
+      setFormData({ name: "", email: "", countryCode: "+55", phone: "" })
+      setError(null)
+    }, 300)
+  }, [onClose])
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (e.key === "Escape") handleClose()
     }
     if (isOpen) {
       document.addEventListener("keydown", handleEscape)
@@ -34,62 +43,65 @@ export function AtlasActivationModal({ isOpen, onClose }: AtlasActivationModalPr
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, onClose])
+  }, [isOpen, handleClose])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setError(null)
 
-    // Validate fields
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
-      setError("Por favor, preencha todos os campos.")
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      // Submit lead data to server
-      const result = await submitLead({
-        name: formData.name,
-        email: formData.email,
-        countryCode: formData.countryCode,
-        phone: formData.phone,
-        timestamp: new Date().toISOString(),
-      })
-
-      if (!result.success) {
-        setError(result.error || "Erro ao enviar. Tente novamente.")
-        setIsSubmitting(false)
+      // Validate fields
+      if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+        setError("Por favor, preencha todos os campos.")
         return
       }
 
-      const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
-      window.location.href = checkoutUrl
-    } catch (err) {
-      console.error("[Atlas 7D] Form submission error:", err)
-      setError("Erro inesperado. Tente novamente.")
-      setIsSubmitting(false)
-    }
-  }
+      setIsSubmitting(true)
+
+      try {
+        // Submit lead data to server
+        const result = await submitLead({
+          name: formData.name,
+          email: formData.email,
+          countryCode: formData.countryCode,
+          phone: formData.phone,
+          timestamp: new Date().toISOString(),
+        })
+
+        if (!result.success) {
+          setError(result.error || "Erro ao enviar. Tente novamente.")
+          setIsSubmitting(false)
+          return
+        }
+
+        const checkoutUrl = "https://pay.kiwify.com.br/7t3JoKg"
+        window.location.href = checkoutUrl
+      } catch (err) {
+        console.error("[Atlas 7D] Form submission error:", err)
+        setError("Erro inesperado. Tente novamente.")
+        setIsSubmitting(false)
+      }
+    },
+    [formData],
+  )
 
   if (!isOpen) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        {/* Outer glow */}
         <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-blue-500/20 via-cyan-500/20 to-blue-500/20 opacity-75 blur-xl" />
 
         {/* Modal card */}
         <div className="relative rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-slate-800/95 via-slate-900/95 to-blue-950/95 p-8 backdrop-blur-xl">
           {/* Close button */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full bg-slate-800/50 text-slate-400 transition-colors hover:bg-slate-700/50 hover:text-white"
+            aria-label="Fechar modal"
           >
             <X className="h-5 w-5" />
           </button>
