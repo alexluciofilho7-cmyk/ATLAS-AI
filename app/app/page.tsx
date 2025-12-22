@@ -1,40 +1,47 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
+  LayoutDashboard,
+  Target,
   Brain,
   Dumbbell,
-  Activity,
+  Utensils,
   Moon,
-  Shield,
-  Heart,
-  TrendingUp,
-  Target,
+  Activity,
   Zap,
-  MessageSquare,
-  Send,
   Menu,
   X,
-  LayoutDashboard,
-  User,
-  LogOut,
-  ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Flame,
-  Apple,
-  BedDouble,
-  Sparkles,
-  Leaf,
   ChevronLeft,
-  BarChart3,
+  ChevronRight,
+  Sparkles,
   FileText,
+  Camera,
+  HelpCircle,
+  Save,
+  Check,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import {
+  useAtlasData,
+  type BodyAreaKey,
+  type BodyAreaStatus,
+  type EnergyScore,
+  type DailyCheckin,
+  type BodyMeasurements,
+} from "@/context/AtlasDataContext"
 
-type EnergyLevel = "Baixa" | "Média" | "Alta"
+type SectionKey =
+  | "dashboard"
+  | "visao360"
+  | "atlasIA"
+  | "treinoDieta"
+  | "compulsao"
+  | "sono"
+  | "fisioterapia"
+  | "testosterona"
+
+type EnergyLevel = "Alta" | "Média" | "Baixa"
 
 type AtlasWeekMetrics = {
   weekLabel: string
@@ -57,22 +64,22 @@ const mockWeeks: AtlasWeekMetrics[] = [
     atlasScore: 58,
     executionRate: 60,
     aestheticProgress: 45,
-    metabolicHealth: 62,
-    generalConsistency: 55,
+    metabolicHealth: 55,
+    generalConsistency: 50,
     avgSleepHours: 6.2,
     weightDeltaKg: 0.5,
     energyLevel: "Baixa",
     trainingsDone: 3,
     trainingsPlanned: 5,
-    dietAdherence: 52,
+    dietAdherence: 55,
   },
   {
     weekLabel: "Semana 2",
-    atlasScore: 65,
+    atlasScore: 63,
     executionRate: 70,
-    aestheticProgress: 50,
-    metabolicHealth: 68,
-    generalConsistency: 62,
+    aestheticProgress: 52,
+    metabolicHealth: 60,
+    generalConsistency: 58,
     avgSleepHours: 6.8,
     weightDeltaKg: -0.3,
     energyLevel: "Média",
@@ -82,461 +89,305 @@ const mockWeeks: AtlasWeekMetrics[] = [
   },
   {
     weekLabel: "Semana 3",
+    atlasScore: 68,
+    executionRate: 75,
+    aestheticProgress: 58,
+    metabolicHealth: 68,
+    generalConsistency: 65,
+    avgSleepHours: 7.0,
+    weightDeltaKg: -0.8,
+    energyLevel: "Média",
+    trainingsDone: 4,
+    trainingsPlanned: 5,
+    dietAdherence: 72,
+  },
+  {
+    weekLabel: "Semana 4",
     atlasScore: 72,
     executionRate: 80,
-    aestheticProgress: 58,
-    metabolicHealth: 75,
+    aestheticProgress: 63,
+    metabolicHealth: 72,
     generalConsistency: 70,
     avgSleepHours: 7.2,
-    weightDeltaKg: -0.4,
-    energyLevel: "Média",
+    weightDeltaKg: -1.2,
+    energyLevel: "Alta",
     trainingsDone: 4,
     trainingsPlanned: 5,
     dietAdherence: 78,
   },
   {
-    weekLabel: "Semana 4",
+    weekLabel: "Semana 5",
     atlasScore: 78,
     executionRate: 85,
-    aestheticProgress: 65,
-    metabolicHealth: 80,
+    aestheticProgress: 70,
+    metabolicHealth: 78,
     generalConsistency: 76,
     avgSleepHours: 7.5,
-    weightDeltaKg: -0.6,
+    weightDeltaKg: -1.8,
     energyLevel: "Alta",
     trainingsDone: 5,
     trainingsPlanned: 5,
     dietAdherence: 82,
   },
   {
-    weekLabel: "Semana 5",
+    weekLabel: "Semana 6",
     atlasScore: 82,
-    executionRate: 90,
-    aestheticProgress: 70,
-    metabolicHealth: 84,
+    executionRate: 88,
+    aestheticProgress: 75,
+    metabolicHealth: 82,
     generalConsistency: 80,
     avgSleepHours: 7.8,
-    weightDeltaKg: -0.5,
+    weightDeltaKg: -2.1,
     energyLevel: "Alta",
     trainingsDone: 5,
     trainingsPlanned: 5,
     dietAdherence: 88,
   },
-  {
-    weekLabel: "Semana 6",
-    atlasScore: 88,
-    executionRate: 95,
-    aestheticProgress: 75,
-    metabolicHealth: 88,
-    generalConsistency: 85,
-    avgSleepHours: 8.0,
-    weightDeltaKg: -0.3,
-    energyLevel: "Alta",
-    trainingsDone: 5,
-    trainingsPlanned: 5,
-    dietAdherence: 92,
-  },
+]
+
+const menuItems = [
+  { key: "dashboard" as SectionKey, label: "Dashboard", icon: LayoutDashboard },
+  { key: "visao360" as SectionKey, label: "Visão 360 do Corpo", icon: Target },
+  { key: "atlasIA" as SectionKey, label: "Atlas IA", icon: Brain },
+  { key: "treinoDieta" as SectionKey, label: "Treino & Dieta", icon: Dumbbell },
+  { key: "compulsao" as SectionKey, label: "Compulsão Alimentar", icon: Utensils },
+  { key: "sono" as SectionKey, label: "Sono & Recuperação", icon: Moon },
+  { key: "fisioterapia" as SectionKey, label: "Fisioterapia", icon: Activity },
+  { key: "testosterona" as SectionKey, label: "Testosterona Natural", icon: Zap },
 ]
 
 function getAtlasScoreMessage(score: number): string {
-  if (score >= 85) return "Nível atleta. Seu corpo está sob comando – mantenha o ritmo."
-  if (score >= 60) return "Meio atleta, meio amador. Você está indo bem, mas ainda deixa resultados na mesa."
-  return "Você treina, mas ainda vive como amador. Ou muda o jogo, ou vai continuar estagnado."
+  if (score >= 90) return "Você está em modo governança total. Continue assim!"
+  if (score >= 75) return "Excelente progresso. Pequenos ajustes e você atinge a elite."
+  if (score >= 60) return "Bom ritmo. Foque na consistência para acelerar resultados."
+  if (score >= 40) return "Há espaço para melhorar. A Atlas IA vai te guiar."
+  return "Fase inicial. Cada pequena ação conta. Vamos juntos!"
 }
 
-function getDailyBriefing(week: AtlasWeekMetrics): string {
-  const messages: string[] = []
-
-  if (week.executionRate < 60) {
-    messages.push(
-      "Sua execução de treino está abaixo do mínimo. Se continuar assim, você só vai manter o corpo, não evoluir.",
-    )
-  } else if (week.executionRate < 85) {
-    messages.push("Sua execução de treino é boa, mas ainda tem espaço para subir um nível e buscar padrão de atleta.")
-  } else {
-    messages.push("Execução de treino em padrão de atleta. Mantenha o foco e proteja esse hábito.")
+function getAreaColor(status: BodyAreaStatus): string {
+  switch (status) {
+    case "good":
+      return "bg-emerald-400/70 shadow-[0_0_20px_rgba(16,185,129,0.7)]"
+    case "injury":
+      return "bg-yellow-400/80 shadow-[0_0_20px_rgba(250,204,21,0.8)]"
+    default:
+      return "bg-red-500/80 shadow-[0_0_20px_rgba(239,68,68,0.9)]"
   }
+}
 
-  if (week.dietAdherence < 70) {
-    messages.push("Sua dieta está frouxa. Não adianta treinar como atleta e comer como amador.")
-  } else {
-    messages.push("Sua aderência à dieta está consistente. Pequenos ajustes vão refinar ainda mais seu físico.")
+function getStatusLabel(status: BodyAreaStatus): string {
+  switch (status) {
+    case "good":
+      return "Ponto forte"
+    case "injury":
+      return "Lesão – tratar com prioridade"
+    default:
+      return "Precisa de atenção"
   }
-
-  if (week.avgSleepHours < 7) {
-    messages.push("Seu sono está curto. Isso está travando sua recuperação, testosterona e estética.")
-  } else {
-    messages.push("Seu sono está em uma boa faixa. Continue blindando esse horário.")
-  }
-
-  if (week.weightDeltaKg < 0) {
-    messages.push(
-      `Você perdeu ${Math.abs(week.weightDeltaKg).toFixed(1)}kg essa semana. Cuidado para não sacrificar massa magra.`,
-    )
-  } else if (week.weightDeltaKg > 0.3) {
-    messages.push(`Você ganhou ${week.weightDeltaKg.toFixed(1)}kg essa semana. Monitore se isso é músculo ou gordura.`)
-  }
-
-  return messages.join(" ")
 }
 
-function getWeeklySummary(week: AtlasWeekMetrics): string {
-  return `Nesta semana (${week.weekLabel}), seu Atlas Score foi de ${week.atlasScore}/100. Você executou ${week.executionRate}% dos treinos planejados (${week.trainingsDone} de ${week.trainingsPlanned}), manteve ${week.dietAdherence}% de aderência à dieta e dormiu em média ${week.avgSleepHours.toFixed(1)}h por noite. Sua consistência geral ficou em ${week.generalConsistency}% e o score de saúde metabólica em ${week.metabolicHealth}%.`
+const bodyAreaLabels: Record<BodyAreaKey, string> = {
+  shoulders: "Ombros",
+  chest: "Peitoral",
+  back: "Costas",
+  arms: "Braços",
+  core: "Core/Abdômen",
+  hips: "Quadril",
+  legs: "Pernas",
+  calves: "Panturrilhas",
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 85) return "text-green-400"
-  if (score >= 60) return "text-yellow-400"
-  return "text-red-400"
+const hotspotPositions: Record<BodyAreaKey, { top: string; left: string }> = {
+  shoulders: { top: "12%", left: "50%" },
+  chest: { top: "22%", left: "50%" },
+  back: { top: "28%", left: "50%" },
+  arms: { top: "32%", left: "20%" },
+  core: { top: "38%", left: "50%" },
+  hips: { top: "48%", left: "50%" },
+  legs: { top: "65%", left: "50%" },
+  calves: { top: "82%", left: "50%" },
 }
 
-function getScoreGradient(score: number): string {
-  if (score >= 85) return "from-green-500 to-cyan-400"
-  if (score >= 60) return "from-yellow-500 to-orange-400"
-  return "from-red-500 to-orange-400"
-}
-
-type SectionType =
-  | "dashboard"
-  | "visao360"
-  | "atlasia"
-  | "treinoDieta"
-  | "compulsao"
-  | "sono"
-  | "fisioterapia"
-  | "testosterona"
-
-const menuItems: { id: SectionType; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "visao360", label: "Visão 360 do Corpo", icon: Target },
-  { id: "atlasia", label: "Atlas IA", icon: Brain },
-  { id: "treinoDieta", label: "Treino & Dieta", icon: Dumbbell },
-  { id: "compulsao", label: "Compulsão & Fome", icon: Heart },
-  { id: "sono", label: "Sono & Recuperação", icon: Moon },
-  { id: "fisioterapia", label: "Fisioterapia & Dores", icon: Shield },
-  { id: "testosterona", label: "Testosterona Natural", icon: TrendingUp },
-]
-
-const specialtyChips = [
-  { label: "Treino", color: "from-blue-500 to-blue-600" },
-  { label: "Dieta", color: "from-cyan-500 to-cyan-600" },
-  { label: "Sono", color: "from-indigo-500 to-indigo-600" },
-  { label: "Testosterona", color: "from-green-500 to-green-600" },
-  { label: "Fisioterapia", color: "from-purple-500 to-purple-600" },
-  { label: "Compulsão", color: "from-pink-500 to-pink-600" },
-]
-
-const metricsData = {
-  execucao: { value: 82, unit: "%", label: "Treinos concluídos esta semana" },
-  consistencia: { value: 19, unit: " dias", label: "Sequência atual de dias seguidos" },
-  estetica: { value: 67, unit: "%", label: "Progresso do shape ideal" },
-  metabolismo: {
-    status: "Otimizado",
-    indicators: { energia: "Alta", sono: "7.5h", peso: "-2.1kg" },
-  },
-}
-
+// ========== DASHBOARD VIEW ==========
 function DashboardView() {
-  const [currentWeekIndex, setCurrentWeekIndex] = useState(mockWeeks.length - 1)
-  const [weeklySummary, setWeeklySummary] = useState<string | null>(null)
+  const { currentWeekMetrics } = useAtlasData()
+  const [weekIndex, setWeekIndex] = useState(mockWeeks.length - 1)
+  const [showSummary, setShowSummary] = useState(false)
 
-  const currentWeek = mockWeeks[currentWeekIndex]
-  const scoreMessage = getAtlasScoreMessage(currentWeek.atlasScore)
-  const dailyBriefing = getDailyBriefing(currentWeek)
+  const currentWeek = mockWeeks[weekIndex]
+  const canGoPrev = weekIndex > 0
+  const canGoNext = weekIndex < mockWeeks.length - 1
 
-  const handlePreviousWeek = () => {
-    if (currentWeekIndex > 0) {
-      setCurrentWeekIndex(currentWeekIndex - 1)
-      setWeeklySummary(null)
-    }
-  }
-
-  const handleNextWeek = () => {
-    if (currentWeekIndex < mockWeeks.length - 1) {
-      setCurrentWeekIndex(currentWeekIndex + 1)
-      setWeeklySummary(null)
-    }
-  }
-
-  const handleGenerateSummary = () => {
-    setWeeklySummary(getWeeklySummary(currentWeek))
-  }
+  const circumference = 2 * Math.PI * 54
+  const strokeDashoffset = circumference - (currentWeek.atlasScore / 100) * circumference
 
   return (
-    <div className="space-y-8">
-      {/* Week Navigation */}
-      <div className="flex items-center justify-between bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
+    <div className="space-y-6">
+      {/* Welcome message */}
+      <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-2xl p-6">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Bem-vindo ao Painel Atlas IA</h2>
+        <p className="text-muted-foreground">
+          Aqui você governa os 6 pilares da sua performance: Treino, Dieta, Sono, Testosterona, Compulsão Alimentar e
+          Fisioterapia.
+        </p>
+      </div>
+
+      {/* Week navigation */}
+      <div className="flex items-center justify-between">
         <button
-          onClick={handlePreviousWeek}
-          disabled={currentWeekIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          onClick={() => canGoPrev && setWeekIndex(weekIndex - 1)}
+          disabled={!canGoPrev}
+          className="p-2 rounded-lg bg-card/50 border border-border hover:border-blue-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <ChevronLeft className="w-5 h-5" />
-          <span className="hidden sm:inline">Anterior</span>
         </button>
-        <div className="text-center">
-          <p className="text-lg font-bold text-foreground">{currentWeek.weekLabel}</p>
-          <p className="text-sm text-muted-foreground">
-            Semana {currentWeekIndex + 1} de {mockWeeks.length}
-          </p>
-        </div>
+        <span className="text-lg font-semibold text-foreground">{currentWeek.weekLabel}</span>
         <button
-          onClick={handleNextWeek}
-          disabled={currentWeekIndex === mockWeeks.length - 1}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          onClick={() => canGoNext && setWeekIndex(weekIndex + 1)}
+          disabled={!canGoNext}
+          className="p-2 rounded-lg bg-card/50 border border-border hover:border-blue-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
-          <span className="hidden sm:inline">Próxima</span>
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Atlas Score Card - Main */}
-      <div className="bg-gradient-to-br from-slate-800/60 via-slate-900/80 to-blue-950/60 border border-blue-500/30 rounded-3xl p-6 md:p-8 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all duration-300">
-        <div className="flex flex-col lg:flex-row items-center gap-8">
-          {/* Score Circle */}
-          <div className="relative w-48 h-48 flex-shrink-0">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+      {/* Atlas Score card */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="relative w-36 h-36">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
               <circle
-                cx="50"
-                cy="50"
-                r="42"
+                cx="60"
+                cy="60"
+                r="54"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="8"
-                className="text-secondary/50"
+                className="text-secondary"
               />
               <circle
-                cx="50"
-                cy="50"
-                r="42"
+                cx="60"
+                cy="60"
+                r="54"
                 fill="none"
                 stroke="url(#scoreGradient)"
                 strokeWidth="8"
                 strokeLinecap="round"
-                strokeDasharray={`${currentWeek.atlasScore * 2.64} 264`}
-                className="transition-all duration-700 ease-out"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-all duration-700"
               />
               <defs>
                 <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop
-                    offset="0%"
-                    stopColor={
-                      currentWeek.atlasScore >= 85 ? "#22c55e" : currentWeek.atlasScore >= 60 ? "#eab308" : "#ef4444"
-                    }
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={
-                      currentWeek.atlasScore >= 85 ? "#06b6d4" : currentWeek.atlasScore >= 60 ? "#f97316" : "#f97316"
-                    }
-                  />
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#22d3ee" />
                 </linearGradient>
               </defs>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-5xl font-bold ${getScoreColor(currentWeek.atlasScore)}`}>
-                {currentWeek.atlasScore}
-              </span>
-              <span className="text-muted-foreground text-sm">/100</span>
+              <span className="text-4xl font-bold text-foreground">{currentWeek.atlasScore}</span>
+              <span className="text-xs text-muted-foreground">Atlas Score</span>
             </div>
           </div>
-
-          {/* Score Info */}
-          <div className="flex-1 text-center lg:text-left">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Atlas Score desta semana</h2>
-            <p className="text-lg text-blue-300 font-medium mb-4">Você é Atleta ou Está se Enganando?</p>
-            <div
-              className={`p-4 rounded-xl border ${currentWeek.atlasScore >= 85 ? "bg-green-500/10 border-green-500/30" : currentWeek.atlasScore >= 60 ? "bg-yellow-500/10 border-yellow-500/30" : "bg-red-500/10 border-red-500/30"}`}
-            >
-              <p className={`text-lg font-medium ${getScoreColor(currentWeek.atlasScore)}`}>{scoreMessage}</p>
-            </div>
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-xl font-bold text-foreground mb-2">Sua Governança Corporal</h3>
+            <p className="text-muted-foreground">{getAtlasScoreMessage(currentWeek.atlasScore)}</p>
           </div>
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {/* Taxa de Execução */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-blue-400" />
-            </div>
-            <p className="text-sm text-muted-foreground">Taxa de Execução</p>
-          </div>
-          <p className="text-3xl font-bold text-blue-300 mb-2">{currentWeek.executionRate}%</p>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
-              style={{ width: `${currentWeek.executionRate}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Treinos: {currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}
-          </p>
-        </div>
-
-        {/* Evolução Estética */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-indigo-400" />
-            </div>
-            <p className="text-sm text-muted-foreground">Evolução Estética</p>
-          </div>
-          <p className="text-3xl font-bold text-indigo-300 mb-2">{currentWeek.aestheticProgress}%</p>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full transition-all duration-500"
-              style={{ width: `${currentWeek.aestheticProgress}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Progresso do shape ideal</p>
-        </div>
-
-        {/* Saúde Metabólica */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-green-400" />
-            </div>
-            <p className="text-sm text-muted-foreground">Saúde Metabólica</p>
-          </div>
-          <p className="text-3xl font-bold text-green-300 mb-2">{currentWeek.metabolicHealth}%</p>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-gradient-to-r from-green-500 to-cyan-400 rounded-full transition-all duration-500"
-              style={{ width: `${currentWeek.metabolicHealth}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Sono: {currentWeek.avgSleepHours.toFixed(1)}h | Δ {currentWeek.weightDeltaKg > 0 ? "+" : ""}
-            {currentWeek.weightDeltaKg.toFixed(1)}kg
-          </p>
-        </div>
-
-        {/* Consistência Geral */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-cyan-400" />
-            </div>
-            <p className="text-sm text-muted-foreground">Consistência Geral</p>
-          </div>
-          <p className="text-3xl font-bold text-cyan-300 mb-2">{currentWeek.generalConsistency}%</p>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full transition-all duration-500"
-              style={{ width: `${currentWeek.generalConsistency}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Aderência dieta: {currentWeek.dietAdherence}%</p>
-        </div>
-
-        {/* Energia & Sono */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-yellow-400" />
-            </div>
-            <p className="text-sm text-muted-foreground">Energia & Sono</p>
-          </div>
-          <div className="flex items-center gap-2 mb-2">
-            <Zap
-              className={`w-5 h-5 ${currentWeek.energyLevel === "Alta" ? "text-green-400" : currentWeek.energyLevel === "Média" ? "text-yellow-400" : "text-red-400"}`}
-            />
-            <p
-              className={`text-2xl font-bold ${currentWeek.energyLevel === "Alta" ? "text-green-300" : currentWeek.energyLevel === "Média" ? "text-yellow-300" : "text-red-300"}`}
-            >
-              {currentWeek.energyLevel}
+      {/* Metrics grid */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {[
+          { label: "Execução", value: currentWeek.executionRate, unit: "%", color: "blue" },
+          { label: "Estética", value: currentWeek.aestheticProgress, unit: "%", color: "indigo" },
+          { label: "Metabólica", value: currentWeek.metabolicHealth, unit: "%", color: "green" },
+          { label: "Consistência", value: currentWeek.generalConsistency, unit: "%", color: "cyan" },
+          { label: "Energia", value: currentWeek.energyLevel, unit: "", color: "purple" },
+        ].map((metric) => (
+          <div
+            key={metric.label}
+            className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-blue-500/30 transition-all"
+          >
+            <p className="text-xs text-muted-foreground mb-1">{metric.label}</p>
+            <p className="text-2xl font-bold text-foreground">
+              {metric.value}
+              {metric.unit}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Moon className="w-4 h-4 text-indigo-400" />
-            <p className="text-sm text-muted-foreground">{currentWeek.avgSleepHours.toFixed(1)}h / noite</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Daily Briefing Card */}
-      <div className="bg-gradient-to-br from-slate-800/40 via-slate-900/60 to-blue-950/40 border border-blue-500/20 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+      {/* Briefing card */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <Brain className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">Briefing do Dia – Atlas IA</h3>
-            <p className="text-sm text-muted-foreground">Hoje a verdade nua e crua sobre sua semana é:</p>
-          </div>
-        </div>
-        <div className="bg-secondary/20 rounded-xl p-5 border border-border/50">
-          <p className="text-muted-foreground leading-relaxed">{dailyBriefing}</p>
-        </div>
-      </div>
-
-      {/* Weekly Summary Button and Result */}
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-300">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-cyan-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">Resumo da Semana</h3>
-          </div>
-          <Button
-            onClick={handleGenerateSummary}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-6 rounded-xl shadow-lg shadow-cyan-500/25"
-          >
-            Gerar Resumo
-          </Button>
-        </div>
-        {weeklySummary && (
-          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-5 mt-4">
-            <p className="text-foreground leading-relaxed">{weeklySummary}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Evolution Chart */}
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
-        <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-blue-400" />
+            <Sparkles className="w-5 h-5 text-blue-400" />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">Evolução do Atlas Score</h3>
-            <p className="text-sm text-muted-foreground">Acompanhe sua progressão semana a semana</p>
+          <h3 className="text-lg font-semibold text-foreground">Briefing do Dia</h3>
+        </div>
+        <p className="text-muted-foreground">
+          Com base nos seus últimos 7 dias: você completou {currentWeek.trainingsDone} de {currentWeek.trainingsPlanned}{" "}
+          treinos, manteve {currentWeek.dietAdherence}% de aderência à dieta e dormiu em média{" "}
+          {currentWeek.avgSleepHours}h por noite.
+          {currentWeek.atlasScore >= 75
+            ? " Continue assim para consolidar seus ganhos!"
+            : " Foque em aumentar a consistência para acelerar seus resultados."}
+        </p>
+      </div>
+
+      {/* Summary button */}
+      <button
+        onClick={() => setShowSummary(!showSummary)}
+        className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+      >
+        <FileText className="w-5 h-5" />
+        {showSummary ? "Ocultar Resumo" : "Gerar Resumo da Semana"}
+      </button>
+
+      {showSummary && (
+        <div className="bg-card/50 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6 animate-in fade-in duration-300">
+          <h4 className="text-lg font-semibold text-foreground mb-4">Resumo Completo - {currentWeek.weekLabel}</h4>
+          <div className="space-y-3 text-muted-foreground">
+            <p>
+              Atlas Score: {currentWeek.atlasScore}/100 - {getAtlasScoreMessage(currentWeek.atlasScore)}
+            </p>
+            <p>
+              Treinos: {currentWeek.trainingsDone}/{currentWeek.trainingsPlanned} ({currentWeek.executionRate}% de
+              execução)
+            </p>
+            <p>Dieta: {currentWeek.dietAdherence}% de aderência</p>
+            <p>Sono: média de {currentWeek.avgSleepHours}h/noite</p>
+            <p>Energia: {currentWeek.energyLevel}</p>
+            <p>
+              Variação de peso: {currentWeek.weightDeltaKg > 0 ? "+" : ""}
+              {currentWeek.weightDeltaKg}kg
+            </p>
           </div>
         </div>
-        <div className="flex items-end justify-between gap-2 h-48 px-4">
-          {mockWeeks.map((week, index) => (
+      )}
+
+      {/* Evolution chart */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Evolução do Atlas Score</h3>
+        <div className="flex items-end justify-between gap-2 h-40">
+          {mockWeeks.map((week, idx) => (
             <button
               key={week.weekLabel}
-              onClick={() => {
-                setCurrentWeekIndex(index)
-                setWeeklySummary(null)
-              }}
-              className={`flex flex-col items-center flex-1 group cursor-pointer transition-all duration-200 ${index === currentWeekIndex ? "scale-105" : "hover:scale-102"}`}
-            >
-              <div
-                className={`w-full max-w-12 rounded-t-lg transition-all duration-500 ${
-                  index === currentWeekIndex
-                    ? `bg-gradient-to-t ${getScoreGradient(week.atlasScore)} shadow-lg shadow-blue-500/30`
-                    : "bg-gradient-to-t from-slate-600 to-slate-500 group-hover:from-blue-600 group-hover:to-cyan-500"
-                }`}
-                style={{ height: `${week.atlasScore * 1.6}px` }}
-              />
-              <span
-                className={`mt-2 text-xs ${index === currentWeekIndex ? "text-blue-300 font-semibold" : "text-muted-foreground"}`}
-              >
-                S{index + 1}
-              </span>
-              <span
-                className={`text-xs ${index === currentWeekIndex ? "text-foreground font-bold" : "text-muted-foreground"}`}
-              >
-                {week.atlasScore}
-              </span>
-            </button>
+              onClick={() => setWeekIndex(idx)}
+              className={`flex-1 rounded-t-lg transition-all duration-300 hover:opacity-80 ${
+                idx === weekIndex ? "bg-gradient-to-t from-blue-600 to-cyan-400" : "bg-secondary"
+              }`}
+              style={{ height: `${week.atlasScore}%` }}
+              title={`${week.weekLabel}: ${week.atlasScore}`}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+          {mockWeeks.map((week) => (
+            <span key={week.weekLabel} className="flex-1 text-center">
+              S{week.weekLabel.split(" ")[1]}
+            </span>
           ))}
         </div>
       </div>
@@ -544,152 +395,451 @@ function DashboardView() {
   )
 }
 
+// ========== VISAO 360 VIEW ==========
 function Visao360View() {
+  const {
+    gender,
+    setGender,
+    bodyMeasurements,
+    bodyStatus,
+    saveMeasurements,
+    checkins,
+    registerCheckin,
+    photos,
+    setPhotos,
+  } = useAtlasData()
+
+  const [measurements, setMeasurements] = useState<BodyMeasurements>(bodyMeasurements)
+  const [hoveredArea, setHoveredArea] = useState<BodyAreaKey | null>(null)
+  const [showMeasureGuide, setShowMeasureGuide] = useState(false)
+
+  // Check-in form state
+  const [checkinForm, setCheckinForm] = useState({
+    trainedToday: false,
+    restDay: false,
+    followedDiet: 80,
+    sleepHours: 7,
+    energy: 3 as EnergyScore,
+    stressLevel: 2 as EnergyScore,
+    painLevel: 0,
+    notes: "",
+  })
+
+  const handleSaveMeasurements = () => {
+    saveMeasurements(measurements)
+  }
+
+  const handleCheckinSubmit = () => {
+    const checkin: DailyCheckin = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().split("T")[0],
+      ...checkinForm,
+    }
+    registerCheckin(checkin)
+    // Reset form
+    setCheckinForm({
+      trainedToday: false,
+      restDay: false,
+      followedDiet: 80,
+      sleepHours: 7,
+      energy: 3,
+      stressLevel: 2,
+      painLevel: 0,
+      notes: "",
+    })
+  }
+
+  const handlePhotoUpload = (type: "front" | "side" | "back", file: File) => {
+    const url = URL.createObjectURL(file)
+    setPhotos({ ...photos, [type]: url })
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
           <Target className="w-6 h-6 text-blue-400" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground">Visão 360 do Corpo</h2>
-          <p className="text-muted-foreground">Acompanhe todas as métricas da sua governança corporal</p>
+          <p className="text-muted-foreground">
+            Aqui a Atlas IA enxerga seu corpo como um projeto de engenharia: medidas, pontos fortes, falhas e histórico
+            diário.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Execução Detalhada */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <Dumbbell className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Execução Semanal</p>
-              <p className="text-3xl font-bold text-blue-300">{metricsData.execucao.value}%</p>
-            </div>
-          </div>
-          <div className="h-3 bg-secondary rounded-full overflow-hidden mb-4">
+      {/* Gender selector */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => setGender("male")}
+          className={`px-4 py-2 rounded-lg border transition-all ${
+            gender === "male"
+              ? "bg-blue-600 border-blue-500 text-white"
+              : "bg-card/50 border-border text-muted-foreground hover:border-blue-500/50"
+          }`}
+        >
+          Masculino
+        </button>
+        <button
+          onClick={() => setGender("female")}
+          className={`px-4 py-2 rounded-lg border transition-all ${
+            gender === "female"
+              ? "bg-blue-600 border-blue-500 text-white"
+              : "bg-card/50 border-border text-muted-foreground hover:border-blue-500/50"
+          }`}
+        >
+          Feminino
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Hologram card */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Mapa Corporal</h3>
+          <div className="relative w-full h-96 bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl overflow-hidden">
+            {/* Hologram background */}
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
-              style={{ width: `${metricsData.execucao.value}%` }}
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-60"
+              style={{
+                backgroundImage: `url('/--gender------male-----male-body-silhouette-hologr.jpg')`,
+              }}
             />
+
+            {/* Hotspots */}
+            {(Object.keys(bodyStatus) as BodyAreaKey[]).map((area) => (
+              <div
+                key={area}
+                className={`absolute w-6 h-6 rounded-full cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ${getAreaColor(bodyStatus[area])} ${
+                  hoveredArea === area ? "scale-150" : ""
+                }`}
+                style={{
+                  top: hotspotPositions[area].top,
+                  left: hotspotPositions[area].left,
+                }}
+                onMouseEnter={() => setHoveredArea(area)}
+                onMouseLeave={() => setHoveredArea(null)}
+              />
+            ))}
+
+            {/* Tooltip */}
+            {hoveredArea && (
+              <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-sm">
+                <p className="font-semibold text-foreground">{bodyAreaLabels[hoveredArea]}</p>
+                <p className="text-muted-foreground">{getStatusLabel(bodyStatus[hoveredArea])}</p>
+              </div>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground mb-4">{metricsData.execucao.label}</p>
-          <div className="space-y-2 border-t border-border pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Meta semanal</span>
-              <span className="text-foreground">5 treinos</span>
+
+          {/* Legend */}
+          <div className="flex gap-4 mt-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400" />
+              <span className="text-muted-foreground">Ponto forte</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Concluídos</span>
-              <span className="text-blue-300">4 treinos</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <span className="text-muted-foreground">Precisa atenção</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Próximo treino</span>
-              <span className="text-foreground">Hoje, 18h</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-yellow-400" />
+              <span className="text-muted-foreground">Lesão</span>
             </div>
           </div>
         </div>
 
-        {/* Consistência Detalhada */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Consistência</p>
-              <p className="text-3xl font-bold text-cyan-300">{metricsData.consistencia.value} dias</p>
-            </div>
+        {/* Measurements form */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Medidas Corporais</h3>
+            <button
+              onClick={() => setShowMeasureGuide(true)}
+              className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            >
+              <HelpCircle className="w-4 h-4" />
+              Como medir?
+            </button>
           </div>
-          <div className="h-3 bg-secondary rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full" style={{ width: "63%" }} />
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">{metricsData.consistencia.label}</p>
-          <div className="space-y-2 border-t border-border pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Recorde pessoal</span>
-              <span className="text-foreground">30 dias</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Média mensal</span>
-              <span className="text-cyan-300">85%</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Estética Detalhada */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-              <Zap className="w-6 h-6 text-indigo-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Progresso Estético</p>
-              <p className="text-3xl font-bold text-indigo-300">{metricsData.estetica.value}%</p>
-            </div>
+          <div className="grid grid-cols-2 gap-4 max-h-80 overflow-y-auto pr-2">
+            {[
+              { key: "shoulders", label: "Ombros" },
+              { key: "chest", label: "Peitoral" },
+              { key: "waist", label: "Cintura" },
+              { key: "hips", label: "Quadril" },
+              { key: "rightArm", label: "Braço direito" },
+              { key: "leftArm", label: "Braço esquerdo" },
+              { key: "rightThigh", label: "Coxa direita" },
+              { key: "leftThigh", label: "Coxa esquerda" },
+              { key: "rightCalf", label: "Panturrilha D" },
+              { key: "leftCalf", label: "Panturrilha E" },
+              { key: "neck", label: "Pescoço" },
+            ].map((field) => (
+              <div key={field.key}>
+                <label className="text-xs text-muted-foreground mb-1 block">{field.label}</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={measurements[field.key as keyof BodyMeasurements] || ""}
+                    onChange={(e) =>
+                      setMeasurements({
+                        ...measurements,
+                        [field.key]: e.target.value ? Number.parseFloat(e.target.value) : null,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
+                  />
+                  <span className="text-xs text-muted-foreground">cm</span>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="h-3 bg-secondary rounded-full overflow-hidden mb-4">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full"
-              style={{ width: `${metricsData.estetica.value}%` }}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">{metricsData.estetica.label}</p>
-          <div className="space-y-2 border-t border-border pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Peso atual</span>
-              <span className="text-foreground">78.5 kg</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Meta</span>
-              <span className="text-indigo-300">75 kg / 12% BF</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Metabolismo Detalhado */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Metabolismo</p>
-              <p className="text-3xl font-bold text-green-300">{metricsData.metabolismo.status}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Energia</p>
-              <p className="text-sm font-semibold text-foreground">{metricsData.metabolismo.indicators.energia}</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Sono</p>
-              <p className="text-sm font-semibold text-foreground">{metricsData.metabolismo.indicators.sono}</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Peso</p>
-              <p className="text-sm font-semibold text-green-300">{metricsData.metabolismo.indicators.peso}</p>
-            </div>
-          </div>
-          <div className="space-y-2 border-t border-border pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">TMB estimada</span>
-              <span className="text-foreground">1,850 kcal</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">GET estimado</span>
-              <span className="text-green-300">2,590 kcal</span>
-            </div>
-          </div>
+          <button
+            onClick={handleSaveMeasurements}
+            className="w-full mt-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          >
+            <Save className="w-5 h-5" />
+            Salvar medidas
+          </button>
         </div>
       </div>
+
+      {/* Check-in card */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+            <Check className="w-5 h-5 text-cyan-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Check-in do Dia</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Training */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Treino</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCheckinForm({ ...checkinForm, trainedToday: true, restDay: false })}
+                className={`flex-1 py-2 px-3 rounded-lg border text-sm transition-all ${
+                  checkinForm.trainedToday
+                    ? "bg-blue-600 border-blue-500 text-white"
+                    : "bg-card/50 border-border text-muted-foreground"
+                }`}
+              >
+                Treinei
+              </button>
+              <button
+                onClick={() => setCheckinForm({ ...checkinForm, trainedToday: false, restDay: true })}
+                className={`flex-1 py-2 px-3 rounded-lg border text-sm transition-all ${
+                  checkinForm.restDay
+                    ? "bg-blue-600 border-blue-500 text-white"
+                    : "bg-card/50 border-border text-muted-foreground"
+                }`}
+              >
+                Descanso
+              </button>
+            </div>
+          </div>
+
+          {/* Diet */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">
+              Aderência à Dieta: {checkinForm.followedDiet}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={checkinForm.followedDiet}
+              onChange={(e) => setCheckinForm({ ...checkinForm, followedDiet: Number.parseInt(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+
+          {/* Sleep */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Horas de sono</label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              max="12"
+              value={checkinForm.sleepHours}
+              onChange={(e) => setCheckinForm({ ...checkinForm, sleepHours: Number.parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Energy */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Energia do dia</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setCheckinForm({ ...checkinForm, energy: n as EnergyScore })}
+                  className={`flex-1 py-2 rounded-lg border text-sm transition-all ${
+                    checkinForm.energy === n
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-card/50 border-border text-muted-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stress */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Nível de estresse</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setCheckinForm({ ...checkinForm, stressLevel: n as EnergyScore })}
+                  className={`flex-1 py-2 rounded-lg border text-sm transition-all ${
+                    checkinForm.stressLevel === n
+                      ? "bg-orange-600 border-orange-500 text-white"
+                      : "bg-card/50 border-border text-muted-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pain */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Nível de dor: {checkinForm.painLevel}</label>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              value={checkinForm.painLevel}
+              onChange={(e) => setCheckinForm({ ...checkinForm, painLevel: Number.parseInt(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="mt-4">
+          <label className="text-sm text-muted-foreground mb-2 block">Anotações (opcional)</label>
+          <textarea
+            value={checkinForm.notes}
+            onChange={(e) => setCheckinForm({ ...checkinForm, notes: e.target.value })}
+            placeholder="Como foi seu dia?"
+            className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 h-20 resize-none"
+          />
+        </div>
+
+        <button
+          onClick={handleCheckinSubmit}
+          className="w-full mt-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+        >
+          <Check className="w-5 h-5" />
+          Registrar check-in
+        </button>
+      </div>
+
+      {/* Progress photos */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+            <Camera className="w-5 h-5 text-indigo-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">Fotos de Progresso</h3>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {(["front", "side", "back"] as const).map((type) => (
+            <div key={type} className="relative">
+              <label
+                className={`block aspect-[3/4] rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden ${
+                  photos[type] ? "border-blue-500" : "border-border hover:border-blue-500/50"
+                }`}
+              >
+                {photos[type] ? (
+                  <img src={photos[type] || "/placeholder.svg"} alt={type} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <Camera className="w-8 h-8 mb-2" />
+                    <span className="text-xs capitalize">
+                      {type === "front" ? "Frente" : type === "side" ? "Lateral" : "Costas"}
+                    </span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handlePhotoUpload(type, e.target.files[0])}
+                />
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Measure guide modal */}
+      {showMeasureGuide && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowMeasureGuide(false)}
+        >
+          <div
+            className="bg-card border border-border rounded-2xl p-6 max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Como medir corretamente</h3>
+              <button
+                onClick={() => setShowMeasureGuide(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Ombros:</strong> Fita passando pela parte mais larga, de deltóide a
+                deltóide.
+              </li>
+              <li>
+                <strong className="text-foreground">Peitoral:</strong> Na linha do mamilo, fita nivelada.
+              </li>
+              <li>
+                <strong className="text-foreground">Cintura:</strong> Ponto mais fino acima do quadril (umbigo).
+              </li>
+              <li>
+                <strong className="text-foreground">Quadril:</strong> Ponto mais largo do glúteo.
+              </li>
+              <li>
+                <strong className="text-foreground">Braços:</strong> Parte mais larga com contração leve.
+              </li>
+              <li>
+                <strong className="text-foreground">Coxa:</strong> Parte mais larga, logo abaixo do glúteo.
+              </li>
+              <li>
+                <strong className="text-foreground">Panturrilha:</strong> Parte mais larga em contração leve.
+              </li>
+              <li>
+                <strong className="text-foreground">Pescoço:</strong> Logo abaixo do pomo de Adão.
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+// ========== OTHER VIEWS (unchanged) ==========
 function AtlasIAView() {
   return (
     <div className="space-y-6">
@@ -698,74 +848,31 @@ function AtlasIAView() {
           <Brain className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Atlas IA - Assistente Inteligente</h2>
-          <p className="text-muted-foreground">Seu cérebro estratégico baseado em evidências científicas</p>
+          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
+          <p className="text-muted-foreground">Sua inteligência artificial de governança corporal</p>
         </div>
       </div>
 
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
-        <div className="flex items-center gap-4 mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl border border-blue-500/20">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Brain className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">Sistema de Governança Corporal</h3>
-            <p className="text-muted-foreground">
-              IA especializada em evidências científicas de Harvard e PubMed para otimizar seu treino, dieta, sono,
-              testosterona natural, fisioterapia e controle de compulsão alimentar.
-            </p>
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-4">Especialidades da Atlas IA:</p>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {specialtyChips.map((chip) => (
-            <button
-              key={chip.label}
-              className={`
-                px-4 py-2 text-sm font-medium rounded-full
-                bg-gradient-to-r ${chip.color} text-white
-                transition-all duration-200 ease-out
-                hover:scale-105 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]
-                focus:outline-none focus:ring-2 focus:ring-blue-400/50
-              `}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Chat Area */}
-        <div className="bg-secondary/20 rounded-xl p-6 mb-4 min-h-[250px] flex flex-col border border-border/50">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
-                <MessageSquare className="w-10 h-10 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Chat com a Atlas IA</h3>
-              <p className="text-muted-foreground text-sm">
-                Em breve você poderá perguntar qualquer coisa sobre seu corpo, treino, dieta, sono, hormônios ou
-                compulsão alimentar. A Atlas IA responderá com base em evidências científicas de Harvard e PubMed.
-              </p>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-96">
+        <div className="flex flex-col h-full">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <Brain className="w-16 h-16 mx-auto mb-4 text-blue-400/50" />
+              <p>Inicie uma conversa com a Atlas IA</p>
+              <p className="text-sm mt-2">Pergunte sobre treino, dieta, sono ou qualquer pilar da sua governança.</p>
             </div>
           </div>
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              placeholder="Digite sua mensagem..."
+              className="flex-1 px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
+            />
+            <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity">
+              Enviar
+            </button>
+          </div>
         </div>
-
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Digite sua pergunta para a Atlas IA..."
-            className="flex-1 bg-secondary/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-            disabled
-          />
-          <Button
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 rounded-xl shadow-lg shadow-blue-500/25"
-            disabled
-          >
-            <Send className="w-5 h-5" />
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">Em breve disponível</p>
       </div>
     </div>
   )
@@ -780,83 +887,11 @@ function TreinoDietaView() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
-          <p className="text-muted-foreground">Governança do seu estímulo e combustível</p>
+          <p className="text-muted-foreground">Protocolos integrados de exercício e nutrição</p>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Treino Card */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <Dumbbell className="w-6 h-6 text-blue-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground">Treino Inteligente</h3>
-          </div>
-          <p className="text-muted-foreground mb-4">
-            A Atlas IA cuida da periodização, evita overtraining e prioriza pontos fracos para maximizar seus
-            resultados.
-          </p>
-          <div className="space-y-3 border-t border-border pt-4">
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Treinos esta semana</p>
-                <p className="text-xs text-muted-foreground">4 de 5 concluídos</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Target className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Foco da fase</p>
-                <p className="text-xs text-muted-foreground">Hipertrofia - Semana 3/8</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Flame className="w-5 h-5 text-orange-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Prioridade de músculos</p>
-                <p className="text-xs text-muted-foreground">Costas, Posteriores de coxa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dieta Card */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-              <Apple className="w-6 h-6 text-cyan-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground">Dieta Flexível</h3>
-          </div>
-          <p className="text-muted-foreground mb-4">
-            Nutrição flexível com trocas inteligentes, ajustes pós-deslize e foco em performance + estética.
-          </p>
-          <div className="space-y-3 border-t border-border pt-4">
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Activity className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Macros diários</p>
-                <p className="text-xs text-muted-foreground">2,400 kcal | 180P | 280C | 70G</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Clock className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Refeições planejadas</p>
-                <p className="text-xs text-muted-foreground">5 refeições / dia</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Ajustes automáticos</p>
-                <p className="text-xs text-muted-foreground">Recálculo pós-deslize ativado</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
       </div>
     </div>
   )
@@ -866,80 +901,16 @@ function CompulsaoView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center">
-          <Heart className="w-6 h-6 text-pink-400" />
+        <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+          <Utensils className="w-6 h-6 text-orange-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Compulsão & Fome Emocional</h2>
-          <p className="text-muted-foreground">Controlando gatilhos e recalibrando sem culpa</p>
+          <h2 className="text-2xl font-bold text-foreground">Compulsão Alimentar</h2>
+          <p className="text-muted-foreground">Estratégias cognitivo-comportamentais para controle</p>
         </div>
       </div>
-
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-pink-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-300">
-        <p className="text-muted-foreground mb-6">
-          A Atlas IA atua com estratégias cognitivo-comportamentais para identificar gatilhos emocionais, criar planos
-          de emergência pós-binge e recalibrar o protocolo sem culpa após deslizes.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Plano de Crise */}
-          <div className="bg-gradient-to-br from-pink-500/10 to-red-500/10 border border-pink-500/20 rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-6 h-6 text-pink-400" />
-              <h3 className="text-lg font-semibold text-foreground">Plano de Crise</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-pink-400">1</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Identificar o gatilho emocional (estresse, ansiedade, tédio)
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-pink-400">2</span>
-                </div>
-                <p className="text-sm text-muted-foreground">Técnica de respiração 4-7-8 por 2 minutos</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-pink-400">3</span>
-                </div>
-                <p className="text-sm text-muted-foreground">Substituição inteligente com alimento de baixo impacto</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Recalibração */}
-          <div className="bg-gradient-to-br from-green-500/10 to-cyan-500/10 border border-green-500/20 rounded-xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <CheckCircle className="w-6 h-6 text-green-400" />
-              <h3 className="text-lg font-semibold text-foreground">Pós-Deslize</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <CheckCircle className="w-3 h-3 text-green-400" />
-                </div>
-                <p className="text-sm text-muted-foreground">Sem culpa: deslizes fazem parte do processo</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <CheckCircle className="w-3 h-3 text-green-400" />
-                </div>
-                <p className="text-sm text-muted-foreground">Recálculo automático dos macros da semana</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <CheckCircle className="w-3 h-3 text-green-400" />
-                </div>
-                <p className="text-sm text-muted-foreground">Retorno imediato ao protocolo no dia seguinte</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
       </div>
     </div>
   )
@@ -954,59 +925,11 @@ function SonoView() {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground">Sono & Recuperação</h2>
-          <p className="text-muted-foreground">Carregando a bateria do corpo</p>
+          <p className="text-muted-foreground">Protocolos de higiene do sono e recuperação</p>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Métricas de Sono */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Suas Métricas de Sono</h3>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-secondary/30 rounded-xl p-4 text-center">
-              <BedDouble className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-indigo-300">7.5h</p>
-              <p className="text-xs text-muted-foreground">Média semanal</p>
-            </div>
-            <div className="bg-secondary/30 rounded-xl p-4 text-center">
-              <Zap className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-cyan-300">82%</p>
-              <p className="text-xs text-muted-foreground">Qualidade</p>
-            </div>
-            <div className="bg-secondary/30 rounded-xl p-4 text-center">
-              <Clock className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-blue-300">23:00</p>
-              <p className="text-xs text-muted-foreground">Horário alvo</p>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            O sono impacta diretamente sua testosterona, recuperação muscular e performance cognitiva. Dormir menos de
-            6h pode reduzir testosterona em até 15%.
-          </p>
-        </div>
-
-        {/* Recomendações */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Higiene do Sono</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-foreground">Evitar telas 1h antes de dormir</p>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-foreground">Manter quarto entre 18-20°C</p>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-foreground">Última refeição 2-3h antes de deitar</p>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-foreground">Magnésio e ZMA antes de dormir</p>
-            </div>
-          </div>
-        </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
       </div>
     </div>
   )
@@ -1016,43 +939,16 @@ function FisioterapiaView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-          <Shield className="w-6 h-6 text-purple-400" />
+        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+          <Activity className="w-6 h-6 text-green-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Fisioterapia & Dores</h2>
+          <h2 className="text-2xl font-bold text-foreground">Fisioterapia</h2>
           <p className="text-muted-foreground">Correção postural e prevenção de lesões</p>
         </div>
       </div>
-
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-purple-500/30 hover:shadow-[0_0_20px_rgba(147,51,234,0.15)] transition-all duration-300">
-        <p className="text-muted-foreground mb-6">
-          A Atlas IA integra protocolos de fisioterapia ao seu treino principal, focando em correção de ombros, coluna e
-          quadril, além de mobilidade e prevenção de lesões.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4">
-            <h4 className="font-semibold text-foreground mb-2">Ombros</h4>
-            <p className="text-sm text-muted-foreground">Correção de protração e fortalecimento de manguito rotador</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4">
-            <h4 className="font-semibold text-foreground mb-2">Coluna</h4>
-            <p className="text-sm text-muted-foreground">Mobilidade torácica e estabilização lombar</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4">
-            <h4 className="font-semibold text-foreground mb-2">Quadril</h4>
-            <p className="text-sm text-muted-foreground">Alongamento de flexores e ativação de glúteos</p>
-          </div>
-        </div>
-
-        <div className="bg-secondary/20 rounded-xl p-5 border border-border/50">
-          <h4 className="font-semibold text-foreground mb-3">Protocolos Personalizados</h4>
-          <p className="text-sm text-muted-foreground">
-            Em breve a Atlas IA irá gerar protocolos de mobilidade e correção postural personalizados baseados nas suas
-            avaliações e histórico de dores.
-          </p>
-        </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
       </div>
     </div>
   )
@@ -1062,321 +958,105 @@ function TestosteronaView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-          <TrendingUp className="w-6 h-6 text-green-400" />
+        <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+          <Zap className="w-6 h-6 text-yellow-400" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground">Testosterona Natural</h2>
-          <p className="text-muted-foreground">Otimizando hormônios de forma natural</p>
+          <p className="text-muted-foreground">Estratégias para otimização hormonal natural</p>
         </div>
       </div>
-
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300">
-        <p className="text-muted-foreground mb-6">
-          A Atlas IA otimiza sua testosterona natural através de hábitos, rotina, treino, sono, alimentação e
-          micronutrientes estratégicos que favorecem a produção hormonal.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Fatores */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-foreground mb-3">Fatores Otimizados</h4>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Leaf className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Micronutrientes</p>
-                <p className="text-xs text-muted-foreground">Zinco, Magnésio, Vitamina D3, Boro</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Moon className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Sono de qualidade</p>
-                <p className="text-xs text-muted-foreground">7-9h por noite, ritmo circadiano</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Dumbbell className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Treino de força</p>
-                <p className="text-xs text-muted-foreground">Compostos, alta intensidade</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Métricas */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-foreground mb-3">Métricas Futuras</h4>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Activity className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Consistência de sono</p>
-                <p className="text-xs text-muted-foreground">85% nos últimos 30 dias</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <Dumbbell className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Treinos de força</p>
-                <p className="text-xs text-muted-foreground">4x por semana</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Gordura corporal</p>
-                <p className="text-xs text-muted-foreground">Mantendo entre 12-18%</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
       </div>
     </div>
   )
 }
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  sublabel,
-  color,
-  progress,
-}: {
-  icon: typeof Dumbbell
-  label: string
-  value: string
-  sublabel: string
-  color: "blue" | "cyan" | "indigo" | "green"
-  progress?: number
-}) {
-  const colorClasses = {
-    blue: {
-      bg: "bg-blue-500/20",
-      text: "text-blue-400",
-      value: "text-blue-300",
-      gradient: "from-blue-500 to-cyan-400",
-      hover: "hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)]",
-    },
-    cyan: {
-      bg: "bg-cyan-500/20",
-      text: "text-cyan-400",
-      value: "text-cyan-300",
-      gradient: "from-cyan-500 to-blue-400",
-      hover: "hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]",
-    },
-    indigo: {
-      bg: "bg-indigo-500/20",
-      text: "text-indigo-400",
-      value: "text-indigo-300",
-      gradient: "from-indigo-500 to-purple-400",
-      hover: "hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]",
-    },
-    green: {
-      bg: "bg-green-500/20",
-      text: "text-green-400",
-      value: "text-green-300",
-      gradient: "from-green-500 to-cyan-400",
-      hover: "hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)]",
-    },
-  }
+// ========== MAIN PAGE COMPONENT ==========
+export default function AtlasPainelPage() {
+  const [activeSection, setActiveSection] = useState<SectionKey>("dashboard")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const c = colorClasses[color]
-
-  return (
-    <div
-      className={`bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 transition-all duration-300 ${c.hover}`}
-    >
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl ${c.bg} flex items-center justify-center`}>
-          <Icon className={`w-5 h-5 ${c.text}`} />
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className={`text-xl font-bold ${c.value}`}>{value}</p>
-        </div>
-      </div>
-      {progress !== undefined && (
-        <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
-          <div
-            className={`h-full bg-gradient-to-r ${c.gradient} rounded-full transition-all duration-500`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-      <p className="text-xs text-muted-foreground">{sublabel}</p>
-    </div>
-  )
-}
-
-export default function AtlasDashboardPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState<SectionType>("dashboard")
-
-  const handleMenuClick = (itemId: SectionType) => {
-    setActiveSection(itemId)
-    setSidebarOpen(false)
-  }
-
-  const getPageTitle = () => {
+  const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return { title: "Dashboard", subtitle: "Visão geral da sua governança" }
+        return <DashboardView />
       case "visao360":
-        return { title: "Visão 360 do Corpo", subtitle: "Todas as suas métricas em detalhes" }
-      case "atlasia":
-        return { title: "Atlas IA", subtitle: "Seu assistente inteligente" }
+        return <Visao360View />
+      case "atlasIA":
+        return <AtlasIAView />
       case "treinoDieta":
-        return { title: "Treino & Dieta", subtitle: "Governança do estímulo e combustível" }
+        return <TreinoDietaView />
       case "compulsao":
-        return { title: "Compulsão & Fome", subtitle: "Controlando gatilhos emocionais" }
+        return <CompulsaoView />
       case "sono":
-        return { title: "Sono & Recuperação", subtitle: "Carregando a bateria do corpo" }
+        return <SonoView />
       case "fisioterapia":
-        return { title: "Fisioterapia & Dores", subtitle: "Correção postural e prevenção" }
+        return <FisioterapiaView />
       case "testosterona":
-        return { title: "Testosterona Natural", subtitle: "Otimizando hormônios naturalmente" }
+        return <TestosteronaView />
       default:
-        return { title: "Painel Atlas IA", subtitle: "O cérebro que governa seu corpo" }
+        return <DashboardView />
     }
   }
 
-  const pageTitle = getPageTitle()
-
   return (
-    <div className="min-h-screen bg-background flex">
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`
-          fixed lg:sticky top-0 left-0 z-50 h-screen w-72
-          bg-card/95 backdrop-blur-xl border-r border-border
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          flex flex-col
-        `}
-      >
-        {/* Sidebar Header */}
-        <div className="p-6 border-b border-border">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-foreground block">
-                Atlas <span className="text-blue-400">IA</span>
-              </span>
-              <span className="text-xs text-muted-foreground">Painel de Governança</span>
-            </div>
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="absolute top-6 right-4 lg:hidden p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-          >
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleMenuClick(item.id)}
-              className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
-                transition-all duration-200 ease-out group relative
-                ${
-                  activeSection === item.id
-                    ? "bg-blue-500/20 text-blue-300 shadow-[inset_0_0_20px_rgba(59,130,246,0.15)]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                }
-              `}
-            >
-              <div
-                className={`
-                  absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full
-                  transition-all duration-200
-                  ${
-                    activeSection === item.id
-                      ? "bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
-                      : "bg-transparent group-hover:bg-blue-400/50 group-hover:shadow-[0_0_8px_rgba(59,130,246,0.4)]"
-                  }
-                `}
-              />
-              <item.icon className={`w-5 h-5 transition-colors ${activeSection === item.id ? "text-blue-400" : ""}`} />
-              <span className="font-medium">{item.label}</span>
-              <ChevronRight
-                className={`
-                  w-4 h-4 ml-auto transition-all duration-200
-                  ${activeSection === item.id ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0"}
-                `}
-              />
-            </button>
-          ))}
-        </nav>
-
-        {/* User Block */}
-        <div className="p-4 border-t border-border">
-          <div className="bg-secondary/30 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">Usuário Atlas</p>
-                <p className="text-xs text-muted-foreground truncate">usuario@email.com</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground bg-transparent"
-            >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-md border-b border-border z-40 flex items-center px-4 md:px-6">
+        <button className="md:hidden mr-4" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">A</span>
           </div>
-        </div>
+          <span className="font-bold text-foreground">Atlas IA</span>
+        </Link>
+        <div className="ml-auto text-sm text-muted-foreground">Bem-vindo ao seu painel</div>
+      </header>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-16 left-0 bottom-0 w-64 bg-card/50 backdrop-blur-md border-r border-border z-30 transform transition-transform duration-300 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        <nav className="p-4 space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeSection === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => {
+                  setActiveSection(item.key)
+                  setMobileMenuOpen(false)
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                  isActive
+                    ? "bg-blue-600/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 min-h-screen">
-        <header className="sticky top-0 z-30 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-16 items-center justify-between px-4 md:px-8">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-            >
-              <Menu className="w-6 h-6 text-foreground" />
-            </button>
-
-            <div className="flex-1 text-center lg:text-left lg:ml-0">
-              <h1 className="text-lg md:text-xl font-bold text-foreground">{pageTitle.title}</h1>
-              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">{pageTitle.subtitle}</p>
-            </div>
-
-            <div className="w-10 lg:hidden" />
-          </div>
-        </header>
-
-        {/* Content Area - Renders based on activeSection */}
-        <div className="px-4 md:px-8 py-8">
-          {activeSection === "dashboard" && <DashboardView />}
-          {activeSection === "visao360" && <Visao360View />}
-          {activeSection === "atlasia" && <AtlasIAView />}
-          {activeSection === "treinoDieta" && <TreinoDietaView />}
-          {activeSection === "compulsao" && <CompulsaoView />}
-          {activeSection === "sono" && <SonoView />}
-          {activeSection === "fisioterapia" && <FisioterapiaView />}
-          {activeSection === "testosterona" && <TestosteronaView />}
-        </div>
+      {/* Main content */}
+      <main className="pt-16 md:pl-64">
+        <div className="p-6 md:p-8 max-w-6xl">{renderContent()}</div>
       </main>
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
     </div>
   )
 }
