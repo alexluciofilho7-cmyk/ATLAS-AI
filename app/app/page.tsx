@@ -27,9 +27,174 @@ import {
   BedDouble,
   Sparkles,
   Leaf,
+  ChevronLeft,
+  BarChart3,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+
+type EnergyLevel = "Baixa" | "Média" | "Alta"
+
+type AtlasWeekMetrics = {
+  weekLabel: string
+  atlasScore: number
+  executionRate: number
+  aestheticProgress: number
+  metabolicHealth: number
+  generalConsistency: number
+  avgSleepHours: number
+  weightDeltaKg: number
+  energyLevel: EnergyLevel
+  trainingsDone: number
+  trainingsPlanned: number
+  dietAdherence: number
+}
+
+const mockWeeks: AtlasWeekMetrics[] = [
+  {
+    weekLabel: "Semana 1",
+    atlasScore: 58,
+    executionRate: 60,
+    aestheticProgress: 45,
+    metabolicHealth: 62,
+    generalConsistency: 55,
+    avgSleepHours: 6.2,
+    weightDeltaKg: 0.5,
+    energyLevel: "Baixa",
+    trainingsDone: 3,
+    trainingsPlanned: 5,
+    dietAdherence: 52,
+  },
+  {
+    weekLabel: "Semana 2",
+    atlasScore: 65,
+    executionRate: 70,
+    aestheticProgress: 50,
+    metabolicHealth: 68,
+    generalConsistency: 62,
+    avgSleepHours: 6.8,
+    weightDeltaKg: -0.3,
+    energyLevel: "Média",
+    trainingsDone: 4,
+    trainingsPlanned: 5,
+    dietAdherence: 65,
+  },
+  {
+    weekLabel: "Semana 3",
+    atlasScore: 72,
+    executionRate: 80,
+    aestheticProgress: 58,
+    metabolicHealth: 75,
+    generalConsistency: 70,
+    avgSleepHours: 7.2,
+    weightDeltaKg: -0.4,
+    energyLevel: "Média",
+    trainingsDone: 4,
+    trainingsPlanned: 5,
+    dietAdherence: 78,
+  },
+  {
+    weekLabel: "Semana 4",
+    atlasScore: 78,
+    executionRate: 85,
+    aestheticProgress: 65,
+    metabolicHealth: 80,
+    generalConsistency: 76,
+    avgSleepHours: 7.5,
+    weightDeltaKg: -0.6,
+    energyLevel: "Alta",
+    trainingsDone: 5,
+    trainingsPlanned: 5,
+    dietAdherence: 82,
+  },
+  {
+    weekLabel: "Semana 5",
+    atlasScore: 82,
+    executionRate: 90,
+    aestheticProgress: 70,
+    metabolicHealth: 84,
+    generalConsistency: 80,
+    avgSleepHours: 7.8,
+    weightDeltaKg: -0.5,
+    energyLevel: "Alta",
+    trainingsDone: 5,
+    trainingsPlanned: 5,
+    dietAdherence: 88,
+  },
+  {
+    weekLabel: "Semana 6",
+    atlasScore: 88,
+    executionRate: 95,
+    aestheticProgress: 75,
+    metabolicHealth: 88,
+    generalConsistency: 85,
+    avgSleepHours: 8.0,
+    weightDeltaKg: -0.3,
+    energyLevel: "Alta",
+    trainingsDone: 5,
+    trainingsPlanned: 5,
+    dietAdherence: 92,
+  },
+]
+
+function getAtlasScoreMessage(score: number): string {
+  if (score >= 85) return "Nível atleta. Seu corpo está sob comando – mantenha o ritmo."
+  if (score >= 60) return "Meio atleta, meio amador. Você está indo bem, mas ainda deixa resultados na mesa."
+  return "Você treina, mas ainda vive como amador. Ou muda o jogo, ou vai continuar estagnado."
+}
+
+function getDailyBriefing(week: AtlasWeekMetrics): string {
+  const messages: string[] = []
+
+  if (week.executionRate < 60) {
+    messages.push(
+      "Sua execução de treino está abaixo do mínimo. Se continuar assim, você só vai manter o corpo, não evoluir.",
+    )
+  } else if (week.executionRate < 85) {
+    messages.push("Sua execução de treino é boa, mas ainda tem espaço para subir um nível e buscar padrão de atleta.")
+  } else {
+    messages.push("Execução de treino em padrão de atleta. Mantenha o foco e proteja esse hábito.")
+  }
+
+  if (week.dietAdherence < 70) {
+    messages.push("Sua dieta está frouxa. Não adianta treinar como atleta e comer como amador.")
+  } else {
+    messages.push("Sua aderência à dieta está consistente. Pequenos ajustes vão refinar ainda mais seu físico.")
+  }
+
+  if (week.avgSleepHours < 7) {
+    messages.push("Seu sono está curto. Isso está travando sua recuperação, testosterona e estética.")
+  } else {
+    messages.push("Seu sono está em uma boa faixa. Continue blindando esse horário.")
+  }
+
+  if (week.weightDeltaKg < 0) {
+    messages.push(
+      `Você perdeu ${Math.abs(week.weightDeltaKg).toFixed(1)}kg essa semana. Cuidado para não sacrificar massa magra.`,
+    )
+  } else if (week.weightDeltaKg > 0.3) {
+    messages.push(`Você ganhou ${week.weightDeltaKg.toFixed(1)}kg essa semana. Monitore se isso é músculo ou gordura.`)
+  }
+
+  return messages.join(" ")
+}
+
+function getWeeklySummary(week: AtlasWeekMetrics): string {
+  return `Nesta semana (${week.weekLabel}), seu Atlas Score foi de ${week.atlasScore}/100. Você executou ${week.executionRate}% dos treinos planejados (${week.trainingsDone} de ${week.trainingsPlanned}), manteve ${week.dietAdherence}% de aderência à dieta e dormiu em média ${week.avgSleepHours.toFixed(1)}h por noite. Sua consistência geral ficou em ${week.generalConsistency}% e o score de saúde metabólica em ${week.metabolicHealth}%.`
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 85) return "text-green-400"
+  if (score >= 60) return "text-yellow-400"
+  return "text-red-400"
+}
+
+function getScoreGradient(score: number): string {
+  if (score >= 85) return "from-green-500 to-cyan-400"
+  if (score >= 60) return "from-yellow-500 to-orange-400"
+  return "from-red-500 to-orange-400"
+}
 
 type SectionType =
   | "dashboard"
@@ -72,53 +237,308 @@ const metricsData = {
 }
 
 function DashboardView() {
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(mockWeeks.length - 1)
+  const [weeklySummary, setWeeklySummary] = useState<string | null>(null)
+
+  const currentWeek = mockWeeks[currentWeekIndex]
+  const scoreMessage = getAtlasScoreMessage(currentWeek.atlasScore)
+  const dailyBriefing = getDailyBriefing(currentWeek)
+
+  const handlePreviousWeek = () => {
+    if (currentWeekIndex > 0) {
+      setCurrentWeekIndex(currentWeekIndex - 1)
+      setWeeklySummary(null)
+    }
+  }
+
+  const handleNextWeek = () => {
+    if (currentWeekIndex < mockWeeks.length - 1) {
+      setCurrentWeekIndex(currentWeekIndex + 1)
+      setWeeklySummary(null)
+    }
+  }
+
+  const handleGenerateSummary = () => {
+    setWeeklySummary(getWeeklySummary(currentWeek))
+  }
+
   return (
     <div className="space-y-8">
-      <div className="bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-transparent border border-blue-500/20 rounded-2xl p-6 md:p-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Bem-vindo ao seu Painel Atlas IA</h2>
-        <p className="text-lg text-blue-300 font-medium mb-4">O cérebro que governa seu corpo.</p>
-        <p className="text-muted-foreground max-w-2xl">
-          Este é o resumo da sua governança corporal. Aqui você acompanha os 6 pilares:{" "}
-          <span className="text-blue-300">Treino</span>, <span className="text-cyan-300">Dieta</span>,{" "}
-          <span className="text-indigo-300">Sono</span>, <span className="text-green-300">Testosterona Natural</span>,{" "}
-          <span className="text-purple-300">Fisioterapia</span> e{" "}
-          <span className="text-pink-300">Compulsão Alimentar</span>.
-        </p>
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
+        <button
+          onClick={handlePreviousWeek}
+          disabled={currentWeekIndex === 0}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span className="hidden sm:inline">Anterior</span>
+        </button>
+        <div className="text-center">
+          <p className="text-lg font-bold text-foreground">{currentWeek.weekLabel}</p>
+          <p className="text-sm text-muted-foreground">
+            Semana {currentWeekIndex + 1} de {mockWeeks.length}
+          </p>
+        </div>
+        <button
+          onClick={handleNextWeek}
+          disabled={currentWeekIndex === mockWeeks.length - 1}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/50 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          <span className="hidden sm:inline">Próxima</span>
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Quick Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          icon={Dumbbell}
-          label="Execução"
-          value={`${metricsData.execucao.value}%`}
-          sublabel={metricsData.execucao.label}
-          color="blue"
-          progress={metricsData.execucao.value}
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Consistência"
-          value={`${metricsData.consistencia.value} dias`}
-          sublabel={metricsData.consistencia.label}
-          color="cyan"
-          progress={63}
-        />
-        <MetricCard
-          icon={Zap}
-          label="Estética"
-          value={`${metricsData.estetica.value}%`}
-          sublabel={metricsData.estetica.label}
-          color="indigo"
-          progress={metricsData.estetica.value}
-        />
-        <MetricCard
-          icon={Activity}
-          label="Metabolismo"
-          value={metricsData.metabolismo.status}
-          sublabel="Energia alta, sono regular"
-          color="green"
-        />
+      {/* Atlas Score Card - Main */}
+      <div className="bg-gradient-to-br from-slate-800/60 via-slate-900/80 to-blue-950/60 border border-blue-500/30 rounded-3xl p-6 md:p-8 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all duration-300">
+        <div className="flex flex-col lg:flex-row items-center gap-8">
+          {/* Score Circle */}
+          <div className="relative w-48 h-48 flex-shrink-0">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                className="text-secondary/50"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="url(#scoreGradient)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={`${currentWeek.atlasScore * 2.64} 264`}
+                className="transition-all duration-700 ease-out"
+              />
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop
+                    offset="0%"
+                    stopColor={
+                      currentWeek.atlasScore >= 85 ? "#22c55e" : currentWeek.atlasScore >= 60 ? "#eab308" : "#ef4444"
+                    }
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={
+                      currentWeek.atlasScore >= 85 ? "#06b6d4" : currentWeek.atlasScore >= 60 ? "#f97316" : "#f97316"
+                    }
+                  />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className={`text-5xl font-bold ${getScoreColor(currentWeek.atlasScore)}`}>
+                {currentWeek.atlasScore}
+              </span>
+              <span className="text-muted-foreground text-sm">/100</span>
+            </div>
+          </div>
+
+          {/* Score Info */}
+          <div className="flex-1 text-center lg:text-left">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Atlas Score desta semana</h2>
+            <p className="text-lg text-blue-300 font-medium mb-4">Você é Atleta ou Está se Enganando?</p>
+            <div
+              className={`p-4 rounded-xl border ${currentWeek.atlasScore >= 85 ? "bg-green-500/10 border-green-500/30" : currentWeek.atlasScore >= 60 ? "bg-yellow-500/10 border-yellow-500/30" : "bg-red-500/10 border-red-500/30"}`}
+            >
+              <p className={`text-lg font-medium ${getScoreColor(currentWeek.atlasScore)}`}>{scoreMessage}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {/* Taxa de Execução */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-blue-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">Taxa de Execução</p>
+          </div>
+          <p className="text-3xl font-bold text-blue-300 mb-2">{currentWeek.executionRate}%</p>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
+              style={{ width: `${currentWeek.executionRate}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Treinos: {currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}
+          </p>
+        </div>
+
+        {/* Evolução Estética */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-indigo-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">Evolução Estética</p>
+          </div>
+          <p className="text-3xl font-bold text-indigo-300 mb-2">{currentWeek.aestheticProgress}%</p>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full transition-all duration-500"
+              style={{ width: `${currentWeek.aestheticProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Progresso do shape ideal</p>
+        </div>
+
+        {/* Saúde Metabólica */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all duration-300">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-green-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">Saúde Metabólica</p>
+          </div>
+          <p className="text-3xl font-bold text-green-300 mb-2">{currentWeek.metabolicHealth}%</p>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-green-500 to-cyan-400 rounded-full transition-all duration-500"
+              style={{ width: `${currentWeek.metabolicHealth}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sono: {currentWeek.avgSleepHours.toFixed(1)}h | Δ {currentWeek.weightDeltaKg > 0 ? "+" : ""}
+            {currentWeek.weightDeltaKg.toFixed(1)}kg
+          </p>
+        </div>
+
+        {/* Consistência Geral */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all duration-300">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-cyan-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">Consistência Geral</p>
+          </div>
+          <p className="text-3xl font-bold text-cyan-300 mb-2">{currentWeek.generalConsistency}%</p>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full transition-all duration-500"
+              style={{ width: `${currentWeek.generalConsistency}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Aderência dieta: {currentWeek.dietAdherence}%</p>
+        </div>
+
+        {/* Energia & Sono */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-5 hover:border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-300">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+              <Flame className="w-5 h-5 text-yellow-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">Energia & Sono</p>
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <Zap
+              className={`w-5 h-5 ${currentWeek.energyLevel === "Alta" ? "text-green-400" : currentWeek.energyLevel === "Média" ? "text-yellow-400" : "text-red-400"}`}
+            />
+            <p
+              className={`text-2xl font-bold ${currentWeek.energyLevel === "Alta" ? "text-green-300" : currentWeek.energyLevel === "Média" ? "text-yellow-300" : "text-red-300"}`}
+            >
+              {currentWeek.energyLevel}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Moon className="w-4 h-4 text-indigo-400" />
+            <p className="text-sm text-muted-foreground">{currentWeek.avgSleepHours.toFixed(1)}h / noite</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Briefing Card */}
+      <div className="bg-gradient-to-br from-slate-800/40 via-slate-900/60 to-blue-950/40 border border-blue-500/20 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <Brain className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-foreground">Briefing do Dia – Atlas IA</h3>
+            <p className="text-sm text-muted-foreground">Hoje a verdade nua e crua sobre sua semana é:</p>
+          </div>
+        </div>
+        <div className="bg-secondary/20 rounded-xl p-5 border border-border/50">
+          <p className="text-muted-foreground leading-relaxed">{dailyBriefing}</p>
+        </div>
+      </div>
+
+      {/* Weekly Summary Button and Result */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-cyan-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Resumo da Semana</h3>
+          </div>
+          <Button
+            onClick={handleGenerateSummary}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-6 rounded-xl shadow-lg shadow-cyan-500/25"
+          >
+            Gerar Resumo
+          </Button>
+        </div>
+        {weeklySummary && (
+          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-5 mt-4">
+            <p className="text-foreground leading-relaxed">{weeklySummary}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Evolution Chart */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Evolução do Atlas Score</h3>
+            <p className="text-sm text-muted-foreground">Acompanhe sua progressão semana a semana</p>
+          </div>
+        </div>
+        <div className="flex items-end justify-between gap-2 h-48 px-4">
+          {mockWeeks.map((week, index) => (
+            <button
+              key={week.weekLabel}
+              onClick={() => {
+                setCurrentWeekIndex(index)
+                setWeeklySummary(null)
+              }}
+              className={`flex flex-col items-center flex-1 group cursor-pointer transition-all duration-200 ${index === currentWeekIndex ? "scale-105" : "hover:scale-102"}`}
+            >
+              <div
+                className={`w-full max-w-12 rounded-t-lg transition-all duration-500 ${
+                  index === currentWeekIndex
+                    ? `bg-gradient-to-t ${getScoreGradient(week.atlasScore)} shadow-lg shadow-blue-500/30`
+                    : "bg-gradient-to-t from-slate-600 to-slate-500 group-hover:from-blue-600 group-hover:to-cyan-500"
+                }`}
+                style={{ height: `${week.atlasScore * 1.6}px` }}
+              />
+              <span
+                className={`mt-2 text-xs ${index === currentWeekIndex ? "text-blue-300 font-semibold" : "text-muted-foreground"}`}
+              >
+                S{index + 1}
+              </span>
+              <span
+                className={`text-xs ${index === currentWeekIndex ? "text-foreground font-bold" : "text-muted-foreground"}`}
+              >
+                {week.atlasScore}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -303,7 +723,7 @@ function AtlasIAView() {
             <button
               key={chip.label}
               className={`
-                px-4 py-2 text-sm font-medium rounded-full 
+                px-4 py-2 text-sm font-medium rounded-full
                 bg-gradient-to-r ${chip.color} text-white
                 transition-all duration-200 ease-out
                 hover:scale-105 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]
@@ -834,7 +1254,7 @@ export default function AtlasDashboardPage() {
 
       <aside
         className={`
-          fixed lg:sticky top-0 left-0 z-50 h-screen w-72 
+          fixed lg:sticky top-0 left-0 z-50 h-screen w-72
           bg-card/95 backdrop-blur-xl border-r border-border
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
