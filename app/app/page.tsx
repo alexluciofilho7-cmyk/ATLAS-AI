@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import React from "react" // Import React for useRef
 import {
   LayoutDashboard,
   Target,
@@ -21,6 +22,12 @@ import {
   HelpCircle,
   Save,
   Check,
+  Send,
+  User,
+  ImageIcon,
+  CheckCircle,
+  TrendingUp,
+  ChevronDown,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -29,6 +36,7 @@ import {
   type EnergyScore,
   type DailyCheckin,
   type BodyMeasurements,
+  type BodyStatusMap, // Added for context data
 } from "@/context/AtlasDataContext"
 
 type SectionKey =
@@ -839,38 +847,745 @@ function Visao360View() {
   )
 }
 
+// ========== ATLAS IA TYPES & SIMULATION ENGINE ==========
+
+type AtlasProtocol = {
+  title: string
+  durationDays: number
+  goal: string
+  dailyRules: string[]
+  dailyChecklist: string[]
+  successMetrics: string[]
+  safetyNotes: string[]
+}
+
+type AtlasMessageType = "nutrition" | "pain" | "compulsion" | "sleep" | "testosterone" | "general" | "image"
+
+type AtlasResponse = {
+  coreText: string
+  protocol?: AtlasProtocol
+  scienceNote?: string
+  type: AtlasMessageType
+  actionButtons?: { label: string; action: string }[]
+}
+
+type ChatMessage = {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  timestamp: Date
+  response?: AtlasResponse
+  imagePreview?: string
+}
+
+type AtlasContextData = {
+  currentWeekMetrics: AtlasWeekMetrics
+  recentCheckins: DailyCheckin[]
+  bodyStatus: BodyStatusMap
+  bodyMeasurements: BodyMeasurements
+}
+
+function simulateAtlasIAResponse(
+  userMessage: string,
+  context: AtlasContextData,
+  messageType?: AtlasMessageType,
+): AtlasResponse {
+  const { currentWeekMetrics, recentCheckins, bodyStatus, bodyMeasurements } = context
+
+  // Analyze context to build contextual responses
+  const lowExecution = currentWeekMetrics.executionRate < 70
+  const poorSleep = currentWeekMetrics.avgSleepHours < 7
+  const lowDiet = currentWeekMetrics.dietAdherence < 70
+  const lowEnergy = currentWeekMetrics.energyLevel === "Baixa"
+
+  const messageLower = userMessage.toLowerCase()
+
+  // FOTO DE COMIDA
+  if (
+    messageType === "image" ||
+    (messageLower.includes("foto") &&
+      (messageLower.includes("comida") || messageLower.includes("refeição") || messageLower.includes("lanche")))
+  ) {
+    return {
+      coreText: `Analisei sua foto. Estimativa: ~520 kcal (35g proteína, 48g carbo, 18g gordura).
+
+Contexto: você está com ${currentWeekMetrics.dietAdherence}% de aderência na dieta esta semana, executou ${currentWeekMetrics.trainingsDone}/${currentWeekMetrics.trainingsPlanned} treinos.
+
+Essa refeição está OK, mas note que seu sono médio está em ${currentWeekMetrics.avgSleepHours}h e energia ${currentWeekMetrics.energyLevel}. **O problema não é essa refeição, é o padrão da semana.**
+
+O que você quer fazer agora?`,
+      type: "nutrition",
+      actionButtons: [
+        { label: "Compensar no jantar", action: "adjust_dinner" },
+        { label: "Ajustar amanhã", action: "adjust_tomorrow" },
+        { label: "Tratar como dia livre", action: "free_day" },
+      ],
+    }
+  }
+
+  // DOR / LESÃO
+  if (
+    messageLower.includes("dor") ||
+    messageLower.includes("lesão") ||
+    messageLower.includes("ombro") ||
+    messageLower.includes("joelho")
+  ) {
+    const hasRedFlag =
+      messageLower.includes("intensa") || messageLower.includes("acordar") || messageLower.includes("trauma")
+
+    if (hasRedFlag) {
+      return {
+        coreText: `🚨 **ATENÇÃO**: Detectei sinais que sugerem algo mais sério.
+
+Você PRECISA consultar um médico ou fisioterapeuta presencial. Não vou te dar protocolo de treino ou exercícios corretivos porque isso pode piorar.
+
+Até você ser avaliado:
+- Evite movimentos que causam dor.
+- Não force "pra ver se melhora".
+- Não tome anti-inflamatório sem prescrição.
+
+Vou te orientar apenas a proteger a região enquanto você marca a consulta.`,
+        type: "pain",
+        safetyNotes: [
+          "A Atlas IA não substitui avaliação médica presencial. Em caso de dúvida, dor intensa ou piora, procure um profissional de saúde.",
+        ],
+      }
+    }
+
+    return {
+      coreText: `Entendi. Dor no ${messageLower.includes("ombro") ? "ombro" : "joelho"} durante movimento.
+
+Com base nos seus dados (execução ${currentWeekMetrics.executionRate}%, sono ${currentWeekMetrics.avgSleepHours}h), vou te propor um protocolo de 7 dias focado em **redução de risco** + recuperação:
+
+**NÃO** vou te dar "exercícios mágicos pra dor". Vou te ensinar a gerir carga, dormir melhor e reduzir inflamação sistêmica.`,
+      type: "pain",
+      protocol: {
+        title: "Protocolo Atlas 7 dias – Gestão de Dor Inteligente",
+        durationDays: 7,
+        goal: "Reduzir inflamação, proteger a região e melhorar recuperação sem parar de treinar",
+        dailyRules: [
+          "Remover TODOS os exercícios que causam dor >3/10 na região",
+          "Dormir mínimo 7h30 (sono é anti-inflamatório natural)",
+          "Caminhar 20min/dia (melhora circulação e recuperação)",
+          "Nada de anti-inflamatório sem prescrição médica",
+        ],
+        dailyChecklist: [
+          "Dor diminuiu ou permaneceu igual? (se piorou, pare e consulte médico)",
+          "Consegui dormir 7h+ hoje?",
+          "Fiz caminhada leve?",
+          "Evitei movimentos que causam dor?",
+        ],
+        successMetrics: [
+          "Dor reduzindo ao longo da semana",
+          "Conseguindo treinar outras regiões sem limitação",
+          "Sono melhorando (mínimo 7h)",
+        ],
+        safetyNotes: [
+          "Se a dor piorar a qualquer momento, pare e consulte um profissional",
+          "A Atlas IA não substitui avaliação médica presencial",
+          "Este protocolo NÃO trata lesões estruturais",
+        ],
+      },
+      scienceNote: `Estudos mostram que privação de sono aumenta inflamação sistêmica (IL-6, TNF-α) e piora percepção de dor. Melhorar sono é mais eficaz que a maioria dos "exercícios corretivos" vendidos por aí. Focar em recuperação + gestão de carga é o caminho.`,
+    }
+  }
+
+  // COMPULSÃO ALIMENTAR
+  if (
+    messageLower.includes("compulsão") ||
+    messageLower.includes("geladeira") ||
+    (messageLower.includes("noite") && messageLower.includes("comer"))
+  ) {
+    return {
+      coreText: `Você teve episódios noturnos. Vamos aos dados: você treinou ${currentWeekMetrics.trainingsDone}/${currentWeekMetrics.trainingsPlanned} vezes, dormiu média de ${currentWeekMetrics.avgSleepHours}h, aderência de dieta ${currentWeekMetrics.dietAdherence}%.
+
+**O problema não é "falta de força de vontade". É fisiologia + timing.**
+
+Quando você dorme mal (você está em <7h), aumenta grelina (hormônio da fome) e cai leptina (saciedade). Resultado: fome noturna descontrolada, desejo por junk food, decisões ruins.
+
+**A solução não é "ter vergonha na cara à noite". É consertar o DIA.**
+
+Vou te propor um protocolo de 14 dias que mexe no café da manhã, tarde e timing das refeições. A noite vai se resolver sozinha.`,
+      type: "compulsion",
+      protocol: {
+        title: "Protocolo Atlas 14 dias – Anti-Compulsão Sistêmica",
+        durationDays: 14,
+        goal: "Eliminar episódios noturnos atacando as causas reais: sono ruim, déficit agressivo, timing errado",
+        dailyRules: [
+          "Café da manhã até 1h após acordar (proteína + carboidrato)",
+          "Lanche da tarde reforçado (15h-16h) - 300-400 kcal",
+          "Jantar até 20h (sem pular)",
+          "Dormir às 22h30 (não negociável)",
+          "Se tiver fome à noite: 1 copo de água + esperar 10min antes de decidir comer",
+        ],
+        dailyChecklist: [
+          "Tomei café da manhã até 1h depois de acordar?",
+          "Fiz lanche reforçado 15h-16h?",
+          "Jantei até 20h?",
+          "Fui dormir às 22h30?",
+          "Tive episódio noturno? (0 = não, 1 = sim)",
+        ],
+        successMetrics: [
+          "Redução de 70%+ dos episódios noturnos em 14 dias",
+          "Sono melhorando (mínimo 7h)",
+          "Energia durante o dia aumentando",
+          "Fome noturna diminuindo naturalmente",
+        ],
+        safetyNotes: [
+          "Se os episódios persistirem após 14 dias, considere buscar nutricionista ou psicólogo especializado em comportamento alimentar",
+          "Compulsão grave pode ter componentes emocionais profundos que precisam de acompanhamento profissional",
+        ],
+      },
+      scienceNote: `Estudos de privação de sono mostram aumento de 25-30% em grelina e queda de 15-20% em leptina, levando a aumento de fome e preferência por alimentos calóricos. Timing das refeições + sono adequado normalizam esses hormônios naturalmente. Referências: Spiegel et al. (2004), Taheri et al. (2004).`,
+    }
+  }
+
+  // CARBO À NOITE
+  if (messageLower.includes("carbo") && messageLower.includes("noite")) {
+    return {
+      coreText: `Você está perguntando sobre carbo à noite. Vamos ao contexto:
+
+Execução: ${currentWeekMetrics.executionRate}%
+Sono: ${currentWeekMetrics.avgSleepHours}h (${poorSleep ? "RUIM" : "ok"})
+Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
+Energia: ${currentWeekMetrics.energyLevel}
+
+**Sua pergunta sobre "carbo à noite engorda" é irrelevante.** O problema é que você está executando ${lowExecution ? "mal" : "bem"}, dormindo ${poorSleep ? "mal" : "ok"} e com energia ${lowEnergy ? "baixa" : currentWeekMetrics.energyLevel.toLowerCase()}.
+
+Se eu te falar "pode comer carbo à noite", você vai continuar dormindo mal, treinando irregular e com fome descontrolada. Se eu te falar "não pode", você vai criar restrição mental e piorar a compulsão.
+
+**A resposta certa:** Conserta execução + sono PRIMEIRO. Depois a gente fala de timing de macros. Você está querendo otimizar 2% quando está errando 60% do básico.
+
+Quer que eu monte um protocolo de 7 dias focando em sono + rotina?`,
+      type: "nutrition",
+      scienceNote: `O mito de "carbo à noite engorda" vem de estudos antigos mal interpretados. Estudos mais recentes mostram que o que importa é o balanço calórico total e a composição da dieta ao longo do dia, não o timing isolado. O timing de carboidrato pode até melhorar o sono (carboidrato aumenta triptofano → serotonina → melatonina). Mas se você dorme mal e treina irregular, o timing é irrelevante.`,
+    }
+  }
+
+  // RECALCULAR DIETA
+  if (messageLower.includes("recalcul") || (messageLower.includes("ajust") && messageLower.includes("dieta"))) {
+    return {
+      coreText: `Recalculando dieta com base nos seus dados atuais:
+
+**Contexto da semana:**
+- Atlas Score: ${currentWeekMetrics.atlasScore}/100
+- Execução: ${currentWeekMetrics.executionRate}% (${currentWeekMetrics.trainingsDone}/${currentWeekMetrics.trainingsPlanned} treinos)
+- Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
+- Sono: ${currentWeekMetrics.avgSleepHours}h média
+- Energia: ${currentWeekMetrics.energyLevel}
+
+**Diagnóstico:**
+${lowExecution ? "⚠️ Execução baixa - não adianta ajustar dieta se você não treina.\n" : ""}${poorSleep ? "⚠️ Sono abaixo de 7h - isso está sabotando tudo (fome, recuperação, resultado).\n" : ""}${lowDiet ? "⚠️ Aderência baixa - o problema não é a dieta atual, é a execução.\n" : ""}
+
+**Ajuste proposto para hoje:**
+- Manter estrutura atual
+- Aumentar proteína no café da manhã (+20g)
+- Reforçar lanche da tarde (horário crítico)
+- Jantar mais cedo (até 20h)
+
+**Prioridade #1:** ${poorSleep ? "Dormir 7h30+ hoje (não negociável)" : "Executar 100% do treino de hoje"}`,
+      type: "nutrition",
+    }
+  }
+
+  // REVER SEMANA (ATLAS SCORE)
+  if (messageLower.includes("rever") || messageLower.includes("semana") || messageLower.includes("resumo")) {
+    const victories = []
+    const sabotages = []
+    const actions = []
+
+    if (currentWeekMetrics.executionRate >= 80) {
+      victories.push(`Executou ${currentWeekMetrics.executionRate}% dos treinos - consistência de elite`)
+    } else {
+      sabotages.push(
+        `Apenas ${currentWeekMetrics.executionRate}% de execução - perdeu ${currentWeekMetrics.trainingsPlanned - currentWeekMetrics.trainingsDone} treinos`,
+      )
+    }
+
+    if (currentWeekMetrics.avgSleepHours >= 7.5) {
+      victories.push(`Dormiu bem (${currentWeekMetrics.avgSleepHours}h média) - recuperação otimizada`)
+    } else {
+      sabotages.push(`Sono abaixo do ideal (${currentWeekMetrics.avgSleepHours}h) - afeta fome, energia e resultado`)
+    }
+
+    if (currentWeekMetrics.dietAdherence >= 85) {
+      victories.push(`Aderência de ${currentWeekMetrics.dietAdherence}% na dieta - disciplina impecável`)
+    } else {
+      sabotages.push(`Aderência de apenas ${currentWeekMetrics.dietAdherence}% - inconsistência alimentar`)
+    }
+
+    if (victories.length < 2) {
+      actions.push("Reduzir volume de treino temporariamente - você precisa de vitórias, não de volume")
+    }
+    if (poorSleep) {
+      actions.push("Protocolo de sono: dormir às 22h30 por 7 dias consecutivos")
+    }
+    if (lowDiet) {
+      actions.push("Simplificar dieta: 3 refeições por dia, sem contar macro - foco em EXECUTAR")
+    }
+
+    return {
+      coreText: `**Revisão da Semana - Atlas Score ${currentWeekMetrics.atlasScore}/100**
+
+**✅ 3 Vitórias:**
+${victories.length > 0 ? victories.map((v, i) => `${i + 1}. ${v}`).join("\n") : "1. Você não desistiu (isso já é uma vitória)\n2. Você está aqui buscando melhoria\n3. Você tem dados pra trabalhar (não está no escuro)"}
+
+**❌ 3 Sabotagens:**
+${sabotages.length > 0 ? sabotages.map((s, i) => `${i + 1}. ${s}`).join("\n") : "Nenhuma sabotagem crítica identificada"}
+
+**🎯 3 Ações para Próxima Semana:**
+${actions.length > 0 ? actions.map((a, i) => `${i + 1}. ${a}`).join("\n") : "1. Manter o que está funcionando\n2. Aumentar intensidade gradualmente\n3. Monitorar energia e sono"}
+
+**Contexto brutalmente honesto:**
+${
+  currentWeekMetrics.atlasScore < 60
+    ? "Você está agindo como alguém que quer resultados ou como alguém que quer história pra contar? Os números não mentem."
+    : currentWeekMetrics.atlasScore < 80
+      ? "Você está no caminho, mas há inconsistências claras. Resultado vem de hábitos, não de intenções."
+      : "Você está executando como um profissional. Continue assim e o resultado é inevitável."
+}`,
+      type: "general",
+    }
+  }
+
+  // RESPOSTA GENÉRICA (MAS AINDA CONTEXTUAL)
+  return {
+    coreText: `Entendi sua pergunta. Deixa eu te dar contexto antes de responder:
+
+**Sua semana atual:**
+- Atlas Score: ${currentWeekMetrics.atlasScore}/100
+- Execução: ${currentWeekMetrics.executionRate}% (${currentWeekMetrics.trainingsDone}/${currentWeekMetrics.trainingsPlanned} treinos)
+- Sono: ${currentWeekMetrics.avgSleepHours}h média
+- Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
+- Energia: ${currentWeekMetrics.energyLevel}
+
+Baseado nesses dados, a resposta para "${userMessage}" depende do que você está priorizando. 
+
+Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um protocolo específico pro SEU corpo e pro SEU momento atual?`,
+    type: "general",
+  }
+}
+
 // ========== OTHER VIEWS (unchanged) ==========
 function AtlasIAView() {
+  const atlasData = useAtlasData()
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputValue, setInputValue] = useState("")
+  const [expandedScience, setExpandedScience] = useState<Set<string>>(new Set())
+  const [showImageUpload, setShowImageUpload] = useState(false)
+  const messagesEndRef = React.useRef<HTMLDivElement>(null)
+
+  // Initialize with demo messages on mount
+  React.useEffect(() => {
+    const demoMessages: ChatMessage[] = [
+      {
+        id: "demo-1",
+        role: "user",
+        content: "Toda noite eu destruo a geladeira. Como resolver isso?",
+        timestamp: new Date(Date.now() - 300000),
+      },
+      {
+        id: "demo-2",
+        role: "assistant",
+        content: "",
+        timestamp: new Date(Date.now() - 290000),
+        response: simulateAtlasIAResponse(
+          "Toda noite eu destruo a geladeira",
+          {
+            currentWeekMetrics: atlasData.currentWeekMetrics,
+            recentCheckins: atlasData.checkins,
+            bodyStatus: atlasData.bodyStatus,
+            bodyMeasurements: atlasData.bodyMeasurements,
+          },
+          "compulsion",
+        ),
+      },
+      {
+        id: "demo-3",
+        role: "user",
+        content: "Posso comer carboidrato à noite?",
+        timestamp: new Date(Date.now() - 180000),
+      },
+      {
+        id: "demo-4",
+        role: "assistant",
+        content: "",
+        timestamp: new Date(Date.now() - 170000),
+        response: simulateAtlasIAResponse(
+          "Posso comer carboidrato à noite?",
+          {
+            currentWeekMetrics: atlasData.currentWeekMetrics,
+            recentCheckins: atlasData.checkins,
+            bodyStatus: atlasData.bodyStatus,
+            bodyMeasurements: atlasData.bodyMeasurements,
+          },
+          "nutrition",
+        ),
+      },
+    ]
+    setMessages(demoMessages)
+  }, []) // Only run once on mount
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const handleSend = () => {
+    if (!inputValue.trim()) return
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: inputValue,
+      timestamp: new Date(),
+    }
+
+    const context: AtlasContextData = {
+      currentWeekMetrics: atlasData.currentWeekMetrics,
+      recentCheckins: atlasData.checkins,
+      bodyStatus: atlasData.bodyStatus,
+      bodyMeasurements: atlasData.bodyMeasurements,
+    }
+
+    const response = simulateAtlasIAResponse(inputValue, context)
+
+    const assistantMsg: ChatMessage = {
+      id: `assistant-${Date.now()}`,
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+      response,
+    }
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg])
+    setInputValue("")
+  }
+
+  const handleShortcut = (prompt: string) => {
+    setInputValue(prompt)
+    setTimeout(() => handleSend(), 100)
+  }
+
+  const toggleScience = (messageId: string) => {
+    setExpandedScience((prev) => {
+      const next = new Set(prev)
+      if (next.has(messageId)) {
+        next.delete(messageId)
+      } else {
+        next.add(messageId)
+      }
+      return next
+    })
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
-          <Brain className="w-6 h-6 text-white" />
+    <div className="h-full flex flex-col lg:flex-row gap-6">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Atlas IA – Governança Corporal</h2>
+              <p className="text-sm text-muted-foreground">
+                Um cérebro que lê seus dados e devolve decisões práticas, em tempo real, baseado em evidência científica
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-xs text-blue-400">
+            <Activity className="w-3 h-3" />
+            Baseado em estudos (PubMed / Harvard) – sem substituir médico
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
-          <p className="text-muted-foreground">Sua inteligência artificial de governança corporal</p>
+
+        {/* Messages Area */}
+        <div className="flex-1 bg-card/30 backdrop-blur-sm border border-border rounded-2xl p-4 overflow-y-auto min-h-96 max-h-[600px]">
+          <div className="space-y-6">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                {msg.role === "assistant" && (
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+                    <Brain className="w-4 h-4 text-white" />
+                  </div>
+                )}
+
+                <div className={`max-w-[80%] ${msg.role === "user" ? "order-first" : ""}`}>
+                  {msg.role === "user" ? (
+                    <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm">
+                      <p className="text-sm">{msg.content}</p>
+                    </div>
+                  ) : msg.response ? (
+                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 space-y-4">
+                      {/* Core Text */}
+                      <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                        {msg.response.coreText}
+                      </div>
+
+                      {/* Protocol Card */}
+                      {msg.response.protocol && (
+                        <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-xl p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <h4 className="font-bold text-blue-400 flex-1">{msg.response.protocol.title}</h4>
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-md whitespace-nowrap">
+                              {msg.response.protocol.durationDays} dias
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Objetivo</p>
+                              <p className="text-sm text-foreground">{msg.response.protocol.goal}</p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Regras Diárias</p>
+                              <ul className="space-y-1">
+                                {msg.response.protocol.dailyRules.map((rule, i) => (
+                                  <li key={i} className="text-sm text-foreground flex gap-2">
+                                    <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                                    <span>{rule}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Checklist Diário</p>
+                              <ul className="space-y-1">
+                                {msg.response.protocol.dailyChecklist.map((item, i) => (
+                                  <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                                    <Target className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Métricas de Sucesso</p>
+                              <ul className="space-y-1">
+                                {msg.response.protocol.successMetrics.map((metric, i) => (
+                                  <li key={i} className="text-sm text-foreground flex gap-2">
+                                    <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                                    <span>{metric}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {msg.response.protocol.safetyNotes.length > 0 && (
+                              <div className="pt-2 border-t border-blue-500/20">
+                                <p className="text-xs font-semibold text-orange-400 uppercase mb-1">
+                                  ⚠️ Alertas de Segurança
+                                </p>
+                                <ul className="space-y-1">
+                                  {msg.response.protocol.safetyNotes.map((note, i) => (
+                                    <li key={i} className="text-xs text-orange-300/90">
+                                      {note}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      {msg.response.actionButtons && msg.response.actionButtons.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {msg.response.actionButtons.map((btn, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleShortcut(btn.action)}
+                              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-sm font-medium rounded-lg transition-colors"
+                            >
+                              {btn.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Science Note */}
+                      {msg.response.scienceNote && (
+                        <div className="border-t border-border pt-3">
+                          <button
+                            onClick={() => toggleScience(msg.id)}
+                            className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            {expandedScience.has(msg.id) ? "Ocultar" : "Ver"} explicação científica
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform ${expandedScience.has(msg.id) ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                          {expandedScience.has(msg.id) && (
+                            <div className="mt-3 p-3 bg-secondary/50 rounded-lg text-sm text-muted-foreground leading-relaxed">
+                              {msg.response.scienceNote}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+
+                {msg.role === "user" && (
+                  <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="mt-4 flex gap-2">
+          <div className="flex-1 relative">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend()
+                }
+              }}
+              placeholder="Digite sua mensagem ou use um atalho ao lado..."
+              className="w-full px-4 py-3 pr-12 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 resize-none"
+              rows={2}
+            />
+            <button
+              onClick={() => setShowImageUpload(!showImageUpload)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-blue-400 transition-colors"
+              title="Anexar imagem (em breve)"
+            >
+              <ImageIcon className="w-5 h-5" />
+            </button>
+          </div>
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim()}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-96">
-        <div className="flex flex-col h-full">
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Brain className="w-16 h-16 mx-auto mb-4 text-blue-400/50" />
-              <p>Inicie uma conversa com a Atlas IA</p>
-              <p className="text-sm mt-2">Pergunte sobre treino, dieta, sono ou qualquer pilar da sua governança.</p>
+      {/* Sidebar - Context + Shortcuts */}
+      <div className="w-full lg:w-80 space-y-4">
+        {/* Current Context Card */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-blue-400" />
+            Contexto Atual
+          </h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Atlas Score</span>
+              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.atlasScore}/100</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Execução</span>
+              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.executionRate}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Sono médio</span>
+              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.avgSleepHours}h</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Dieta</span>
+              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.dietAdherence}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Energia</span>
+              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.energyLevel}</span>
             </div>
           </div>
-          <div className="mt-4 flex gap-2">
-            <input
-              type="text"
-              placeholder="Digite sua mensagem..."
-              className="flex-1 px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
-            />
-            <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity">
-              Enviar
+        </div>
+
+        {/* Shortcuts Card */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" />
+            Atalhos Atlas IA
+          </h3>
+          <div className="space-y-2">
+            <button
+              onClick={() =>
+                handleShortcut(
+                  "Recalcule minha dieta de hoje considerando meu Atlas Score atual, meus check-ins dos últimos 3 dias e meu objetivo de perder gordura sem perder massa magra",
+                )
+              }
+              className="w-full px-4 py-3 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left text-sm text-blue-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10"
+            >
+              <div className="font-medium mb-1">Recalcular dieta de HOJE</div>
+              <div className="text-xs text-blue-400/70">Baseado nos seus dados atuais</div>
             </button>
+
+            <button
+              onClick={() => handleShortcut("Quero rever uma dor específica que estou sentindo")}
+              className="w-full px-4 py-3 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/30 text-left text-sm text-orange-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10"
+            >
+              <div className="font-medium mb-1">Rever dor específica</div>
+              <div className="text-xs text-orange-400/70">Triagem + protocolo de gestão</div>
+            </button>
+
+            <button
+              onClick={() => handleShortcut("Crie um protocolo de 7 dias focado em reset metabólico")}
+              className="w-full px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left text-sm text-emerald-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/10"
+            >
+              <div className="font-medium mb-1">Protocolo 7 dias – Reset</div>
+              <div className="text-xs text-emerald-400/70">Metabolismo + energia</div>
+            </button>
+
+            <button
+              onClick={() =>
+                handleShortcut("Crie um protocolo de 14 dias focado em eliminar compulsão alimentar noturna")
+              }
+              className="w-full px-4 py-3 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 text-left text-sm text-purple-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <div className="font-medium mb-1">Protocolo 14 dias – Anti-compulsão</div>
+              <div className="text-xs text-purple-400/70">Fisiologia + timing</div>
+            </button>
+
+            <button
+              onClick={() =>
+                handleShortcut(
+                  "Faça uma revisão completa da minha semana baseada no meu Atlas Score, me mostrando vitórias, sabotagens e ações para próxima semana",
+                )
+              }
+              className="w-full px-4 py-3 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-left text-sm text-cyan-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/10"
+            >
+              <div className="font-medium mb-1">Rever semana Atlas Score</div>
+              <div className="text-xs text-cyan-400/70">Análise completa + próximos passos</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Body Status Quick View */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <User className="w-4 h-4 text-green-400" />
+            Status Corporal
+          </h3>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {Object.entries(atlasData.bodyStatus).map(([area, status]) => (
+              <div key={area} className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    status === "good" ? "bg-green-400" : status === "needs_improvement" ? "bg-yellow-400" : "bg-red-400"
+                  }`}
+                />
+                <span className="text-muted-foreground capitalize">{area}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
