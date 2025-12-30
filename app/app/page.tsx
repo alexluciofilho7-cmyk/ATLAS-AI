@@ -33,6 +33,9 @@ import {
   RefreshCw,
   TrendingDown,
   Shield,
+  Apple,
+  Heart,
+  Flame,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -1172,381 +1175,6 @@ Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um 
 }
 
 // ========== OTHER VIEWS (unchanged) ==========
-function AtlasIAView() {
-  const atlasData = useAtlasData()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showImageUpload, setShowImageUpload] = useState(false)
-  const messagesEndRef = React.useRef<HTMLDivElement>(null)
-
-  // Initialize with demo messages on mount
-  // React.useEffect(() => {
-  //   const demoMessages: ChatMessage[] = [
-  //     {
-  //       id: "demo-1",
-  //       role: "user",
-  //       content: "Toda noite eu destruo a geladeira. Como resolver isso?",
-  //       timestamp: new Date(Date.now() - 300000),
-  //     },
-  //     {
-  //       id: "demo-2",
-  //       role: "assistant",
-  //       content: "",
-  //       timestamp: new Date(Date.now() - 290000),
-  //       response: simulateAtlasIAResponse(
-  //         "Toda noite eu destruo a geladeira",
-  //         {
-  //           currentWeekMetrics: atlasData.currentWeekMetrics,
-  //           recentCheckins: atlasData.checkins,
-  //           bodyStatus: atlasData.bodyStatus,
-  //           bodyMeasurements: atlasData.bodyMeasurements,
-  //         },
-  //         "compulsion",
-  //       ),
-  //     },
-  //     {
-  //       id: "demo-3",
-  //       role: "user",
-  //       content: "Posso comer carboidrato à noite?",
-  //       timestamp: new Date(Date.now() - 180000),
-  //     },
-  //     {
-  //       id: "demo-4",
-  //       role: "assistant",
-  //       content: "",
-  //       timestamp: new Date(Date.now() - 170000),
-  //       response: simulateAtlasIAResponse(
-  //         "Posso comer carboidrato à noite?",
-  //         {
-  //           currentWeekMetrics: atlasData.currentWeekMetrics,
-  //           recentCheckins: atlasData.checkins,
-  //           bodyStatus: atlasData.bodyStatus,
-  //           bodyMeasurements: atlasData.bodyMeasurements,
-  //         },
-  //         "nutrition",
-  //       ),
-  //     },
-  //   ]
-  //   setMessages(demoMessages)
-  // }, []) // Only run once on mount
-
-  React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return
-
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: inputValue,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMsg])
-    setInputValue("")
-    setIsLoading(true)
-
-    const context = {
-      currentWeekMetrics: atlasData.currentWeekMetrics,
-      bodyStatus: atlasData.bodyStatus,
-      recentCheckins: atlasData.checkins.slice(-7), // Last 7 check-ins
-      bodyMeasurements: atlasData.bodyMeasurements,
-    }
-
-    const apiMessages = messages
-      .filter((msg) => msg.role === "user" || (msg.role === "assistant" && msg.content))
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
-    apiMessages.push({ role: "user", content: inputValue })
-
-    try {
-      const response = await fetch("/api/atlas-ia-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: apiMessages,
-          context,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Erro ao processar mensagem")
-      }
-
-      const data = await response.json()
-
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.reply,
-        timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, assistantMsg])
-    } catch (error) {
-      console.error("[v0] Error calling Atlas IA API:", error)
-      const errorMsg: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente em alguns instantes.",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMsg])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleShortcut = (prompt: string) => {
-    setInputValue(prompt)
-  }
-
-  return (
-    <div className="h-full flex flex-col lg:flex-row gap-6">
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Atlas IA – Governança Corporal</h2>
-              <p className="text-sm text-muted-foreground">
-                Um cérebro que lê seus dados e devolve decisões práticas, em tempo real, baseado em evidência científica
-              </p>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-xs text-blue-400">
-            <Activity className="w-3 h-3" />
-            Baseado em estudos (PubMed / Harvard) – sem substituir médico
-          </div>
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 bg-card/30 backdrop-blur-sm border border-border rounded-2xl p-4 overflow-y-auto min-h-96 max-h-[600px]">
-          <div className="space-y-6">
-            {messages.length === 0 && (
-              <div className="text-center py-12">
-                <Brain className="w-12 h-12 text-blue-400/50 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">
-                  Faça sua primeira pergunta ou use um dos atalhos ao lado
-                </p>
-              </div>
-            )}
-
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                {msg.role === "assistant" && (
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
-                    <Brain className="w-4 h-4 text-white" />
-                  </div>
-                )}
-
-                <div className={`max-w-[80%] ${msg.role === "user" ? "order-first" : ""}`}>
-                  {msg.role === "user" ? (
-                    <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm">
-                      <p className="text-sm whitespace-pre-line">{msg.content}</p>
-                    </div>
-                  ) : (
-                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4">
-                      <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">{msg.content}</div>
-                    </div>
-                  )}
-                </div>
-
-                {msg.role === "user" && (
-                  <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
-                  <Brain className="w-4 h-4 text-white" />
-                </div>
-                <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="mt-4 flex gap-2">
-          <div className="flex-1 relative">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              placeholder="Digite sua mensagem ou use um atalho ao lado..."
-              className="w-full px-4 py-3 pr-12 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 resize-none"
-              rows={2}
-              disabled={isLoading}
-            />
-            <button
-              onClick={() => setShowImageUpload(!showImageUpload)}
-              className="absolute right-3 top-3 text-muted-foreground hover:text-blue-400 transition-colors"
-              title="Anexar imagem (em breve)"
-              disabled={isLoading}
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
-          </div>
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Sidebar - Context + Shortcuts */}
-      <div className="w-full lg:w-80 space-y-4">
-        {/* Current Context Card */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-blue-400" />
-            Contexto Atual
-          </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Atlas Score</span>
-              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.atlasScore}/100</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Execução</span>
-              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.executionRate}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sono médio</span>
-              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.avgSleepHours}h</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Dieta</span>
-              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.dietAdherence}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Energia</span>
-              <span className="font-semibold text-foreground">{atlasData.currentWeekMetrics.energyLevel}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Shortcuts Card */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-cyan-400" />
-            Atalhos Atlas IA
-          </h3>
-          <div className="space-y-2">
-            <button
-              onClick={() =>
-                handleShortcut(
-                  "Recalcule minha dieta de hoje considerando meu Atlas Score atual, meus check-ins dos últimos 3 dias e meu objetivo de perder gordura sem perder massa magra",
-                )
-              }
-              className="w-full px-4 py-3 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left text-sm text-blue-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10"
-              disabled={isLoading}
-            >
-              <div className="font-medium mb-1">Recalcular dieta de HOJE</div>
-              <div className="text-xs text-blue-400/70">Baseado nos seus dados atuais</div>
-            </button>
-
-            <button
-              onClick={() => handleShortcut("Quero rever uma dor específica que estou sentindo")}
-              className="w-full px-4 py-3 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/30 text-left text-sm text-orange-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10"
-              disabled={isLoading}
-            >
-              <div className="font-medium mb-1">Rever dor específica</div>
-              <div className="text-xs text-orange-400/70">Triagem + protocolo de gestão</div>
-            </button>
-
-            <button
-              onClick={() => handleShortcut("Crie um protocolo de 7 dias focado em reset metabólico")}
-              className="w-full px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left text-sm text-emerald-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/10"
-              disabled={isLoading}
-            >
-              <div className="font-medium mb-1">Protocolo 7 dias – Reset</div>
-              <div className="text-xs text-emerald-400/70">Metabolismo + energia</div>
-            </button>
-
-            <button
-              onClick={() =>
-                handleShortcut("Crie um protocolo de 14 dias focado em eliminar compulsão alimentar noturna")
-              }
-              className="w-full px-4 py-3 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 text-left text-sm text-purple-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10"
-              disabled={isLoading}
-            >
-              <div className="font-medium mb-1">Protocolo 14 dias – Anti-compulsão</div>
-              <div className="text-xs text-purple-400/70">Fisiologia + timing</div>
-            </button>
-
-            <button
-              onClick={() =>
-                handleShortcut(
-                  "Faça uma revisão completa da minha semana baseada no meu Atlas Score, me mostrando vitórias, sabotagens e ações para próxima semana",
-                )
-              }
-              className="w-full px-4 py-3 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-left text-sm text-cyan-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/10"
-              disabled={isLoading}
-            >
-              <div className="font-medium mb-1">Rever semana Atlas Score</div>
-              <div className="text-xs text-cyan-400/70">Análise completa + próximos passos</div>
-            </button>
-          </div>
-        </div>
-
-        {/* Body Status Quick View */}
-        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-green-400" />
-            Status Corporal
-          </h3>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {Object.entries(atlasData.bodyStatus).map(([area, status]) => (
-              <div key={area} className="flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    status === "good" ? "bg-green-400" : status === "needs_improvement" ? "bg-yellow-400" : "bg-red-400"
-                  }`}
-                />
-                <span className="text-muted-foreground capitalize">{area}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ========== TREINO & DIETA VIEW ==========
 function TreinoDietaView() {
   const { bodyStatus, currentWeekMetrics, checkins, gender } = useAtlasData()
 
@@ -2012,6 +1640,363 @@ function TestosteronaView() {
       </div>
       <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
         <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== ATLAS IA VIEW (FUTUREISTIC CHAT PANEL) ==========
+function AtlasIAView() {
+  const atlasData = useAtlasData()
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputValue, setInputValue] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [activeContext, setActiveContext] = useState<string | null>(null)
+  const messagesEndRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const contextChips = [
+    { id: "training", label: "Treino", icon: Dumbbell },
+    { id: "diet", label: "Dieta", icon: Apple },
+    { id: "sleep", label: "Sono & Recuperação", icon: Moon },
+    { id: "physio", label: "Fisioterapia & Dores", icon: Heart },
+    { id: "testosterone", label: "Testosterona Natural", icon: Flame },
+    { id: "compulsion", label: "Compulsão Alimentar", icon: AlertTriangle },
+  ]
+
+  const warShortcuts = [
+    {
+      label: "Analisar meu dia de hoje",
+      message: "Atlas IA, analise meu dia de hoje com base nos meus dados e fale a verdade sobre minha execução.",
+    },
+    {
+      label: "Protocolo 7 dias para o meu ponto fraco",
+      message: "Crie um protocolo de 7 dias focado no meu maior ponto fraco físico.",
+    },
+    {
+      label: "Revisar minha semana sem passar pano",
+      message:
+        "Revise minha semana como um treinador que não passa pano e me dê 3 elogios, 3 críticas e 3 ações para próxima semana.",
+    },
+  ]
+
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return
+
+    let finalMessage = inputValue
+    if (activeContext) {
+      const contextLabels: Record<string, string> = {
+        training: "Treino",
+        diet: "Dieta",
+        sleep: "Sono & Recuperação",
+        physio: "Fisioterapia & Dores",
+        testosterone: "Testosterona Natural",
+        compulsion: "Compulsão Alimentar",
+      }
+      finalMessage = `[Contexto de foco principal: ${contextLabels[activeContext]}] ${inputValue}`
+    }
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: inputValue,
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMsg])
+    setInputValue("")
+    setIsLoading(true)
+
+    const context = {
+      currentWeekMetrics: atlasData.currentWeekMetrics,
+      bodyStatus: atlasData.bodyStatus,
+      recentCheckins: atlasData.checkins.slice(-7),
+      bodyMeasurements: atlasData.bodyMeasurements,
+    }
+
+    const apiMessages = messages
+      .filter((msg) => msg.role === "user" || (msg.role === "assistant" && msg.content))
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+    apiMessages.push({ role: "user", content: finalMessage })
+
+    try {
+      const response = await fetch("/api/atlas-ia-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          context,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Erro ao processar mensagem")
+      }
+
+      const data = await response.json()
+
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.reply,
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, assistantMsg])
+    } catch (error) {
+      console.error("[v0] Error calling Atlas IA API:", error)
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente em alguns instantes.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMsg])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleShortcut = (message: string) => {
+    setInputValue(message)
+  }
+
+  return (
+    <div
+      className="h-full min-h-screen relative overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #0a192f 0%, #112240 50%, #0a1929 100%)",
+      }}
+    >
+      {/* Background particles/circuit effect */}
+      <div className="absolute inset-0 opacity-10">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px)",
+            backgroundSize: "50px 50px",
+          }}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
+        {/* Futuristic Chat Card */}
+        <div
+          className="bg-slate-900/40 backdrop-blur-xl border-2 border-blue-500/30 rounded-3xl shadow-2xl overflow-hidden"
+          style={{
+            boxShadow: "0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(6, 182, 212, 0.1)",
+          }}
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-sm border-b border-blue-500/30 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg animate-pulse"
+                  style={{
+                    boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)",
+                  }}
+                >
+                  <Brain className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Atlas IA – Governança Corporal</h2>
+                  <p className="text-sm text-blue-200/70">
+                    Seu cérebro externo para treino, dieta, sono, hormônios e lesões.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-400/40 rounded-full">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="text-sm text-emerald-300 font-medium">Online</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Messages Area */}
+          <div className="p-6 h-[500px] overflow-y-auto bg-slate-900/20 backdrop-blur-sm">
+            <div className="space-y-6">
+              {messages.length === 0 && (
+                <div className="text-center py-16">
+                  <div
+                    className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center"
+                    style={{
+                      boxShadow: "0 0 40px rgba(59, 130, 246, 0.3)",
+                    }}
+                  >
+                    <Brain className="w-10 h-10 text-blue-400" />
+                  </div>
+                  <p className="text-blue-200/70 text-sm">
+                    Faça sua primeira pergunta ou use um dos atalhos de guerra abaixo
+                  </p>
+                </div>
+              )}
+
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {msg.role === "assistant" && (
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <Brain className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+
+                  <div className={`max-w-[75%] ${msg.role === "user" ? "order-first" : ""}`}>
+                    {msg.role === "user" ? (
+                      <div
+                        className="bg-gradient-to-br from-blue-600 to-blue-500 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg"
+                        style={{
+                          boxShadow: "0 4px 20px rgba(59, 130, 246, 0.3)",
+                        }}
+                      >
+                        <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                      </div>
+                    ) : (
+                      <div
+                        className="bg-slate-800/60 backdrop-blur-sm border border-blue-500/20 rounded-2xl rounded-tl-sm p-5 shadow-xl"
+                        style={{
+                          boxShadow: "0 4px 20px rgba(6, 182, 212, 0.15)",
+                        }}
+                      >
+                        <div className="text-sm text-blue-50 whitespace-pre-line leading-relaxed">{msg.content}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {msg.role === "user" && (
+                    <div className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Brain className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="bg-slate-800/60 backdrop-blur-sm border border-blue-500/20 rounded-2xl rounded-tl-sm px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
+                        <div
+                          className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.4s" }}
+                        />
+                      </div>
+                      <span className="text-xs text-blue-300 ml-2">Atlas IA está analisando seus dados...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Context Chips */}
+          <div className="px-6 py-4 bg-slate-900/40 border-t border-blue-500/20">
+            <div className="flex flex-wrap gap-2">
+              {contextChips.map((chip) => {
+                const Icon = chip.icon
+                return (
+                  <button
+                    key={chip.id}
+                    onClick={() => setActiveContext(activeContext === chip.id ? null : chip.id)}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
+                      activeContext === chip.id
+                        ? "bg-blue-500/30 border-2 border-blue-400/60 text-blue-200 shadow-lg"
+                        : "bg-slate-800/50 border border-slate-700/50 text-slate-300 hover:border-blue-500/40 hover:bg-slate-700/50"
+                    }`}
+                    style={
+                      activeContext === chip.id
+                        ? {
+                            boxShadow: "0 0 20px rgba(59, 130, 246, 0.4)",
+                          }
+                        : {}
+                    }
+                    disabled={isLoading}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {chip.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* War Shortcuts */}
+          <div className="px-6 py-4 bg-slate-900/30 border-t border-blue-500/20">
+            <div className="flex gap-3">
+              {warShortcuts.map((shortcut, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleShortcut(shortcut.message)}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 font-medium hover:from-cyan-600/30 hover:to-blue-600/30 hover:border-cyan-400/50 transition-all duration-200 hover:shadow-lg"
+                  style={{
+                    boxShadow: "0 0 15px rgba(6, 182, 212, 0.1)",
+                  }}
+                  disabled={isLoading}
+                >
+                  {shortcut.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="p-6 bg-slate-900/50 border-t border-blue-500/30">
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSend()
+                    }
+                  }}
+                  placeholder="Digite sua mensagem para a Atlas IA..."
+                  className="w-full px-5 py-4 pr-14 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 resize-none transition-all"
+                  rows={2}
+                  disabled={isLoading}
+                />
+                <button
+                  className="absolute right-4 top-4 text-slate-400 hover:text-blue-400 transition-colors disabled:opacity-50"
+                  title="Anexar imagem (em breve)"
+                  disabled={isLoading}
+                >
+                  <ImageIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <button
+                onClick={handleSend}
+                disabled={!inputValue.trim() || isLoading}
+                className="px-7 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl hover:from-blue-500 hover:to-cyan-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                style={{
+                  boxShadow: "0 4px 20px rgba(59, 130, 246, 0.4)",
+                }}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
