@@ -25,9 +25,7 @@ import {
   Send,
   User,
   ImageIcon,
-  CheckCircle,
   TrendingUp,
-  ChevronDown,
   AlertTriangle,
   AlertCircle,
   Clock,
@@ -1178,67 +1176,67 @@ function AtlasIAView() {
   const atlasData = useAtlasData()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState("")
-  const [expandedScience, setExpandedScience] = useState<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = useState(false)
   const [showImageUpload, setShowImageUpload] = useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
   // Initialize with demo messages on mount
-  React.useEffect(() => {
-    const demoMessages: ChatMessage[] = [
-      {
-        id: "demo-1",
-        role: "user",
-        content: "Toda noite eu destruo a geladeira. Como resolver isso?",
-        timestamp: new Date(Date.now() - 300000),
-      },
-      {
-        id: "demo-2",
-        role: "assistant",
-        content: "",
-        timestamp: new Date(Date.now() - 290000),
-        response: simulateAtlasIAResponse(
-          "Toda noite eu destruo a geladeira",
-          {
-            currentWeekMetrics: atlasData.currentWeekMetrics,
-            recentCheckins: atlasData.checkins,
-            bodyStatus: atlasData.bodyStatus,
-            bodyMeasurements: atlasData.bodyMeasurements,
-          },
-          "compulsion",
-        ),
-      },
-      {
-        id: "demo-3",
-        role: "user",
-        content: "Posso comer carboidrato à noite?",
-        timestamp: new Date(Date.now() - 180000),
-      },
-      {
-        id: "demo-4",
-        role: "assistant",
-        content: "",
-        timestamp: new Date(Date.now() - 170000),
-        response: simulateAtlasIAResponse(
-          "Posso comer carboidrato à noite?",
-          {
-            currentWeekMetrics: atlasData.currentWeekMetrics,
-            recentCheckins: atlasData.checkins,
-            bodyStatus: atlasData.bodyStatus,
-            bodyMeasurements: atlasData.bodyMeasurements,
-          },
-          "nutrition",
-        ),
-      },
-    ]
-    setMessages(demoMessages)
-  }, []) // Only run once on mount
+  // React.useEffect(() => {
+  //   const demoMessages: ChatMessage[] = [
+  //     {
+  //       id: "demo-1",
+  //       role: "user",
+  //       content: "Toda noite eu destruo a geladeira. Como resolver isso?",
+  //       timestamp: new Date(Date.now() - 300000),
+  //     },
+  //     {
+  //       id: "demo-2",
+  //       role: "assistant",
+  //       content: "",
+  //       timestamp: new Date(Date.now() - 290000),
+  //       response: simulateAtlasIAResponse(
+  //         "Toda noite eu destruo a geladeira",
+  //         {
+  //           currentWeekMetrics: atlasData.currentWeekMetrics,
+  //           recentCheckins: atlasData.checkins,
+  //           bodyStatus: atlasData.bodyStatus,
+  //           bodyMeasurements: atlasData.bodyMeasurements,
+  //         },
+  //         "compulsion",
+  //       ),
+  //     },
+  //     {
+  //       id: "demo-3",
+  //       role: "user",
+  //       content: "Posso comer carboidrato à noite?",
+  //       timestamp: new Date(Date.now() - 180000),
+  //     },
+  //     {
+  //       id: "demo-4",
+  //       role: "assistant",
+  //       content: "",
+  //       timestamp: new Date(Date.now() - 170000),
+  //       response: simulateAtlasIAResponse(
+  //         "Posso comer carboidrato à noite?",
+  //         {
+  //           currentWeekMetrics: atlasData.currentWeekMetrics,
+  //           recentCheckins: atlasData.checkins,
+  //           bodyStatus: atlasData.bodyStatus,
+  //           bodyMeasurements: atlasData.bodyMeasurements,
+  //         },
+  //         "nutrition",
+  //       ),
+  //     },
+  //   ]
+  //   setMessages(demoMessages)
+  // }, []) // Only run once on mount
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -1247,42 +1245,67 @@ function AtlasIAView() {
       timestamp: new Date(),
     }
 
-    const context: AtlasContextData = {
+    setMessages((prev) => [...prev, userMsg])
+    setInputValue("")
+    setIsLoading(true)
+
+    const context = {
       currentWeekMetrics: atlasData.currentWeekMetrics,
-      recentCheckins: atlasData.checkins,
       bodyStatus: atlasData.bodyStatus,
+      recentCheckins: atlasData.checkins.slice(-7), // Last 7 check-ins
       bodyMeasurements: atlasData.bodyMeasurements,
     }
 
-    const response = simulateAtlasIAResponse(inputValue, context)
+    const apiMessages = messages
+      .filter((msg) => msg.role === "user" || (msg.role === "assistant" && msg.content))
+      .map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+    apiMessages.push({ role: "user", content: inputValue })
 
-    const assistantMsg: ChatMessage = {
-      id: `assistant-${Date.now()}`,
-      role: "assistant",
-      content: "",
-      timestamp: new Date(),
-      response,
+    try {
+      const response = await fetch("/api/atlas-ia-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          context,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Erro ao processar mensagem")
+      }
+
+      const data = await response.json()
+
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.reply,
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, assistantMsg])
+    } catch (error) {
+      console.error("[v0] Error calling Atlas IA API:", error)
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        role: "assistant",
+        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente em alguns instantes.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMsg])
+    } finally {
+      setIsLoading(false)
     }
-
-    setMessages((prev) => [...prev, userMsg, assistantMsg])
-    setInputValue("")
   }
 
   const handleShortcut = (prompt: string) => {
     setInputValue(prompt)
-    setTimeout(() => handleSend(), 100)
-  }
-
-  const toggleScience = (messageId: string) => {
-    setExpandedScience((prev) => {
-      const next = new Set(prev)
-      if (next.has(messageId)) {
-        next.delete(messageId)
-      } else {
-        next.add(messageId)
-      }
-      return next
-    })
   }
 
   return (
@@ -1311,6 +1334,15 @@ function AtlasIAView() {
         {/* Messages Area */}
         <div className="flex-1 bg-card/30 backdrop-blur-sm border border-border rounded-2xl p-4 overflow-y-auto min-h-96 max-h-[600px]">
           <div className="space-y-6">
+            {messages.length === 0 && (
+              <div className="text-center py-12">
+                <Brain className="w-12 h-12 text-blue-400/50 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">
+                  Faça sua primeira pergunta ou use um dos atalhos ao lado
+                </p>
+              </div>
+            )}
+
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
@@ -1322,122 +1354,13 @@ function AtlasIAView() {
                 <div className={`max-w-[80%] ${msg.role === "user" ? "order-first" : ""}`}>
                   {msg.role === "user" ? (
                     <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm">
-                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-sm whitespace-pre-line">{msg.content}</p>
                     </div>
-                  ) : msg.response ? (
-                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 space-y-4">
-                      {/* Core Text */}
-                      <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                        {msg.response.coreText}
-                      </div>
-
-                      {/* Protocol Card */}
-                      {msg.response.protocol && (
-                        <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-xl p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <h4 className="font-bold text-blue-400 flex-1">{msg.response.protocol.title}</h4>
-                            <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-md whitespace-nowrap">
-                              {msg.response.protocol.durationDays} dias
-                            </span>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div>
-                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Objetivo</p>
-                              <p className="text-sm text-foreground">{msg.response.protocol.goal}</p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Regras Diárias</p>
-                              <ul className="space-y-1">
-                                {msg.response.protocol.dailyRules.map((rule, i) => (
-                                  <li key={i} className="text-sm text-foreground flex gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                                    <span>{rule}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Checklist Diário</p>
-                              <ul className="space-y-1">
-                                {msg.response.protocol.dailyChecklist.map((item, i) => (
-                                  <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                                    <Target className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-semibold text-blue-300 uppercase mb-1">Métricas de Sucesso</p>
-                              <ul className="space-y-1">
-                                {msg.response.protocol.successMetrics.map((metric, i) => (
-                                  <li key={i} className="text-sm text-foreground flex gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                                    <span>{metric}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            {msg.response.protocol.safetyNotes.length > 0 && (
-                              <div className="pt-2 border-t border-blue-500/20">
-                                <p className="text-xs font-semibold text-orange-400 uppercase mb-1">
-                                  ⚠️ Alertas de Segurança
-                                </p>
-                                <ul className="space-y-1">
-                                  {msg.response.protocol.safetyNotes.map((note, i) => (
-                                    <li key={i} className="text-xs text-orange-300/90">
-                                      {note}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      {msg.response.actionButtons && msg.response.actionButtons.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {msg.response.actionButtons.map((btn, i) => (
-                            <button
-                              key={i}
-                              onClick={() => handleShortcut(btn.action)}
-                              className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-sm font-medium rounded-lg transition-colors"
-                            >
-                              {btn.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Science Note */}
-                      {msg.response.scienceNote && (
-                        <div className="border-t border-border pt-3">
-                          <button
-                            onClick={() => toggleScience(msg.id)}
-                            className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            {expandedScience.has(msg.id) ? "Ocultar" : "Ver"} explicação científica
-                            <ChevronDown
-                              className={`w-4 h-4 transition-transform ${expandedScience.has(msg.id) ? "rotate-180" : ""}`}
-                            />
-                          </button>
-                          {expandedScience.has(msg.id) && (
-                            <div className="mt-3 p-3 bg-secondary/50 rounded-lg text-sm text-muted-foreground leading-relaxed">
-                              {msg.response.scienceNote}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                  ) : (
+                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4">
+                      <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">{msg.content}</div>
                     </div>
-                  ) : null}
+                  )}
                 </div>
 
                 {msg.role === "user" && (
@@ -1447,6 +1370,22 @@ function AtlasIAView() {
                 )}
               </div>
             ))}
+
+            {isLoading && (
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+                  <Brain className="w-4 h-4 text-white" />
+                </div>
+                <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -1466,18 +1405,20 @@ function AtlasIAView() {
               placeholder="Digite sua mensagem ou use um atalho ao lado..."
               className="w-full px-4 py-3 pr-12 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500 resize-none"
               rows={2}
+              disabled={isLoading}
             />
             <button
               onClick={() => setShowImageUpload(!showImageUpload)}
               className="absolute right-3 top-3 text-muted-foreground hover:text-blue-400 transition-colors"
               title="Anexar imagem (em breve)"
+              disabled={isLoading}
             >
               <ImageIcon className="w-5 h-5" />
             </button>
           </div>
           <button
             onClick={handleSend}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isLoading}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
@@ -1531,6 +1472,7 @@ function AtlasIAView() {
                 )
               }
               className="w-full px-4 py-3 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left text-sm text-blue-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10"
+              disabled={isLoading}
             >
               <div className="font-medium mb-1">Recalcular dieta de HOJE</div>
               <div className="text-xs text-blue-400/70">Baseado nos seus dados atuais</div>
@@ -1539,6 +1481,7 @@ function AtlasIAView() {
             <button
               onClick={() => handleShortcut("Quero rever uma dor específica que estou sentindo")}
               className="w-full px-4 py-3 bg-orange-600/10 hover:bg-orange-600/20 border border-orange-500/30 text-left text-sm text-orange-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-500/10"
+              disabled={isLoading}
             >
               <div className="font-medium mb-1">Rever dor específica</div>
               <div className="text-xs text-orange-400/70">Triagem + protocolo de gestão</div>
@@ -1547,6 +1490,7 @@ function AtlasIAView() {
             <button
               onClick={() => handleShortcut("Crie um protocolo de 7 dias focado em reset metabólico")}
               className="w-full px-4 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left text-sm text-emerald-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/10"
+              disabled={isLoading}
             >
               <div className="font-medium mb-1">Protocolo 7 dias – Reset</div>
               <div className="text-xs text-emerald-400/70">Metabolismo + energia</div>
@@ -1557,6 +1501,7 @@ function AtlasIAView() {
                 handleShortcut("Crie um protocolo de 14 dias focado em eliminar compulsão alimentar noturna")
               }
               className="w-full px-4 py-3 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 text-left text-sm text-purple-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10"
+              disabled={isLoading}
             >
               <div className="font-medium mb-1">Protocolo 14 dias – Anti-compulsão</div>
               <div className="text-xs text-purple-400/70">Fisiologia + timing</div>
@@ -1569,6 +1514,7 @@ function AtlasIAView() {
                 )
               }
               className="w-full px-4 py-3 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-left text-sm text-cyan-300 rounded-lg transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/10"
+              disabled={isLoading}
             >
               <div className="font-medium mb-1">Rever semana Atlas Score</div>
               <div className="text-xs text-cyan-400/70">Análise completa + próximos passos</div>
