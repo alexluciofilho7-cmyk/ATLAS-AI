@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4", // Use gpt-4 or gpt-4-turbo for best quality
+        model: "gpt-4o-mini",
         messages: openaiMessages,
         temperature: 0.7,
         max_tokens: 1500,
