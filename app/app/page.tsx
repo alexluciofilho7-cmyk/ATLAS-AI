@@ -36,6 +36,9 @@ import {
   TrendingUp,
   CheckCircle2,
   Calendar,
+  AlertCircle,
+  Sun,
+  Coffee,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -1825,7 +1828,6 @@ function SonoView() {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
   const [showCrisisModal, setShowCrisisModal] = useState(false)
   const [showProtocolModal, setShowProtocolModal] = useState<string | null>(null)
-  const [showDayDetails, setShowDayDetails] = useState(false)
 
   // Hábitos do dia
   const [sunExposure, setSunExposure] = useState(false)
@@ -1833,228 +1835,359 @@ function SonoView() {
   const [screenOffEarly, setScreenOffEarly] = useState(false)
   const [lightDinner, setLightDinner] = useState(false)
   const [stressLevel, setStressLevel] = useState(3)
-  const [perceivedQuality, setPerceivedQuality] = useState(3)
+  const [perceivedQuality, setPerceivedQuality] = useState(7) // Changed default from 3 to 7 for better initial visual
+  const [habitsSubmitted, setHabitsSubmitted] = useState(false)
 
   // Modo crise
   const [crisisHours, setCrisisHours] = useState("")
   const [crisisReason, setCrisisReason] = useState("")
   const [crisisEnergy, setCrisisEnergy] = useState(3)
 
-  // Mock data for last 7 nights
+  // Mock data for last 7 nights with better structure
   const mockNights = [
     {
       day: "Seg",
-      date: "18/12",
-      hours: "6h 05min",
+      fullDate: "Segunda, 18/12",
+      hours: 6.08,
+      hoursFormatted: "6h05",
       bedtime: "00:30",
       wakeup: "06:35",
-      quality: "Ruim" as const,
+      quality: 2 as const,
+      qualityLabel: "Ruim" as const,
       causes: ["Tela até tarde", "Refeição pesada"],
-      impact:
-        "Essa noite reduziu seu Atlas Index de 82 para 74. Hoje não é dia de buscar recorde de carga, mas sim consolidar técnica e recuperar.",
+      impact: "Essa noite reduziu seu ASRI de 82 para 74. Hoje não é dia de buscar recorde de carga.",
     },
     {
       day: "Ter",
-      date: "19/12",
-      hours: "7h 20min",
+      fullDate: "Terça, 19/12",
+      hours: 7.33,
+      hoursFormatted: "7h20",
       bedtime: "23:10",
       wakeup: "06:30",
-      quality: "Ok" as const,
+      quality: 3 as const,
+      qualityLabel: "Ok" as const,
       causes: ["Cafeína tarde"],
-      impact: "Sono regular. Seu corpo está se recuperando, mas ainda não é ideal para performance máxima.",
+      impact: "Sono regular. Seu corpo está se recuperando, mas ainda não é ideal.",
     },
     {
       day: "Qua",
-      date: "20/12",
-      hours: "8h 10min",
+      fullDate: "Quarta, 20/12",
+      hours: 8.17,
+      hoursFormatted: "8h10",
       bedtime: "22:30",
       wakeup: "06:40",
-      quality: "Boa" as const,
+      quality: 5 as const,
+      qualityLabel: "Ótima" as const,
       causes: [],
-      impact: "Noite ideal! Seu Atlas Index subiu para 86. Hoje você pode buscar progressão de carga com segurança.",
+      impact: "Noite ideal! Seu ASRI subiu para 86. Hoje você pode progredir com segurança.",
     },
     {
       day: "Qui",
-      date: "21/12",
-      hours: "7h 45min",
+      fullDate: "Quinta, 21/12",
+      hours: 7.75,
+      hoursFormatted: "7h45",
       bedtime: "23:00",
       wakeup: "06:45",
-      quality: "Boa" as const,
+      quality: 5 as const,
+      qualityLabel: "Ótima" as const,
       causes: [],
-      impact: "Sono de atleta. Continue assim e seu corpo vai responder com ganhos consistentes.",
+      impact: "Sono de atleta. Continue assim e seu corpo responderá com ganhos consistentes.",
     },
     {
       day: "Sex",
-      date: "22/12",
-      hours: "6h 30min",
+      fullDate: "Sexta, 22/12",
+      hours: 6.5,
+      hoursFormatted: "6h30",
       bedtime: "00:00",
       wakeup: "06:30",
-      quality: "Ok" as const,
+      quality: 3 as const,
+      qualityLabel: "Ok" as const,
       causes: ["Treino muito tarde"],
-      impact: "Sono suficiente, mas não ótimo. Ajuste o horário do treino para melhorar a qualidade.",
+      impact: "Suficiente, mas não ótimo. Ajuste o horário do treino.",
     },
     {
       day: "Sáb",
-      date: "23/12",
-      hours: "8h 30min",
+      fullDate: "Sábado, 23/12",
+      hours: 8.5,
+      hoursFormatted: "8h30",
       bedtime: "22:00",
       wakeup: "06:30",
-      quality: "Boa" as const,
+      quality: 5 as const,
+      qualityLabel: "Ótima" as const,
       causes: [],
-      impact: "Excelente recuperação de fim de semana. Seu corpo está pronto para a próxima semana.",
+      impact: "Excelente recuperação de fim de semana. Pronto para a próxima semana.",
     },
     {
       day: "Dom",
-      date: "24/12",
-      hours: "7h 50min",
+      fullDate: "Domingo, 24/12",
+      hours: 7.83,
+      hoursFormatted: "7h50",
       bedtime: "22:40",
       wakeup: "06:30",
-      quality: "Boa" as const,
+      quality: 5 as const,
+      qualityLabel: "Ótima" as const,
       causes: [],
       impact: "Ótima preparação para a semana. Você está no caminho certo.",
     },
   ]
 
-  // Calculate ASRI (Atlas Sleep & Recovery Index)
-  const avgSleepHours = currentWeekMetrics.avgSleepHours || 7.2
-  const regularityScore = 85 // Mock
+  // Calculate ASRI with more technical precision
+  const avgSleepHours = mockNights.reduce((sum, n) => sum + n.hours, 0) / mockNights.length
+  const regularityScore = 82 // Mock - based on bedtime/wakeup consistency
   const energyScore =
-    currentWeekMetrics.energyLevel === "Alta" ? 90 : currentWeekMetrics.energyLevel === "Média" ? 70 : 50
+    currentWeekMetrics.energyLevel === "Alta" ? 90 : currentWeekMetrics.energyLevel === "Média" ? 70 : 45
+
+  // ASRI formula: 40% sleep duration, 30% regularity, 30% energy/recovery
   const asri = Math.round((avgSleepHours / 8) * 40 + (regularityScore / 100) * 30 + (energyScore / 100) * 30)
 
-  const asriStatus = asri >= 80 ? "Ideal" : asri >= 60 ? "Aceitável" : "Crítico"
-  const asriColor = asri >= 80 ? "text-green-400" : asri >= 60 ? "text-yellow-400" : "text-red-400"
-  const asriBg = asri >= 80 ? "bg-green-500/20" : asri >= 60 ? "bg-yellow-500/20" : "bg-red-500/20"
-  const asriBorder = asri >= 80 ? "border-green-500/30" : asri >= 60 ? "border-yellow-500/30" : "border-red-500/30"
+  const asriStatus = asri >= 85 ? "Excelente" : asri >= 70 ? "Aceitável" : "Crítico"
+  const asriColor = asri >= 85 ? "text-green-400" : asri >= 70 ? "text-cyan-400" : "text-red-400"
+  const asriBg = asri >= 85 ? "bg-green-500/10" : asri >= 70 ? "bg-cyan-500/10" : "bg-red-500/10"
+  const asriBorder = asri >= 85 ? "border-green-500/40" : asri >= 70 ? "border-cyan-500/40" : "border-red-500/40"
+  const asriGlow = asri >= 85 ? "shadow-green-500/20" : asri >= 70 ? "shadow-cyan-500/20" : "shadow-red-500/20"
 
-  // Risk indicators
-  const compulsionRisk = asri < 60 ? "Alto" : asri < 75 ? "Médio" : "Baixo"
-  const overtrainingRisk = asri < 65 ? "Alto" : asri < 80 ? "Médio" : "Baixo"
-  const testosteroneStatus = asri < 70 ? "Em risco" : "Estável"
+  // Sleep status classification
+  const sleepStatus = avgSleepHours >= 7.5 ? "Ideal" : avgSleepHours >= 6.5 ? "Abaixo do ideal" : "Crítico"
+  const sleepColor = avgSleepHours >= 7.5 ? "text-green-400" : avgSleepHours >= 6.5 ? "text-yellow-400" : "text-red-400"
+
+  // Regularity classification
+  const regularityLabel = regularityScore >= 80 ? "Alta" : regularityScore >= 60 ? "Média" : "Baixa"
+  const regularityColor =
+    regularityScore >= 80 ? "text-green-400" : regularityScore >= 60 ? "text-yellow-400" : "text-red-400"
+
+  // Risk indicators with more precision
+  const compulsionRisk = asri < 65 ? "Alto" : asri < 78 ? "Médio" : "Baixo"
+  const overtrainingRisk = asri < 68 ? "Alto" : asri < 82 ? "Médio" : "Baixo"
+  const testosteroneRisk = asri < 72 ? "Em risco" : "Estável"
+
+  const getRiskColor = (risk: string) => {
+    if (risk === "Baixo" || risk === "Estável") return "bg-green-500/20 text-green-400 border-green-500/30"
+    if (risk === "Médio") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+    return "bg-red-500/20 text-red-400 border-red-500/30"
+  }
+
+  // Impact badges for habits
+  const getImpactBadge = (level: "high" | "medium" | "low") => {
+    if (level === "high")
+      return (
+        <span className="ml-2 px-1.5 py-0.5 bg-cyan-500/20 text-cyan-400 text-[10px] rounded-full border border-cyan-500/30">
+          Alto impacto
+        </span>
+      )
+    if (level === "medium")
+      return (
+        <span className="ml-2 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] rounded-full border border-blue-500/30">
+          Médio impacto
+        </span>
+      )
+    return (
+      <span className="ml-2 px-1.5 py-0.5 bg-gray-500/20 text-gray-400 text-[10px] rounded-full border border-gray-500/30">
+        Baixo impacto
+      </span>
+    )
+  }
 
   const handleRegisterHabits = () => {
-    alert(
-      "Hábitos registrados. Em breve a Atlas IA vai usar isso para recalcular seu Atlas Index e ajustar treino/dieta.",
-    )
+    setHabitsSubmitted(true)
+    setTimeout(() => setHabitsSubmitted(false), 3000)
   }
 
   const handleCrisisSubmit = () => {
     const hours = Number.parseFloat(crisisHours) || 3.5
     setShowCrisisModal(false)
     alert(
-      `Com base em uma noite de ${hours}h de sono e energia nível ${crisisEnergy}, hoje é dia de dano controlado:\n\n• Treino: reduzir intensidade e evitar PR. Foco em execução técnica.\n• Dieta: manter proteína alta, carbo moderado, nada de lixo à noite.\n• Sono hoje: alvo mínimo 7h30, sem cafeína após 15h.\n\nEsse ajuste será usado pela Atlas IA para não deixar você se sabotar amanhã.`,
+      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA ajustará seu plano automaticamente.`,
     )
   }
 
   const selectedNight = selectedDayIndex !== null ? mockNights[selectedDayIndex] : null
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* SEÇÃO 1: TOPO - VISÃO EM 3 SEGUNDOS */}
-      <div className="space-y-4">
-        {/* Título */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center backdrop-blur-sm border border-indigo-500/30">
-            <Moon className="w-6 h-6 text-indigo-400" />
+    <div className="space-y-8 pb-20">
+      {/* BLOCO 1: OVERVIEW TÉCNICO */}
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-purple-600/30 flex items-center justify-center backdrop-blur-sm border border-indigo-400/30 shadow-lg shadow-indigo-500/20">
+            <Moon className="w-7 h-7 text-indigo-300" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">Sono & Recuperação</h2>
-            <p className="text-sm text-gray-400">
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold text-white mb-1.5 tracking-tight">Sono & Recuperação</h2>
+            <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">
               O sistema operacional que sustenta seu treino, dieta, hormônios e performance.
             </p>
           </div>
         </div>
 
-        {/* Header Grid: ASRI + 4 Mini KPIs */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4">
-          {/* Card ASRI Central */}
+        {/* ASRI + Mini KPIs Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_3fr] gap-5">
+          {/* Card ASRI - Centro de comando */}
           <div
-            className={`relative overflow-hidden rounded-2xl border ${asriBorder} ${asriBg} backdrop-blur-sm p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20`}
+            className={`group relative overflow-hidden rounded-3xl border-2 ${asriBorder} ${asriBg} backdrop-blur-md p-8 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${asriGlow}`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
-            <div className="relative z-10">
-              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Atlas Sleep & Recovery Index</p>
-              <div className="flex items-baseline gap-2 mb-3">
-                <span className={`text-5xl font-bold ${asriColor}`}>{asri}</span>
-                <span className="text-2xl text-gray-500">/100</span>
+            {/* Animated background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-blue-600/5 animate-pulse" />
+
+            {/* Circular progress indicator */}
+            <div className="absolute top-6 right-6 w-20 h-20">
+              <svg className="transform -rotate-90 w-20 h-20">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  className="text-slate-700/30"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray={`${(asri / 100) * 226} 226`}
+                  className={asriColor}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-sm font-bold ${asriColor}`}>{asri}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Status:</span>
+            </div>
+
+            <div className="relative z-10">
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-semibold">
+                Atlas Sleep & Recovery Index
+              </p>
+              <div className="flex items-baseline gap-3 mb-4">
+                <span className={`text-6xl font-bold ${asriColor} tracking-tight`}>{asri}</span>
+                <span className="text-3xl text-gray-600 font-light">/100</span>
+              </div>
+
+              <div className="flex items-center gap-3 mb-5">
+                <span className="text-xs text-gray-500 font-medium">Status atual:</span>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${asriBg} ${asriColor} border ${asriBorder}`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriBorder}`}
                 >
                   {asriStatus}
                 </span>
               </div>
-              {asri < 70 && (
-                <p className="mt-3 text-xs text-gray-400 leading-relaxed">
-                  Seu sono está comprometendo treino, dieta e hormônios. Ajuste agora ou aceite resultados medianos.
-                </p>
+
+              {/* Context message */}
+              {asri >= 85 && (
+                <div className="flex items-start gap-2 p-3 bg-green-500/5 border border-green-500/20 rounded-xl">
+                  <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-green-300 leading-relaxed">
+                    Sono sustentando sua performance Atlas. Todas as métricas indicam recuperação profunda e otimização
+                    hormonal.
+                  </p>
+                </div>
               )}
+              {asri >= 70 && asri < 85 && (
+                <div className="flex items-start gap-2 p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+                  <AlertCircle className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-cyan-300 leading-relaxed">
+                    Sono aceitável, mas há margem para otimização. Pequenos ajustes podem elevar significativamente sua
+                    performance.
+                  </p>
+                </div>
+              )}
+              {asri < 70 && (
+                <div className="flex items-start gap-2 p-3 bg-red-500/5 border border-red-500/20 rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-300 leading-relaxed font-medium">
+                    Alerta: sono comprometendo treino, dieta, hormônios e apetite. Ajuste agora ou aceite resultados
+                    medianos.
+                  </p>
+                </div>
+              )}
+
+              <p className="mt-4 text-[10px] text-gray-500 leading-relaxed">
+                Índice calculado a partir de: duração média, regularidade de horário, qualidade percebida e hábitos que
+                afetam hormônios e recuperação muscular.
+              </p>
             </div>
           </div>
 
-          {/* 4 Mini KPIs */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* 4 Mini KPIs - More technical and precise */}
+          <div className="grid grid-cols-2 gap-4">
             {/* Sono médio */}
-            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
-              <p className="text-xs text-gray-400 mb-1">Sono médio (7 dias)</p>
-              <p className="text-2xl font-bold text-white">{avgSleepHours.toFixed(1)}h</p>
-              <p
-                className={`text-xs mt-1 ${avgSleepHours >= 7.5 ? "text-green-400" : avgSleepHours >= 6.5 ? "text-yellow-400" : "text-red-400"}`}
-              >
-                {avgSleepHours >= 7.5 ? "Adequado" : avgSleepHours >= 6.5 ? "Abaixo do ideal" : "Crítico"}
+            <div className="group bg-slate-800/50 backdrop-blur-md border border-slate-700/60 rounded-2xl p-5 hover:border-cyan-500/40 hover:bg-slate-800/70 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Sono médio (7d)</p>
+                <Moon className="w-4 h-4 text-gray-600 group-hover:text-cyan-400 transition-colors" />
+              </div>
+              <p className="text-3xl font-bold text-white mb-1">
+                {avgSleepHours.toFixed(1)}
+                <span className="text-lg text-gray-500">h</span>
               </p>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${avgSleepHours >= 7.5 ? "bg-green-400" : avgSleepHours >= 6.5 ? "bg-yellow-400" : "bg-red-400"} animate-pulse`}
+                />
+                <p className={`text-xs font-medium ${sleepColor}`}>{sleepStatus}</p>
+              </div>
             </div>
 
             {/* Regularidade */}
-            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
-              <p className="text-xs text-gray-400 mb-1">Regularidade de horário</p>
-              <p className="text-2xl font-bold text-white">Alta</p>
-              <p className="text-xs text-green-400 mt-1">Ótima consistência</p>
+            <div className="group bg-slate-800/50 backdrop-blur-md border border-slate-700/60 rounded-2xl p-5 hover:border-blue-500/40 hover:bg-slate-800/70 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Regularidade</p>
+                <Clock className="w-4 h-4 text-gray-600 group-hover:text-blue-400 transition-colors" />
+              </div>
+              <p className="text-3xl font-bold text-white mb-1">{regularityLabel}</p>
+              <p className={`text-xs font-medium ${regularityColor}`}>{regularityScore}% consistência</p>
             </div>
 
             {/* Energia média */}
-            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
-              <p className="text-xs text-gray-400 mb-1">Energia média</p>
-              <p className="text-2xl font-bold text-white">{currentWeekMetrics.energyLevel}</p>
+            <div className="group bg-slate-800/50 backdrop-blur-md border border-slate-700/60 rounded-2xl p-5 hover:border-orange-500/40 hover:bg-slate-800/70 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Energia média</p>
+                <Zap className="w-4 h-4 text-gray-600 group-hover:text-orange-400 transition-colors" />
+              </div>
+              <p className="text-3xl font-bold text-white mb-1">{currentWeekMetrics.energyLevel}</p>
               <p
-                className={`text-xs mt-1 ${currentWeekMetrics.energyLevel === "Alta" ? "text-green-400" : currentWeekMetrics.energyLevel === "Média" ? "text-yellow-400" : "text-red-400"}`}
+                className={`text-xs font-medium ${currentWeekMetrics.energyLevel === "Alta" ? "text-green-400" : currentWeekMetrics.energyLevel === "Média" ? "text-yellow-400" : "text-red-400"}`}
               >
                 {currentWeekMetrics.energyLevel === "Alta"
-                  ? "Excelente"
+                  ? "Excelente capacidade"
                   : currentWeekMetrics.energyLevel === "Média"
                     ? "Pode melhorar"
-                    : "Atenção"}
+                    : "Atenção necessária"}
               </p>
             </div>
 
-            {/* Riscos conectados */}
-            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
-              <p className="text-xs text-gray-400 mb-2">Riscos conectados</p>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Compulsão</span>
+            {/* Riscos conectados - More technical */}
+            <div className="group bg-slate-800/50 backdrop-blur-md border border-slate-700/60 rounded-2xl p-5 hover:border-red-500/40 hover:bg-slate-800/70 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-red-500/10">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Riscos conectados</p>
+                <Activity className="w-4 h-4 text-gray-600 group-hover:text-red-400 transition-colors" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 font-medium">Compulsão</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full font-semibold ${compulsionRisk === "Baixo" ? "bg-green-500/20 text-green-400" : compulsionRisk === "Médio" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getRiskColor(compulsionRisk)}`}
                   >
                     {compulsionRisk}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Overtraining</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 font-medium">Overtraining</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full font-semibold ${overtrainingRisk === "Baixo" ? "bg-green-500/20 text-green-400" : overtrainingRisk === "Médio" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getRiskColor(overtrainingRisk)}`}
                   >
                     {overtrainingRisk}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Testosterona</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 font-medium">Testosterona</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full font-semibold ${testosteroneStatus === "Estável" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${getRiskColor(testosteroneRisk)}`}
                   >
-                    {testosteroneStatus}
+                    {testosteroneRisk}
                   </span>
                 </div>
               </div>
@@ -2063,349 +2196,433 @@ function SonoView() {
         </div>
       </div>
 
-      {/* SEÇÃO 2: MEIO - TIMELINE + HÁBITOS */}
+      {/* BLOCO 2: ÚLTIMAS NOITES + HÁBITOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna esquerda: Noites Recentes */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-400" />
-            Noites Recentes (últimos 7 dias)
-          </h3>
+        {/* Noites Recentes - Bar chart style */}
+        <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/60 rounded-3xl p-7 hover:border-blue-500/30 transition-all duration-500">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-blue-400" />
+                Noites Recentes
+              </h3>
+              <p className="text-xs text-gray-500">
+                Veja se seu corpo está acumulando sono de atleta ou dívida de sono.
+              </p>
+            </div>
+          </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          {/* Bar chart grid */}
+          <div className="grid grid-cols-7 gap-3 mb-5">
             {mockNights.map((night, idx) => {
+              const heightPercent = (night.hours / 9) * 100
               const qualityColor =
-                night.quality === "Boa"
-                  ? "border-green-500/50 bg-green-500/10"
-                  : night.quality === "Ok"
-                    ? "border-yellow-500/50 bg-yellow-500/10"
-                    : "border-red-500/50 bg-red-500/10"
+                night.quality >= 4
+                  ? "bg-gradient-to-t from-green-500/80 to-green-400/80 border-green-400/60 shadow-green-500/30"
+                  : night.quality >= 3
+                    ? "bg-gradient-to-t from-yellow-500/80 to-yellow-400/80 border-yellow-400/60 shadow-yellow-500/30"
+                    : "bg-gradient-to-t from-red-500/80 to-red-400/80 border-red-400/60 shadow-red-500/30"
 
               return (
                 <button
                   key={idx}
-                  onClick={() => {
-                    setSelectedDayIndex(idx)
-                    setShowDayDetails(true)
-                  }}
-                  className={`relative p-2 rounded-lg border ${qualityColor} hover:scale-105 transition-all duration-200 cursor-pointer group`}
+                  onClick={() => setSelectedDayIndex(idx)}
+                  className="relative group flex flex-col items-center"
                 >
-                  <p className="text-[10px] text-gray-400 text-center mb-1">{night.day}</p>
-                  <p className="text-xs font-semibold text-white text-center">{night.hours.split(" ")[0]}</p>
-                  <div
-                    className={`absolute top-1 right-1 w-2 h-2 rounded-full ${night.quality === "Boa" ? "bg-green-400" : night.quality === "Ok" ? "bg-yellow-400" : "bg-red-400"}`}
-                  />
+                  <div className="relative w-full h-32 bg-slate-900/40 rounded-xl overflow-hidden border border-slate-700/50 hover:border-blue-400/50 transition-all duration-300">
+                    {/* Bar */}
+                    <div
+                      className={`absolute bottom-0 left-0 right-0 ${qualityColor} border-t-2 transition-all duration-500 group-hover:scale-105`}
+                      style={{ height: `${heightPercent}%` }}
+                    />
+                    {/* Hours label */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-white drop-shadow-lg z-10">
+                        {night.hoursFormatted}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Day label */}
+                  <p className="text-[10px] text-gray-400 mt-2 font-medium group-hover:text-white transition-colors">
+                    {night.day}
+                  </p>
                 </button>
               )
             })}
           </div>
 
-          {/* Day Details Popover */}
-          {showDayDetails && selectedNight && (
-            <div className="mt-4 p-4 bg-slate-900/60 backdrop-blur-sm border border-blue-500/30 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-bold text-white">
-                  {selectedNight.day}, {selectedNight.date}
-                </h4>
+          {/* Selected night details */}
+          {selectedNight && (
+            <div className="mt-6 p-5 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-blue-500/30 rounded-2xl shadow-xl shadow-blue-500/10">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-white">{selectedNight.fullDate}</h4>
                 <button
-                  onClick={() => setShowDayDetails(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  onClick={() => setSelectedDayIndex(null)}
+                  className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-slate-700/50 rounded-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Duração:</span>
-                  <span className="text-white font-semibold">{selectedNight.hours}</span>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/40">
+                  <p className="text-[10px] text-gray-500 mb-1 font-medium">Duração</p>
+                  <p className="text-lg font-bold text-white">{selectedNight.hoursFormatted}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Horário:</span>
-                  <span className="text-white font-semibold">
+                <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/40">
+                  <p className="text-[10px] text-gray-500 mb-1 font-medium">Horário</p>
+                  <p className="text-xs font-semibold text-white">
                     {selectedNight.bedtime} → {selectedNight.wakeup}
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Qualidade:</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${selectedNight.quality === "Boa" ? "bg-green-500/20 text-green-400" : selectedNight.quality === "Ok" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
-                  >
-                    {selectedNight.quality}
-                  </span>
-                </div>
+              </div>
 
-                {selectedNight.causes.length > 0 && (
-                  <div className="pt-2 border-t border-slate-700/50">
-                    <p className="text-gray-400 mb-1">Causas identificadas:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedNight.causes.map((cause, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full text-[10px]">
-                          {cause}
-                        </span>
-                      ))}
-                    </div>
+              <div className="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/40 mb-4">
+                <span className="text-xs text-gray-400 font-medium">Qualidade</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${selectedNight.quality >= 4 ? "bg-green-500/20 text-green-400 border-green-500/30" : selectedNight.quality >= 3 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}`}
+                >
+                  {selectedNight.qualityLabel}
+                </span>
+              </div>
+
+              {selectedNight.causes.length > 0 && (
+                <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl mb-4">
+                  <p className="text-[10px] text-gray-400 mb-2 font-medium uppercase tracking-wider">
+                    Causas identificadas
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedNight.causes.map((cause, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 bg-red-500/20 text-red-400 rounded-lg text-[10px] font-semibold border border-red-500/30"
+                      >
+                        {cause}
+                      </span>
+                    ))}
                   </div>
-                )}
-
-                <div className="pt-2 border-t border-slate-700/50">
-                  <p className="text-gray-300 leading-relaxed">{selectedNight.impact}</p>
                 </div>
+              )}
+
+              <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                <p className="text-[10px] text-gray-500 mb-2 font-medium uppercase tracking-wider">
+                  Impacto no sistema
+                </p>
+                <p className="text-xs text-gray-300 leading-relaxed">{selectedNight.impact}</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Coluna direita: Hábitos de Sono */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
-          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-cyan-400" />
-            Hábitos de Sono & Recuperação
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">
-            Registre seus hábitos diários para a Atlas IA entender por que seu sono está ajudando ou sabotando seu
-            corpo.
-          </p>
+        {/* Hábitos de Sono - Technical form */}
+        <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/60 rounded-3xl p-7 hover:border-cyan-500/30 transition-all duration-500">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-cyan-400" />
+              Hábitos de Sono & Recuperação
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Cada hábito aqui altera silenciosamente seus hormônios, apetite e recuperação muscular. Marque com
+              honestidade.
+            </p>
+          </div>
 
-          <div className="space-y-3">
-            {/* Toggles */}
-            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
-              <span className="text-sm text-gray-300">Exposição ao sol pela manhã</span>
+          <div className="space-y-3 mb-6">
+            {/* Toggle 1 */}
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/40 hover:border-cyan-500/30 transition-all duration-200 group">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300 font-medium">Exposição ao sol pela manhã</span>
+                {getImpactBadge("high")}
+              </div>
               <button
                 onClick={() => setSunExposure(!sunExposure)}
-                className={`w-11 h-6 rounded-full transition-all duration-200 ${sunExposure ? "bg-green-500" : "bg-slate-700"}`}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${sunExposure ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30" : "bg-slate-700"}`}
               >
                 <div
-                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${sunExposure ? "translate-x-5" : "translate-x-0.5"}`}
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${sunExposure ? "translate-x-6" : "translate-x-0.5"}`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
-              <span className="text-sm text-gray-300">Última cafeína antes das 15h</span>
+            {/* Toggle 2 */}
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/40 hover:border-cyan-500/30 transition-all duration-200 group">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300 font-medium">Última cafeína antes das 15h</span>
+                {getImpactBadge("high")}
+              </div>
               <button
                 onClick={() => setLastCaffeineEarly(!lastCaffeineEarly)}
-                className={`w-11 h-6 rounded-full transition-all duration-200 ${lastCaffeineEarly ? "bg-green-500" : "bg-slate-700"}`}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${lastCaffeineEarly ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30" : "bg-slate-700"}`}
               >
                 <div
-                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${lastCaffeineEarly ? "translate-x-5" : "translate-x-0.5"}`}
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${lastCaffeineEarly ? "translate-x-6" : "translate-x-0.5"}`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
-              <span className="text-sm text-gray-300">Tela desligada 60 min antes</span>
+            {/* Toggle 3 */}
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/40 hover:border-cyan-500/30 transition-all duration-200 group">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300 font-medium">Tela desligada 60 min antes</span>
+                {getImpactBadge("high")}
+              </div>
               <button
                 onClick={() => setScreenOffEarly(!screenOffEarly)}
-                className={`w-11 h-6 rounded-full transition-all duration-200 ${screenOffEarly ? "bg-green-500" : "bg-slate-700"}`}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${screenOffEarly ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30" : "bg-slate-700"}`}
               >
                 <div
-                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${screenOffEarly ? "translate-x-5" : "translate-x-0.5"}`}
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${screenOffEarly ? "translate-x-6" : "translate-x-0.5"}`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
-              <span className="text-sm text-gray-300">Última refeição leve</span>
+            {/* Toggle 4 */}
+            <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/40 hover:border-cyan-500/30 transition-all duration-200 group">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300 font-medium">Última refeição leve</span>
+                {getImpactBadge("medium")}
+              </div>
               <button
                 onClick={() => setLightDinner(!lightDinner)}
-                className={`w-11 h-6 rounded-full transition-all duration-200 ${lightDinner ? "bg-green-500" : "bg-slate-700"}`}
+                className={`relative w-12 h-6 rounded-full transition-all duration-300 ${lightDinner ? "bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/30" : "bg-slate-700"}`}
               >
                 <div
-                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${lightDinner ? "translate-x-5" : "translate-x-0.5"}`}
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${lightDinner ? "translate-x-6" : "translate-x-0.5"}`}
                 />
               </button>
             </div>
 
-            {/* Sliders */}
-            <div className="p-3 bg-slate-900/40 rounded-lg space-y-2">
-              <label className="text-sm text-gray-300">Nível de estresse hoje</label>
+            {/* Slider 1 - Stress */}
+            <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-gray-300 font-medium">Nível de estresse hoje</label>
+                {getImpactBadge("medium")}
+              </div>
               <input
                 type="range"
                 min="1"
-                max="5"
+                max="10"
                 value={stressLevel}
                 onChange={(e) => setStressLevel(Number(e.target.value))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
               />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Baixo</span>
-                <span className="text-cyan-400 font-semibold">{stressLevel}</span>
-                <span>Alto</span>
+              <div className="flex justify-between text-[10px] font-medium">
+                <span className="text-gray-500">Mínimo</span>
+                <span className="text-orange-400 text-sm font-bold">{stressLevel}/10</span>
+                <span className="text-gray-500">Máximo</span>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-900/40 rounded-lg space-y-2">
-              <label className="text-sm text-gray-300">Qualidade percebida do sono</label>
+            {/* Slider 2 - Quality */}
+            <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-gray-300 font-medium">Qualidade percebida do sono</label>
+                {getImpactBadge("high")}
+              </div>
               <input
                 type="range"
                 min="1"
-                max="5"
+                max="10"
                 value={perceivedQuality}
                 onChange={(e) => setPerceivedQuality(Number(e.target.value))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Ruim</span>
-                <span className="text-green-400 font-semibold">{perceivedQuality}</span>
-                <span>Excelente</span>
+              <div className="flex justify-between text-[10px] font-medium">
+                <span className="text-gray-500">Péssima</span>
+                <span className="text-cyan-400 text-sm font-bold">{perceivedQuality}/10</span>
+                <span className="text-gray-500">Excelente</span>
               </div>
             </div>
-
-            <button
-              onClick={handleRegisterHabits}
-              className="w-full mt-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/30"
-            >
-              Registrar hábitos de hoje
-            </button>
           </div>
+
+          {/* Submit button */}
+          <button
+            onClick={handleRegisterHabits}
+            className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/40 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            {habitsSubmitted ? (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                Dados de hoje enviados para a Atlas IA
+              </>
+            ) : (
+              "Registrar hábitos de hoje"
+            )}
+          </button>
         </div>
       </div>
 
-      {/* SEÇÃO 3: BAIXO - PROTOCOLOS + MODO CRISE */}
+      {/* BLOCO 3: MODOS E PROTOCOLOS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Modo Base */}
-        <div className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6 hover:border-blue-400 transition-all duration-300">
-          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-400" />
-            Modo Base – Sono de Atleta
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">A rotina ideal para performance máxima e recuperação profunda.</p>
+        <div className="group bg-gradient-to-br from-blue-900/30 to-cyan-900/30 backdrop-blur-md border-2 border-blue-500/40 rounded-3xl p-7 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:scale-[1.02]">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-400/30">
+              <Target className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Modo Base</h3>
+              <p className="text-[10px] text-gray-400">Sono de Atleta</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-5 leading-relaxed">
+            A rotina ideal para performance máxima e recuperação profunda.
+          </p>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-300">Dormir às:</span>
-              <span className="text-lg font-bold text-blue-400">23:00</span>
+          <div className="space-y-4 mb-5">
+            <div className="flex justify-between items-center p-3 bg-slate-900/40 rounded-xl">
+              <span className="text-xs text-gray-400 font-medium">Dormir às:</span>
+              <span className="text-xl font-bold text-blue-400">23:00</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-300">Acordar às:</span>
-              <span className="text-lg font-bold text-blue-400">06:30</span>
+            <div className="flex justify-between items-center p-3 bg-slate-900/40 rounded-xl">
+              <span className="text-xs text-gray-400 font-medium">Acordar às:</span>
+              <span className="text-xl font-bold text-blue-400">06:30</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-300">Janela de sono:</span>
+            <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-xl border border-green-500/30">
+              <span className="text-xs text-gray-400 font-medium">Janela de sono:</span>
               <span className="text-lg font-bold text-green-400">7h30 – 8h</span>
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-700/50">
-            <p className="text-xs text-gray-400 mb-2 font-semibold">Regras base:</p>
-            <ul className="space-y-1 text-xs text-gray-300">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+          <div className="pt-5 border-t border-slate-700/50">
+            <p className="text-[10px] text-gray-500 mb-3 font-semibold uppercase tracking-wider">Regras base:</p>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2 text-xs text-gray-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
                 Sem tela 60 min antes
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+              <li className="flex items-start gap-2 text-xs text-gray-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
                 Sem cafeína após 15h
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+              <li className="flex items-start gap-2 text-xs text-gray-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
                 Rotina de desaceleração (leitura, banho)
+              </li>
+              <li className="flex items-start gap-2 text-xs text-gray-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                Quarto escuro, silencioso, fresco
               </li>
             </ul>
           </div>
         </div>
 
         {/* Modo Crise */}
-        <div className="bg-gradient-to-br from-red-900/20 to-orange-900/20 backdrop-blur-sm border border-red-500/30 rounded-2xl p-6 hover:border-red-400 transition-all duration-300">
-          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            Modo Crise – Noite detonada
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">
+        <div className="group bg-gradient-to-br from-red-900/30 to-orange-900/30 backdrop-blur-md border-2 border-red-500/40 rounded-3xl p-7 hover:border-red-400 hover:shadow-2xl hover:shadow-red-500/20 transition-all duration-500 hover:scale-[1.02]">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-400/30">
+              <AlertTriangle className="w-6 h-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Modo Crise</h3>
+              <p className="text-[10px] text-gray-400">Noite detonada</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-6 leading-relaxed">
             Dormiu mal ou quase não dormiu? Use este modo para reduzir dano hoje e não jogar a semana fora.
           </p>
 
           <button
             onClick={() => setShowCrisisModal(true)}
-            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-red-500/30"
+            className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/40 hover:scale-105 flex items-center justify-center gap-2"
           >
+            <AlertTriangle className="w-5 h-5" />
             Dormi mal hoje, ajustar meu dia
           </button>
 
-          <p className="mt-3 text-xs text-gray-400 leading-relaxed">
+          <p className="mt-5 text-xs text-gray-400 leading-relaxed">
             A Atlas IA vai ajustar treino, dieta e sono para você não se sabotar.
           </p>
         </div>
 
-        {/* Protocolos */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-300">
-          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-cyan-400" />
-            Protocolos Atlas
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">Escolha um protocolo para reprogramar seu sono como de atleta.</p>
+        {/* Protocolos Atlas */}
+        <div className="group bg-slate-800/50 backdrop-blur-md border-2 border-slate-700/60 rounded-3xl p-7 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-500 hover:scale-[1.02]">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center border border-cyan-400/30">
+              <FileText className="w-6 h-6 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Protocolos Atlas</h3>
+              <p className="text-[10px] text-gray-400">Reprogramação</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-5 leading-relaxed">
+            Escolha um protocolo para reprogramar seu sono como de atleta.
+          </p>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <button
               onClick={() => setShowProtocolModal("reset")}
-              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+              className="w-full text-left p-4 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/60 hover:border-cyan-500/40 rounded-2xl transition-all duration-300 group/btn hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10"
             >
-              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                Reset de Higiene do Sono (7 dias)
+              <p className="text-sm font-bold text-white group-hover/btn:text-cyan-400 transition-colors mb-1 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                Reset de Higiene do Sono
               </p>
-              <p className="text-xs text-gray-400 mt-1">Quebrar hábitos ruins e estabilizar ritmo circadiano</p>
+              <p className="text-[10px] text-gray-400 ml-4">7 dias · Quebrar hábitos ruins</p>
             </button>
 
             <button
               onClick={() => setShowProtocolModal("screen")}
-              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+              className="w-full text-left p-4 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/60 hover:border-cyan-500/40 rounded-2xl transition-all duration-300 group/btn hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10"
             >
-              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                Quebra de Tela Até Tarde (14 dias)
+              <p className="text-sm font-bold text-white group-hover/btn:text-cyan-400 transition-colors mb-1 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                Quebra de Tela Até Tarde
               </p>
-              <p className="text-xs text-gray-400 mt-1">Eliminar luz azul noturna e recuperar melatonina</p>
+              <p className="text-[10px] text-gray-400 ml-4">14 dias · Eliminar luz azul</p>
             </button>
 
             <button
               onClick={() => setShowProtocolModal("athlete")}
-              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+              className="w-full text-left p-4 bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700/60 hover:border-cyan-500/40 rounded-2xl transition-all duration-300 group/btn hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/10"
             >
-              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
-                Sono de Atleta Natural (21 dias)
+              <p className="text-sm font-bold text-white group-hover/btn:text-cyan-400 transition-colors mb-1 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                Sono de Atleta Natural
               </p>
-              <p className="text-xs text-gray-400 mt-1">Protocolo completo para performance máxima</p>
+              <p className="text-[10px] text-gray-400 ml-4">21 dias · Performance máxima</p>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Modal Modo Crise */}
+      {/* Modal Modo Crise - Keep existing implementation */}
       {showCrisisModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-6 max-w-md w-full">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <AlertTriangle className="w-6 h-6 text-red-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-red-500/40 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-red-500/20">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                <AlertTriangle className="w-7 h-7 text-red-400" />
                 Modo Crise Ativado
               </h3>
               <button
                 onClick={() => setShowCrisisModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-slate-700/50 rounded-xl"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm text-gray-300 mb-2">Quantas horas você dormiu?</label>
+                <label className="block text-sm text-gray-300 mb-3 font-medium">Quantas horas você dormiu?</label>
                 <input
                   type="number"
                   step="0.5"
                   value={crisisHours}
                   onChange={(e) => setCrisisHours(e.target.value)}
                   placeholder="Ex: 3.5"
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-300 mb-2">Motivo principal da noite ruim?</label>
+                <label className="block text-sm text-gray-300 mb-3 font-medium">Motivo principal da noite ruim?</label>
                 <select
                   value={crisisReason}
                   onChange={(e) => setCrisisReason(e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 >
                   <option value="">Selecione...</option>
                   <option value="stress">Estresse</option>
@@ -2418,7 +2635,7 @@ function SonoView() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-300 mb-2">Energia agora (1 a 5)</label>
+                <label className="block text-sm text-gray-300 mb-3 font-medium">Energia agora (1 a 5)</label>
                 <input
                   type="range"
                   min="1"
@@ -2427,16 +2644,16 @@ function SonoView() {
                   onChange={(e) => setCrisisEnergy(Number(e.target.value))}
                   className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500"
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
                   <span>Péssima</span>
-                  <span className="text-red-400 font-semibold">{crisisEnergy}</span>
+                  <span className="text-red-400 font-bold text-sm">{crisisEnergy}/5</span>
                   <span>Ótima</span>
                 </div>
               </div>
 
               <button
                 onClick={handleCrisisSubmit}
-                className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold rounded-xl transition-all duration-200"
+                className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/40 mt-6"
               >
                 Ajustar meu dia agora
               </button>
@@ -2445,30 +2662,30 @@ function SonoView() {
         </div>
       )}
 
-      {/* Modal Protocolos */}
+      {/* Modal Protocolos - Enhanced */}
       {showProtocolModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-white">
                 {showProtocolModal === "reset"
-                  ? "Protocolo: Reset de Higiene do Sono (7 dias)"
+                  ? "Reset de Higiene do Sono (7 dias)"
                   : showProtocolModal === "screen"
-                    ? "Protocolo: Quebra de Tela Até Tarde (14 dias)"
-                    : "Protocolo: Sono de Atleta Natural (21 dias)"}
+                    ? "Quebra de Tela Até Tarde (14 dias)"
+                    : "Sono de Atleta Natural (21 dias)"}
               </h3>
               <button
                 onClick={() => setShowProtocolModal(null)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-slate-700/50 rounded-xl"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-sm text-gray-300">
-              <div>
-                <h4 className="font-semibold text-cyan-400 mb-2">Objetivo</h4>
-                <p>
+            <div className="space-y-6 text-sm text-gray-300">
+              <div className="p-5 bg-cyan-500/5 border border-cyan-500/20 rounded-2xl">
+                <h4 className="font-bold text-cyan-400 mb-3 text-base">Objetivo</h4>
+                <p className="leading-relaxed">
                   {showProtocolModal === "reset" &&
                     "Quebrar hábitos ruins de sono, estabilizar ritmo circadiano e recuperar qualidade de recuperação em 7 dias."}
                   {showProtocolModal === "screen" &&
@@ -2478,50 +2695,100 @@ function SonoView() {
                 </p>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Manhã</h4>
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Acordar no mesmo horário todos os dias (6h-7h)</li>
-                  <li>Exposição ao sol nos primeiros 30 min (10-15 min)</li>
-                  <li>Hidratação imediata (500ml água)</li>
-                  <li>Café da manhã proteico dentro de 1h</li>
-                </ul>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+                  <h4 className="font-bold text-blue-400 mb-3 flex items-center gap-2">
+                    <Sun className="w-4 h-4" />
+                    Rotina da Manhã
+                  </h4>
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Acordar no mesmo horário (6h-7h)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Sol nos primeiros 30 min
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Hidratação imediata (500ml)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Café proteico em 1h
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+                  <h4 className="font-bold text-orange-400 mb-3 flex items-center gap-2">
+                    <Coffee className="w-4 h-4" />
+                    Rotina da Tarde
+                  </h4>
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Última cafeína até 15h
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Treino ideal: 16h-19h
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Refeição pesada no almoço
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Sem cochilos após 16h
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+                  <h4 className="font-bold text-purple-400 mb-3 flex items-center gap-2">
+                    <Moon className="w-4 h-4" />
+                    Rotina da Noite
+                  </h4>
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Jantar leve até 20h
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Telas off 60 min antes
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Banho morno 30 min antes
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                      Dormir 22h-23h
+                    </li>
+                  </ul>
+                </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Tarde</h4>
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Última cafeína até 15h</li>
-                  <li>Treino ideal: 16h-19h</li>
-                  <li>Refeição mais pesada no almoço</li>
-                  <li>Evitar cochilos após 16h</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Noite</h4>
-                <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>Jantar leve até 20h</li>
-                  <li>Telas desligadas 60 min antes de dormir</li>
-                  <li>Banho morno 30 min antes</li>
-                  <li>Quarto escuro, silencioso e fresco (18-20°C)</li>
-                  <li>Dormir entre 22h-23h</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-cyan-400 mb-2">Métrica de Sucesso</h4>
+              <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl">
+                <h4 className="font-bold text-green-400 mb-2 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Métrica de Sucesso
+                </h4>
                 <p>
-                  {showProtocolModal === "reset" && "Aumentar ASRI de 55 → 75 em 7 dias"}
-                  {showProtocolModal === "screen" && "Aumentar ASRI de 60 → 80 em 14 dias"}
-                  {showProtocolModal === "athlete" && "Atingir ASRI > 85 e manter por 21 dias"}
+                  {showProtocolModal === "reset" && "Aumentar ASRI de 55 → 75+ em 7 dias"}
+                  {showProtocolModal === "screen" && "Aumentar ASRI de 60 → 80+ em 14 dias"}
+                  {showProtocolModal === "athlete" && "Atingir ASRI > 85 e manter por 21 dias consecutivos"}
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-700/50">
-                <p className="text-xs text-gray-400">
-                  No futuro, esse protocolo será integrado com seu treino, dieta e outros módulos da Atlas IA para
-                  ajustes automáticos.
+              <div className="pt-5 border-t border-slate-700/50">
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <AlertCircle className="w-3 h-3 inline mr-1 text-yellow-400" />
+                  No futuro, esse protocolo será integrado automaticamente com seu treino, dieta e outros módulos da
+                  Atlas IA para ajustes dinâmicos baseados em dados reais.
                 </p>
               </div>
             </div>
@@ -2531,6 +2798,7 @@ function SonoView() {
     </div>
   )
 }
+// </CHANGE>
 
 // ========== FisioterapiaView & TestosteronaView (No changes) ==========
 function FisioterapiaView() {
@@ -3690,7 +3958,7 @@ function TreinoDietaView() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2V9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
                     />
                     <path
                       strokeLinecap="round"
