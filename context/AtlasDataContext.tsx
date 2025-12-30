@@ -138,6 +138,46 @@ export type AtlasWeekMetrics = {
   dietAdherence: number
 }
 
+export type TrainingConfig = {
+  daysPerWeek: number | null
+  trainingDays: string[]
+  minutesPerSession: number | null
+  location: "gym" | "home" | "both"
+  level: FitnessLevel
+  equipment: string[]
+  mainFocus: "muscle_gain" | "fat_loss" | "maintenance" | "performance"
+  updatedAt?: string
+}
+
+export type DietConfig = {
+  mealsPerDay: number | null
+  mealTimes: string[]
+  restrictions: string[]
+  dislikedFoods: string
+  budget: "low" | "medium" | "high"
+  flexibility: "rigid" | "moderate" | "flexible"
+  updatedAt?: string
+}
+
+const defaultTrainingConfig: TrainingConfig = {
+  daysPerWeek: null,
+  trainingDays: [],
+  minutesPerSession: null,
+  location: "gym",
+  level: "intermediate",
+  equipment: [],
+  mainFocus: "muscle_gain",
+}
+
+const defaultDietConfig: DietConfig = {
+  mealsPerDay: null,
+  mealTimes: [],
+  restrictions: [],
+  dislikedFoods: "",
+  budget: "medium",
+  flexibility: "moderate",
+}
+
 function computeMetricsFromCheckins(checkins: DailyCheckin[], existingMetrics: AtlasWeekMetrics): AtlasWeekMetrics {
   const last7 = checkins
     .slice()
@@ -247,6 +287,11 @@ type AtlasDataContextType = {
   photos: ProgressPhotos
   setPhotos: (p: ProgressPhotos) => void
   saveMeasurements: (m: BodyMeasurements) => void
+  trainingConfig: TrainingConfig
+  updateTrainingConfig: (updates: Partial<TrainingConfig>) => void
+  dietConfig: DietConfig
+  updateDietConfig: (updates: Partial<DietConfig>) => void
+  // </CHANGE>
   toast: { message: string; visible: boolean }
   showToast: (message: string) => void
 }
@@ -289,6 +334,9 @@ export function AtlasDataProvider({ children }: { children: ReactNode }) {
   const [checkins, setCheckins] = useState<DailyCheckin[]>([])
   const [currentWeekMetrics, setCurrentWeekMetrics] = useState<AtlasWeekMetrics>(defaultMetrics)
   const [photos, setPhotos] = useState<ProgressPhotos>({})
+  const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>(defaultTrainingConfig)
+  const [dietConfig, setDietConfig] = useState<DietConfig>(defaultDietConfig)
+  // </CHANGE>
   const [toast, setToast] = useState({ message: "", visible: false })
 
   const showToast = useCallback((message: string) => {
@@ -333,6 +381,31 @@ export function AtlasDataProvider({ children }: { children: ReactNode }) {
     [currentWeekMetrics, showToast],
   )
 
+  const updateTrainingConfig = useCallback(
+    (updates: Partial<TrainingConfig>) => {
+      setTrainingConfig((prev) => ({
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      }))
+      showToast("Configuração de treino atualizada.")
+    },
+    [showToast],
+  )
+
+  const updateDietConfig = useCallback(
+    (updates: Partial<DietConfig>) => {
+      setDietConfig((prev) => ({
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      }))
+      showToast("Configuração de dieta atualizada.")
+    },
+    [showToast],
+  )
+  // </CHANGE>
+
   return (
     <AtlasDataContext.Provider
       value={{
@@ -349,6 +422,11 @@ export function AtlasDataProvider({ children }: { children: ReactNode }) {
         photos,
         setPhotos,
         saveMeasurements,
+        trainingConfig,
+        updateTrainingConfig,
+        dietConfig,
+        updateDietConfig,
+        // </CHANGE>
         toast,
         showToast,
       }}

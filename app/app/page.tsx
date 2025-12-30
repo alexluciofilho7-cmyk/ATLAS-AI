@@ -40,9 +40,10 @@ import {
   type DailyCheckin,
   type BodyMeasurements,
   type BodyStatusMap, // Added for context data
+  type TrainingConfig, // Added for type safety
+  type DietConfig, // Added for type safety
 } from "@/context/AtlasDataContext"
 import { AtlasPassaporte } from "@/components/AtlasPassaporte"
-import TreinoDietaRefactored from "@/components/TreinoDietaRefactored"
 import Compulsao2035 from "@/components/Compulsao2035"
 
 type SectionKey =
@@ -902,6 +903,8 @@ type AtlasContextData = {
   recentCheckins: DailyCheckin[]
   bodyStatus: BodyStatusMap
   bodyMeasurements: BodyMeasurements
+  trainingConfig: TrainingConfig // Added
+  dietConfig: DietConfig // Added
 }
 
 function simulateAtlasIAResponse(
@@ -909,7 +912,7 @@ function simulateAtlasIAResponse(
   context: AtlasContextData,
   messageType?: AtlasMessageType,
 ): AtlasResponse {
-  const { currentWeekMetrics, recentCheckins, bodyStatus, bodyMeasurements } = context
+  const { currentWeekMetrics, recentCheckins, bodyStatus, bodyMeasurements, trainingConfig, dietConfig } = context
 
   // Analyze context to build contextual responses
   const lowExecution = currentWeekMetrics.executionRate < 70
@@ -1086,11 +1089,11 @@ Quer que eu monte um protocolo de 7 dias focando em sono + rotina?`,
     return {
       coreText: `Recalculando dieta com base nos seus dados atuais:
 
-**Contexto da semana:**
+**Sua semana atual:**
 - Atlas Score: ${currentWeekMetrics.atlasScore}/100
 - Execução: ${currentWeekMetrics.executionRate}% (${currentWeekMetrics.trainingsDone}/${currentWeekMetrics.trainingsPlanned} treinos)
-- Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
 - Sono: ${currentWeekMetrics.avgSleepHours}h média
+- Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
 - Energia: ${currentWeekMetrics.energyLevel}
 
 **Diagnóstico:**
@@ -1185,11 +1188,8 @@ Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um 
   }
 }
 
-// ========== OTHER VIEWS (unchanged) ==========
-function TreinoDietaView() {
-  return <TreinoDietaRefactored />
-}
-
+// ========== OTHER VIEWS (TreinoDietaView REPLACED) ==========
+// TreinoDietaView REPLACED WITH NEW IMPLEMENTATION BELOW
 function CompulsaoView() {
   return <Compulsao2035 />
 }
@@ -1322,6 +1322,8 @@ function AtlasIAView() {
       bodyStatus: atlasData.bodyStatus,
       recentCheckins: atlasData.checkins.slice(-7),
       bodyMeasurements: atlasData.bodyMeasurements,
+      trainingConfig: atlasData.trainingConfig, // Pass training config
+      dietConfig: atlasData.dietConfig, // Pass diet config
     }
 
     const apiMessages = messages
@@ -1588,6 +1590,7 @@ function AtlasIAView() {
     sleep: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].sleepHours : 7,
     energy: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].energy : 3,
     compulsion:
+      atlasData.checkins.length === 0 ||
       atlasData.checkins.filter(
         (c) => c.notes?.toLowerCase().includes("compulsão") || c.notes?.toLowerCase().includes("fome noturna"),
       ).length === 0
@@ -1898,6 +1901,336 @@ function AtlasIAView() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ========== TreinoDietaView IMPLEMENTATION ==========
+function TreinoDietaView() {
+  const { trainingConfig, updateTrainingConfig, dietConfig, updateDietConfig, currentWeekMetrics } = useAtlasData()
+  const [activeTab, setActiveTab] = useState<"treino" | "dieta">("treino")
+
+  // Local state for forms
+  const [training, setTraining] = useState(trainingConfig)
+  const [diet, setDiet] = useState(dietConfig)
+
+  const handleSaveTraining = () => {
+    updateTrainingConfig(training)
+  }
+
+  const handleSaveDiet = () => {
+    updateDietConfig(diet)
+  }
+
+  const weekDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Dumbbell className="w-6 h-6 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
+          <p className="text-muted-foreground">O que você vai fazer esta semana para avançar</p>
+        </div>
+      </div>
+
+      {/* Top indicators */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Execução</p>
+          <p className="text-2xl font-bold text-foreground">{currentWeekMetrics.executionRate}%</p>
+        </div>
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Sono médio</p>
+          <p className="text-2xl font-bold text-foreground">{currentWeekMetrics.avgSleepHours}h</p>
+        </div>
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Energia</p>
+          <p className="text-2xl font-bold text-foreground">{currentWeekMetrics.energyLevel}</p>
+        </div>
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4">
+          <p className="text-xs text-muted-foreground mb-1">Risco recaída</p>
+          <p className="text-2xl font-bold text-orange-400">Baixo</p>
+        </div>
+      </div>
+
+      {/* Mission of the week */}
+      <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Missão da Semana</h3>
+        <p className="text-muted-foreground mb-4">
+          {trainingConfig.mainFocus === "muscle_gain" && "Construir massa muscular com foco em peito e ombros"}
+          {trainingConfig.mainFocus === "fat_loss" && "Queimar gordura mantendo massa muscular"}
+          {trainingConfig.mainFocus === "maintenance" && "Manter composição corporal atual"}
+          {trainingConfig.mainFocus === "performance" && "Melhorar performance e força"}
+        </p>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">Duração:</span>
+            <span className="ml-2 text-foreground font-medium">{training.minutesPerSession || "60"} min</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Intensidade:</span>
+            <span className="ml-2 text-foreground font-medium">Média</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Recuperação:</span>
+            <span className="ml-2 text-foreground font-medium">Moderada</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Configuration section */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Configuração de Treino & Dieta</h3>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 border-b border-border">
+          <button
+            onClick={() => setActiveTab("treino")}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === "treino"
+                ? "text-blue-400 border-b-2 border-blue-400"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Treino
+          </button>
+          <button
+            onClick={() => setActiveTab("dieta")}
+            className={`px-4 py-2 font-medium transition-all ${
+              activeTab === "dieta"
+                ? "text-cyan-400 border-b-2 border-cyan-400"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Dieta
+          </button>
+        </div>
+
+        {/* Training tab */}
+        {activeTab === "treino" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Dias de treino por semana</label>
+                <select
+                  value={training.daysPerWeek || ""}
+                  onChange={(e) => setTraining({ ...training, daysPerWeek: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Selecione</option>
+                  {[2, 3, 4, 5, 6, 7].map((n) => (
+                    <option key={n} value={n}>
+                      {n} dias
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Tempo por sessão</label>
+                <select
+                  value={training.minutesPerSession || ""}
+                  onChange={(e) => setTraining({ ...training, minutesPerSession: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Selecione</option>
+                  {[30, 45, 60, 75, 90].map((n) => (
+                    <option key={n} value={n}>
+                      {n} minutos
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Onde treina</label>
+                <select
+                  value={training.location}
+                  onChange={(e) => setTraining({ ...training, location: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="gym">Academia</option>
+                  <option value="home">Casa</option>
+                  <option value="both">Ambos</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Foco principal</label>
+                <select
+                  value={training.mainFocus}
+                  onChange={(e) => setTraining({ ...training, mainFocus: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="muscle_gain">Ganho de massa</option>
+                  <option value="fat_loss">Perda de gordura</option>
+                  <option value="maintenance">Manutenção</option>
+                  <option value="performance">Performance</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Quais dias pretende treinar</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {weekDays.map((day) => (
+                  <button
+                    key={day}
+                    onClick={() => {
+                      const isSelected = training.trainingDays.includes(day)
+                      setTraining({
+                        ...training,
+                        trainingDays: isSelected
+                          ? training.trainingDays.filter((d) => d !== day)
+                          : [...training.trainingDays, day],
+                      })
+                    }}
+                    className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                      training.trainingDays.includes(day)
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-card/50 border-border text-muted-foreground hover:border-blue-500/50"
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveTraining}
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Salvar configuração de treino
+            </button>
+          </div>
+        )}
+
+        {/* Diet tab */}
+        {activeTab === "dieta" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Refeições por dia</label>
+                <select
+                  value={diet.mealsPerDay || ""}
+                  onChange={(e) => setDiet({ ...diet, mealsPerDay: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">Selecione</option>
+                  {[3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n}>
+                      {n} refeições
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Orçamento</label>
+                <select
+                  value={diet.budget}
+                  onChange={(e) => setDiet({ ...diet, budget: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="low">Baixo</option>
+                  <option value="medium">Médio</option>
+                  <option value="high">Alto</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Flexibilidade</label>
+                <select
+                  value={diet.flexibility}
+                  onChange={(e) => setDiet({ ...diet, flexibility: e.target.value as any })}
+                  className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:border-blue-500"
+                >
+                  <option value="rigid">Dieta rígida</option>
+                  <option value="moderate">Moderada</option>
+                  <option value="flexible">Flexível com estratégia</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Restrições alimentares</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {["Vegetariano", "Vegano", "Lactose", "Glúten", "Ovo"].map((restriction) => (
+                  <button
+                    key={restriction}
+                    onClick={() => {
+                      const isSelected = diet.restrictions.includes(restriction)
+                      setDiet({
+                        ...diet,
+                        restrictions: isSelected
+                          ? diet.restrictions.filter((r) => r !== restriction)
+                          : [...diet.restrictions, restriction],
+                      })
+                    }}
+                    className={`px-3 py-2 rounded-lg border text-sm transition-all ${
+                      diet.restrictions.includes(restriction)
+                        ? "bg-cyan-600 border-cyan-500 text-white"
+                        : "bg-card/50 border-border text-muted-foreground hover:border-cyan-500/50"
+                    }`}
+                  >
+                    {restriction}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Alimentos que não gosta</label>
+              <textarea
+                value={diet.dislikedFoods}
+                onChange={(e) => setDiet({ ...diet, dislikedFoods: e.target.value })}
+                placeholder="Ex: brócolis, peixe, abacate..."
+                className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500 h-20 resize-none"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveDiet}
+              className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Salvar configuração de dieta
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Weekly plan placeholder */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Semana Atlas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+          {weekDays.map((day, i) => {
+            const isTrainingDay = training.trainingDays.includes(day)
+            return (
+              <div
+                key={day}
+                className={`p-4 rounded-xl border ${
+                  isTrainingDay ? "bg-blue-600/10 border-blue-500/30" : "bg-secondary/30 border-border"
+                }`}
+              >
+                <p className="text-xs font-medium text-muted-foreground mb-2">{day.slice(0, 3)}</p>
+                {isTrainingDay ? (
+                  <>
+                    <p className="text-sm font-semibold text-foreground mb-2">Treino {String.fromCharCode(65 + i)}</p>
+                    <button className="text-xs text-blue-400 hover:text-blue-300">Ver plano</button>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Descanso</p>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
