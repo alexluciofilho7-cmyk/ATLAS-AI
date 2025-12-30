@@ -877,12 +877,25 @@ type AtlasResponse = {
   actionButtons?: { label: string; action: string }[]
 }
 
+type AtlasStructuredResponse = {
+  oneLiner: string
+  confidence: number
+  quickQuestions?: Array<{ id: string; label: string }>
+  planNow?: Array<{ step: string; seconds?: number }>
+  next24h?: Array<{ step: string }>
+  sevenDays?: Array<{ day: string; focus: string; actions: string[] }>
+  whyItWorks?: string[]
+  actions?: Array<{ id: string; label: string }>
+  care?: { riskLevel: "low" | "medium" | "high"; message: string | null }
+}
+
 type ChatMessage = {
   id: string
   role: "user" | "assistant"
   content: string
   timestamp: Date
   response?: AtlasResponse
+  structuredResponse?: AtlasStructuredResponse // Added structured response field
   imagePreview?: string
 }
 
@@ -1652,6 +1665,7 @@ function AtlasIAView() {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [activeContext, setActiveContext] = useState<string | null>(null)
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -1746,8 +1760,9 @@ function AtlasIAView() {
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
-        content: data.reply,
+        content: data.reply.oneLiner || "Resposta recebida",
         timestamp: new Date(),
+        structuredResponse: data.reply,
       }
 
       setMessages((prev) => [...prev, assistantMsg])
@@ -1767,6 +1782,166 @@ function AtlasIAView() {
 
   const handleShortcut = (message: string) => {
     setInputValue(message)
+    // Optionally, auto-send or prompt user to send
+    // handleSend()
+  }
+
+  const handleQuickQuestionClick = (questionLabel: string) => {
+    setSelectedQuestions((prev) => [...prev, questionLabel])
+    setInputValue(questionLabel)
+  }
+
+  const renderStructuredResponse = (msg: ChatMessage) => {
+    const sr = msg.structuredResponse
+    if (!sr) return null
+
+    return (
+      <div className="space-y-4">
+        {/* Confidence Badge */}
+        {sr.confidence && (
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-400/40 rounded-full">
+              <span className="text-xs font-bold text-cyan-300">Precisão {sr.confidence}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* One Liner */}
+        <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-400/30 rounded-xl p-4">
+          <p className="text-base font-semibold text-cyan-100 leading-relaxed">{sr.oneLiner}</p>
+        </div>
+
+        {/* Quick Questions */}
+        {sr.quickQuestions && sr.quickQuestions.length > 0 && (
+          <div className="bg-slate-800/60 border border-blue-400/30 rounded-xl p-4">
+            <h4 className="text-xs font-bold text-blue-300 mb-3">Perguntas rápidas (20s):</h4>
+            <div className="flex flex-wrap gap-2">
+              {sr.quickQuestions.map((q) => (
+                <button
+                  key={q.id}
+                  onClick={() => handleQuickQuestionClick(q.label)}
+                  className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/40 rounded-lg text-xs text-blue-100 transition-all hover:scale-105"
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Plan NOW */}
+        {sr.planNow && sr.planNow.length > 0 && (
+          <div className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-400/30 rounded-xl p-4">
+            <h4 className="text-sm font-bold text-emerald-300 mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Plano AGORA (2 minutos):
+            </h4>
+            <div className="space-y-2">
+              {sr.planNow.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span className="text-emerald-400 font-bold text-sm">{idx + 1}.</span>
+                  <p className="text-sm text-blue-100/90 flex-1">{item.step}</p>
+                  {item.seconds && <span className="text-xs text-emerald-300">{item.seconds}s</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Next 24h */}
+        {sr.next24h && sr.next24h.length > 0 && (
+          <div className="bg-slate-800/60 border border-blue-400/30 rounded-xl p-4">
+            <h4 className="text-sm font-bold text-blue-300 mb-3">Próximas 24h:</h4>
+            <div className="space-y-2">
+              {sr.next24h.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span className="text-blue-400 font-bold text-sm">{idx + 1}.</span>
+                  <p className="text-sm text-blue-100/80">{item.step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 7 Days Plan */}
+        {sr.sevenDays && sr.sevenDays.length > 0 && (
+          <div className="bg-slate-800/60 border border-purple-400/30 rounded-xl p-4">
+            <h4 className="text-sm font-bold text-purple-300 mb-3">7 dias (anti-recaída):</h4>
+            <div className="space-y-3">
+              {sr.sevenDays.map((dayPlan, idx) => (
+                <div key={idx} className="border-l-2 border-purple-400/40 pl-3">
+                  <div className="text-xs font-bold text-purple-300 mb-1">
+                    {dayPlan.day}: {dayPlan.focus}
+                  </div>
+                  <ul className="space-y-1">
+                    {dayPlan.actions.map((action, aIdx) => (
+                      <li key={aIdx} className="text-xs text-blue-100/70">
+                        • {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Why it works */}
+        {sr.whyItWorks && sr.whyItWorks.length > 0 && (
+          <div className="bg-slate-800/60 border border-slate-600/30 rounded-xl p-4">
+            <h4 className="text-xs font-bold text-slate-400 mb-2">Por que isso funciona?</h4>
+            <div className="space-y-2">
+              {sr.whyItWorks.map((reason, idx) => (
+                <p key={idx} className="text-xs text-slate-300 leading-relaxed">
+                  {reason}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Care/Safety Alert */}
+        {sr.care && sr.care.message && (
+          <div
+            className={`border rounded-xl p-4 ${
+              sr.care.riskLevel === "high"
+                ? "bg-red-500/10 border-red-400/40"
+                : sr.care.riskLevel === "medium"
+                  ? "bg-yellow-500/10 border-yellow-400/40"
+                  : "bg-blue-500/10 border-blue-400/40"
+            }`}
+          >
+            <h4
+              className={`text-sm font-bold mb-2 flex items-center gap-2 ${
+                sr.care.riskLevel === "high"
+                  ? "text-red-300"
+                  : sr.care.riskLevel === "medium"
+                    ? "text-yellow-300"
+                    : "text-blue-300"
+              }`}
+            >
+              <Shield className="w-4 h-4" />
+              Alerta de segurança
+            </h4>
+            <p className="text-sm text-slate-200">{sr.care.message}</p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        {sr.actions && sr.actions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {sr.actions.map((action) => (
+              <button
+                key={action.id}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-blue-400/40 rounded-lg text-xs font-bold text-blue-100 hover:from-blue-600/50 hover:to-cyan-600/50 transition-all"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const formatAIMessage = (content: string): React.ReactNode => {
@@ -1955,7 +2130,10 @@ function AtlasIAView() {
               )}
 
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-4 duration-300`}
+                >
                   {msg.role === "assistant" && (
                     <div
                       className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-xl relative overflow-hidden"
@@ -1968,27 +2146,28 @@ function AtlasIAView() {
                     </div>
                   )}
 
-                  <div className={`max-w-[75%] ${msg.role === "user" ? "order-first" : ""}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-5 ${
+                      msg.role === "user"
+                        ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white"
+                        : "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-blue-500/20"
+                    }`}
+                    style={
+                      msg.role === "user"
+                        ? {
+                            boxShadow: "0 8px 30px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.2)",
+                          }
+                        : {
+                            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.3)",
+                          }
+                    }
+                  >
                     {msg.role === "user" ? (
-                      /* User message with stronger glow and better shadow */
-                      <div
-                        className="bg-gradient-to-br from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl rounded-tr-md shadow-2xl"
-                        style={{
-                          boxShadow: "0 8px 30px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.2)",
-                        }}
-                      >
-                        <p className="text-sm whitespace-pre-line leading-relaxed font-medium">{msg.content}</p>
-                      </div>
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                    ) : msg.structuredResponse ? (
+                      renderStructuredResponse(msg)
                     ) : (
-                      /* AI message with formatted blocks, titles, and better visual hierarchy */
-                      <div
-                        className="bg-slate-800/70 backdrop-blur-md border border-blue-500/30 rounded-2xl rounded-tl-md p-6 shadow-2xl"
-                        style={{
-                          boxShadow: "0 8px 30px rgba(6, 182, 212, 0.2), 0 0 40px rgba(6, 182, 212, 0.1)",
-                        }}
-                      >
-                        <div className="space-y-3">{formatAIMessage(msg.content)}</div>
-                      </div>
+                      formatAIMessage(msg.content)
                     )}
                   </div>
 
@@ -2001,29 +2180,15 @@ function AtlasIAView() {
               ))}
 
               {isLoading && (
-                <div className="flex gap-4 justify-start">
-                  <div
-                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-xl"
-                    style={{
-                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
-                    }}
-                  >
-                    <Brain className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="bg-slate-800/70 backdrop-blur-md border border-blue-500/30 rounded-2xl rounded-tl-md px-6 py-4">
+                <div className="flex justify-start">
+                  <div className="bg-slate-800/80 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-5 max-w-[85%]">
                     <div className="flex items-center gap-3">
-                      <div className="flex gap-1.5">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
-                        <div
-                          className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.15s" }}
-                        />
-                        <div
-                          className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.3s" }}
-                        />
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-75" />
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-150" />
                       </div>
-                      <span className="text-xs text-blue-300 font-medium">Atlas IA está analisando seus dados...</span>
+                      <span className="text-sm text-blue-200/70">Atlas IA está analisando seus dados...</span>
                     </div>
                   </div>
                 </div>
