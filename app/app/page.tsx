@@ -35,6 +35,7 @@ import {
   UserCog as UserBody,
   TrendingUp,
   CheckCircle2,
+  Calendar,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -1818,25 +1819,720 @@ function CompulsaoView() {
   )
 }
 
+// ========== SonoView IMPLEMENTATION ==========
 function SonoView() {
+  const { currentWeekMetrics, checkins } = useAtlasData()
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
+  const [showCrisisModal, setShowCrisisModal] = useState(false)
+  const [showProtocolModal, setShowProtocolModal] = useState<string | null>(null)
+  const [showDayDetails, setShowDayDetails] = useState(false)
+
+  // Hábitos do dia
+  const [sunExposure, setSunExposure] = useState(false)
+  const [lastCaffeineEarly, setLastCaffeineEarly] = useState(false)
+  const [screenOffEarly, setScreenOffEarly] = useState(false)
+  const [lightDinner, setLightDinner] = useState(false)
+  const [stressLevel, setStressLevel] = useState(3)
+  const [perceivedQuality, setPerceivedQuality] = useState(3)
+
+  // Modo crise
+  const [crisisHours, setCrisisHours] = useState("")
+  const [crisisReason, setCrisisReason] = useState("")
+  const [crisisEnergy, setCrisisEnergy] = useState(3)
+
+  // Mock data for last 7 nights
+  const mockNights = [
+    {
+      day: "Seg",
+      date: "18/12",
+      hours: "6h 05min",
+      bedtime: "00:30",
+      wakeup: "06:35",
+      quality: "Ruim" as const,
+      causes: ["Tela até tarde", "Refeição pesada"],
+      impact:
+        "Essa noite reduziu seu Atlas Index de 82 para 74. Hoje não é dia de buscar recorde de carga, mas sim consolidar técnica e recuperar.",
+    },
+    {
+      day: "Ter",
+      date: "19/12",
+      hours: "7h 20min",
+      bedtime: "23:10",
+      wakeup: "06:30",
+      quality: "Ok" as const,
+      causes: ["Cafeína tarde"],
+      impact: "Sono regular. Seu corpo está se recuperando, mas ainda não é ideal para performance máxima.",
+    },
+    {
+      day: "Qua",
+      date: "20/12",
+      hours: "8h 10min",
+      bedtime: "22:30",
+      wakeup: "06:40",
+      quality: "Boa" as const,
+      causes: [],
+      impact: "Noite ideal! Seu Atlas Index subiu para 86. Hoje você pode buscar progressão de carga com segurança.",
+    },
+    {
+      day: "Qui",
+      date: "21/12",
+      hours: "7h 45min",
+      bedtime: "23:00",
+      wakeup: "06:45",
+      quality: "Boa" as const,
+      causes: [],
+      impact: "Sono de atleta. Continue assim e seu corpo vai responder com ganhos consistentes.",
+    },
+    {
+      day: "Sex",
+      date: "22/12",
+      hours: "6h 30min",
+      bedtime: "00:00",
+      wakeup: "06:30",
+      quality: "Ok" as const,
+      causes: ["Treino muito tarde"],
+      impact: "Sono suficiente, mas não ótimo. Ajuste o horário do treino para melhorar a qualidade.",
+    },
+    {
+      day: "Sáb",
+      date: "23/12",
+      hours: "8h 30min",
+      bedtime: "22:00",
+      wakeup: "06:30",
+      quality: "Boa" as const,
+      causes: [],
+      impact: "Excelente recuperação de fim de semana. Seu corpo está pronto para a próxima semana.",
+    },
+    {
+      day: "Dom",
+      date: "24/12",
+      hours: "7h 50min",
+      bedtime: "22:40",
+      wakeup: "06:30",
+      quality: "Boa" as const,
+      causes: [],
+      impact: "Ótima preparação para a semana. Você está no caminho certo.",
+    },
+  ]
+
+  // Calculate ASRI (Atlas Sleep & Recovery Index)
+  const avgSleepHours = currentWeekMetrics.avgSleepHours || 7.2
+  const regularityScore = 85 // Mock
+  const energyScore =
+    currentWeekMetrics.energyLevel === "Alta" ? 90 : currentWeekMetrics.energyLevel === "Média" ? 70 : 50
+  const asri = Math.round((avgSleepHours / 8) * 40 + (regularityScore / 100) * 30 + (energyScore / 100) * 30)
+
+  const asriStatus = asri >= 80 ? "Ideal" : asri >= 60 ? "Aceitável" : "Crítico"
+  const asriColor = asri >= 80 ? "text-green-400" : asri >= 60 ? "text-yellow-400" : "text-red-400"
+  const asriBg = asri >= 80 ? "bg-green-500/20" : asri >= 60 ? "bg-yellow-500/20" : "bg-red-500/20"
+  const asriBorder = asri >= 80 ? "border-green-500/30" : asri >= 60 ? "border-yellow-500/30" : "border-red-500/30"
+
+  // Risk indicators
+  const compulsionRisk = asri < 60 ? "Alto" : asri < 75 ? "Médio" : "Baixo"
+  const overtrainingRisk = asri < 65 ? "Alto" : asri < 80 ? "Médio" : "Baixo"
+  const testosteroneStatus = asri < 70 ? "Em risco" : "Estável"
+
+  const handleRegisterHabits = () => {
+    alert(
+      "Hábitos registrados. Em breve a Atlas IA vai usar isso para recalcular seu Atlas Index e ajustar treino/dieta.",
+    )
+  }
+
+  const handleCrisisSubmit = () => {
+    const hours = Number.parseFloat(crisisHours) || 3.5
+    setShowCrisisModal(false)
+    alert(
+      `Com base em uma noite de ${hours}h de sono e energia nível ${crisisEnergy}, hoje é dia de dano controlado:\n\n• Treino: reduzir intensidade e evitar PR. Foco em execução técnica.\n• Dieta: manter proteína alta, carbo moderado, nada de lixo à noite.\n• Sono hoje: alvo mínimo 7h30, sem cafeína após 15h.\n\nEsse ajuste será usado pela Atlas IA para não deixar você se sabotar amanhã.`,
+    )
+  }
+
+  const selectedNight = selectedDayIndex !== null ? mockNights[selectedDayIndex] : null
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-          <Moon className="w-6 h-6 text-indigo-400" />
+    <div className="space-y-6 pb-20">
+      {/* SEÇÃO 1: TOPO - VISÃO EM 3 SEGUNDOS */}
+      <div className="space-y-4">
+        {/* Título */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center backdrop-blur-sm border border-indigo-500/30">
+            <Moon className="w-6 h-6 text-indigo-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Sono & Recuperação</h2>
+            <p className="text-sm text-gray-400">
+              O sistema operacional que sustenta seu treino, dieta, hormônios e performance.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Sono & Recuperação</h2>
-          <p className="text-muted-foreground">Protocolos de higiene do sono e recuperação</p>
+
+        {/* Header Grid: ASRI + 4 Mini KPIs */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4">
+          {/* Card ASRI Central */}
+          <div
+            className={`relative overflow-hidden rounded-2xl border ${asriBorder} ${asriBg} backdrop-blur-sm p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
+            <div className="relative z-10">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Atlas Sleep & Recovery Index</p>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className={`text-5xl font-bold ${asriColor}`}>{asri}</span>
+                <span className="text-2xl text-gray-500">/100</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Status:</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${asriBg} ${asriColor} border ${asriBorder}`}
+                >
+                  {asriStatus}
+                </span>
+              </div>
+              {asri < 70 && (
+                <p className="mt-3 text-xs text-gray-400 leading-relaxed">
+                  Seu sono está comprometendo treino, dieta e hormônios. Ajuste agora ou aceite resultados medianos.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* 4 Mini KPIs */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Sono médio */}
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
+              <p className="text-xs text-gray-400 mb-1">Sono médio (7 dias)</p>
+              <p className="text-2xl font-bold text-white">{avgSleepHours.toFixed(1)}h</p>
+              <p
+                className={`text-xs mt-1 ${avgSleepHours >= 7.5 ? "text-green-400" : avgSleepHours >= 6.5 ? "text-yellow-400" : "text-red-400"}`}
+              >
+                {avgSleepHours >= 7.5 ? "Adequado" : avgSleepHours >= 6.5 ? "Abaixo do ideal" : "Crítico"}
+              </p>
+            </div>
+
+            {/* Regularidade */}
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
+              <p className="text-xs text-gray-400 mb-1">Regularidade de horário</p>
+              <p className="text-2xl font-bold text-white">Alta</p>
+              <p className="text-xs text-green-400 mt-1">Ótima consistência</p>
+            </div>
+
+            {/* Energia média */}
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
+              <p className="text-xs text-gray-400 mb-1">Energia média</p>
+              <p className="text-2xl font-bold text-white">{currentWeekMetrics.energyLevel}</p>
+              <p
+                className={`text-xs mt-1 ${currentWeekMetrics.energyLevel === "Alta" ? "text-green-400" : currentWeekMetrics.energyLevel === "Média" ? "text-yellow-400" : "text-red-400"}`}
+              >
+                {currentWeekMetrics.energyLevel === "Alta"
+                  ? "Excelente"
+                  : currentWeekMetrics.energyLevel === "Média"
+                    ? "Pode melhorar"
+                    : "Atenção"}
+              </p>
+            </div>
+
+            {/* Riscos conectados */}
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all duration-200">
+              <p className="text-xs text-gray-400 mb-2">Riscos conectados</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Compulsão</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-semibold ${compulsionRisk === "Baixo" ? "bg-green-500/20 text-green-400" : compulsionRisk === "Médio" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
+                  >
+                    {compulsionRisk}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Overtraining</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-semibold ${overtrainingRisk === "Baixo" ? "bg-green-500/20 text-green-400" : overtrainingRisk === "Médio" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
+                  >
+                    {overtrainingRisk}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Testosterona</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full font-semibold ${testosteroneStatus === "Estável" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}
+                  >
+                    {testosteroneStatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
+
+      {/* SEÇÃO 2: MEIO - TIMELINE + HÁBITOS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna esquerda: Noites Recentes */}
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-400" />
+            Noites Recentes (últimos 7 dias)
+          </h3>
+
+          <div className="grid grid-cols-7 gap-2">
+            {mockNights.map((night, idx) => {
+              const qualityColor =
+                night.quality === "Boa"
+                  ? "border-green-500/50 bg-green-500/10"
+                  : night.quality === "Ok"
+                    ? "border-yellow-500/50 bg-yellow-500/10"
+                    : "border-red-500/50 bg-red-500/10"
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setSelectedDayIndex(idx)
+                    setShowDayDetails(true)
+                  }}
+                  className={`relative p-2 rounded-lg border ${qualityColor} hover:scale-105 transition-all duration-200 cursor-pointer group`}
+                >
+                  <p className="text-[10px] text-gray-400 text-center mb-1">{night.day}</p>
+                  <p className="text-xs font-semibold text-white text-center">{night.hours.split(" ")[0]}</p>
+                  <div
+                    className={`absolute top-1 right-1 w-2 h-2 rounded-full ${night.quality === "Boa" ? "bg-green-400" : night.quality === "Ok" ? "bg-yellow-400" : "bg-red-400"}`}
+                  />
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Day Details Popover */}
+          {showDayDetails && selectedNight && (
+            <div className="mt-4 p-4 bg-slate-900/60 backdrop-blur-sm border border-blue-500/30 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-white">
+                  {selectedNight.day}, {selectedNight.date}
+                </h4>
+                <button
+                  onClick={() => setShowDayDetails(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Duração:</span>
+                  <span className="text-white font-semibold">{selectedNight.hours}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Horário:</span>
+                  <span className="text-white font-semibold">
+                    {selectedNight.bedtime} → {selectedNight.wakeup}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Qualidade:</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${selectedNight.quality === "Boa" ? "bg-green-500/20 text-green-400" : selectedNight.quality === "Ok" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}
+                  >
+                    {selectedNight.quality}
+                  </span>
+                </div>
+
+                {selectedNight.causes.length > 0 && (
+                  <div className="pt-2 border-t border-slate-700/50">
+                    <p className="text-gray-400 mb-1">Causas identificadas:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedNight.causes.map((cause, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full text-[10px]">
+                          {cause}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-700/50">
+                  <p className="text-gray-300 leading-relaxed">{selectedNight.impact}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Coluna direita: Hábitos de Sono */}
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all duration-300">
+          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+            Hábitos de Sono & Recuperação
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Registre seus hábitos diários para a Atlas IA entender por que seu sono está ajudando ou sabotando seu
+            corpo.
+          </p>
+
+          <div className="space-y-3">
+            {/* Toggles */}
+            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
+              <span className="text-sm text-gray-300">Exposição ao sol pela manhã</span>
+              <button
+                onClick={() => setSunExposure(!sunExposure)}
+                className={`w-11 h-6 rounded-full transition-all duration-200 ${sunExposure ? "bg-green-500" : "bg-slate-700"}`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${sunExposure ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
+              <span className="text-sm text-gray-300">Última cafeína antes das 15h</span>
+              <button
+                onClick={() => setLastCaffeineEarly(!lastCaffeineEarly)}
+                className={`w-11 h-6 rounded-full transition-all duration-200 ${lastCaffeineEarly ? "bg-green-500" : "bg-slate-700"}`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${lastCaffeineEarly ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
+              <span className="text-sm text-gray-300">Tela desligada 60 min antes</span>
+              <button
+                onClick={() => setScreenOffEarly(!screenOffEarly)}
+                className={`w-11 h-6 rounded-full transition-all duration-200 ${screenOffEarly ? "bg-green-500" : "bg-slate-700"}`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${screenOffEarly ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-2 bg-slate-900/40 rounded-lg">
+              <span className="text-sm text-gray-300">Última refeição leve</span>
+              <button
+                onClick={() => setLightDinner(!lightDinner)}
+                className={`w-11 h-6 rounded-full transition-all duration-200 ${lightDinner ? "bg-green-500" : "bg-slate-700"}`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ${lightDinner ? "translate-x-5" : "translate-x-0.5"}`}
+                />
+              </button>
+            </div>
+
+            {/* Sliders */}
+            <div className="p-3 bg-slate-900/40 rounded-lg space-y-2">
+              <label className="text-sm text-gray-300">Nível de estresse hoje</label>
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={stressLevel}
+                onChange={(e) => setStressLevel(Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Baixo</span>
+                <span className="text-cyan-400 font-semibold">{stressLevel}</span>
+                <span>Alto</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-900/40 rounded-lg space-y-2">
+              <label className="text-sm text-gray-300">Qualidade percebida do sono</label>
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={perceivedQuality}
+                onChange={(e) => setPerceivedQuality(Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Ruim</span>
+                <span className="text-green-400 font-semibold">{perceivedQuality}</span>
+                <span>Excelente</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleRegisterHabits}
+              className="w-full mt-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/30"
+            >
+              Registrar hábitos de hoje
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* SEÇÃO 3: BAIXO - PROTOCOLOS + MODO CRISE */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Modo Base */}
+        <div className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6 hover:border-blue-400 transition-all duration-300">
+          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-400" />
+            Modo Base – Sono de Atleta
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">A rotina ideal para performance máxima e recuperação profunda.</p>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-300">Dormir às:</span>
+              <span className="text-lg font-bold text-blue-400">23:00</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-300">Acordar às:</span>
+              <span className="text-lg font-bold text-blue-400">06:30</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-300">Janela de sono:</span>
+              <span className="text-lg font-bold text-green-400">7h30 – 8h</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <p className="text-xs text-gray-400 mb-2 font-semibold">Regras base:</p>
+            <ul className="space-y-1 text-xs text-gray-300">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+                Sem tela 60 min antes
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+                Sem cafeína após 15h
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+                Rotina de desaceleração (leitura, banho)
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Modo Crise */}
+        <div className="bg-gradient-to-br from-red-900/20 to-orange-900/20 backdrop-blur-sm border border-red-500/30 rounded-2xl p-6 hover:border-red-400 transition-all duration-300">
+          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            Modo Crise – Noite detonada
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Dormiu mal ou quase não dormiu? Use este modo para reduzir dano hoje e não jogar a semana fora.
+          </p>
+
+          <button
+            onClick={() => setShowCrisisModal(true)}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-red-500/30"
+          >
+            Dormi mal hoje, ajustar meu dia
+          </button>
+
+          <p className="mt-3 text-xs text-gray-400 leading-relaxed">
+            A Atlas IA vai ajustar treino, dieta e sono para você não se sabotar.
+          </p>
+        </div>
+
+        {/* Protocolos */}
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-300">
+          <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-cyan-400" />
+            Protocolos Atlas
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">Escolha um protocolo para reprogramar seu sono como de atleta.</p>
+
+          <div className="space-y-2">
+            <button
+              onClick={() => setShowProtocolModal("reset")}
+              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+            >
+              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                Reset de Higiene do Sono (7 dias)
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Quebrar hábitos ruins e estabilizar ritmo circadiano</p>
+            </button>
+
+            <button
+              onClick={() => setShowProtocolModal("screen")}
+              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+            >
+              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                Quebra de Tela Até Tarde (14 dias)
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Eliminar luz azul noturna e recuperar melatonina</p>
+            </button>
+
+            <button
+              onClick={() => setShowProtocolModal("athlete")}
+              className="w-full text-left p-3 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 hover:border-cyan-500/30 rounded-lg transition-all duration-200 group"
+            >
+              <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                Sono de Atleta Natural (21 dias)
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Protocolo completo para performance máxima</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Modo Crise */}
+      {showCrisisModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-red-500/30 rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+                Modo Crise Ativado
+              </h3>
+              <button
+                onClick={() => setShowCrisisModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">Quantas horas você dormiu?</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={crisisHours}
+                  onChange={(e) => setCrisisHours(e.target.value)}
+                  placeholder="Ex: 3.5"
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">Motivo principal da noite ruim?</label>
+                <select
+                  value={crisisReason}
+                  onChange={(e) => setCrisisReason(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="stress">Estresse</option>
+                  <option value="screen">Tela até tarde</option>
+                  <option value="caffeine">Cafeína</option>
+                  <option value="pain">Dor</option>
+                  <option value="heavy_meal">Refeição pesada</option>
+                  <option value="other">Outro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">Energia agora (1 a 5)</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={crisisEnergy}
+                  onChange={(e) => setCrisisEnergy(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Péssima</span>
+                  <span className="text-red-400 font-semibold">{crisisEnergy}</span>
+                  <span>Ótima</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleCrisisSubmit}
+                className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold rounded-xl transition-all duration-200"
+              >
+                Ajustar meu dia agora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Protocolos */}
+      {showProtocolModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {showProtocolModal === "reset"
+                  ? "Protocolo: Reset de Higiene do Sono (7 dias)"
+                  : showProtocolModal === "screen"
+                    ? "Protocolo: Quebra de Tela Até Tarde (14 dias)"
+                    : "Protocolo: Sono de Atleta Natural (21 dias)"}
+              </h3>
+              <button
+                onClick={() => setShowProtocolModal(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm text-gray-300">
+              <div>
+                <h4 className="font-semibold text-cyan-400 mb-2">Objetivo</h4>
+                <p>
+                  {showProtocolModal === "reset" &&
+                    "Quebrar hábitos ruins de sono, estabilizar ritmo circadiano e recuperar qualidade de recuperação em 7 dias."}
+                  {showProtocolModal === "screen" &&
+                    "Eliminar exposição à luz azul noturna, recuperar produção natural de melatonina e reduzir latência do sono."}
+                  {showProtocolModal === "athlete" &&
+                    "Implementar rotina completa de sono de atleta natural, otimizando recuperação, hormônios e performance."}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Manhã</h4>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Acordar no mesmo horário todos os dias (6h-7h)</li>
+                  <li>Exposição ao sol nos primeiros 30 min (10-15 min)</li>
+                  <li>Hidratação imediata (500ml água)</li>
+                  <li>Café da manhã proteico dentro de 1h</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Tarde</h4>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Última cafeína até 15h</li>
+                  <li>Treino ideal: 16h-19h</li>
+                  <li>Refeição mais pesada no almoço</li>
+                  <li>Evitar cochilos após 16h</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-cyan-400 mb-2">Rotina da Noite</h4>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Jantar leve até 20h</li>
+                  <li>Telas desligadas 60 min antes de dormir</li>
+                  <li>Banho morno 30 min antes</li>
+                  <li>Quarto escuro, silencioso e fresco (18-20°C)</li>
+                  <li>Dormir entre 22h-23h</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-cyan-400 mb-2">Métrica de Sucesso</h4>
+                <p>
+                  {showProtocolModal === "reset" && "Aumentar ASRI de 55 → 75 em 7 dias"}
+                  {showProtocolModal === "screen" && "Aumentar ASRI de 60 → 80 em 14 dias"}
+                  {showProtocolModal === "athlete" && "Atingir ASRI > 85 e manter por 21 dias"}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-700/50">
+                <p className="text-xs text-gray-400">
+                  No futuro, esse protocolo será integrado com seu treino, dieta e outros módulos da Atlas IA para
+                  ajustes automáticos.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+// ========== FisioterapiaView & TestosteronaView (No changes) ==========
 function FisioterapiaView() {
   return (
     <div className="space-y-6">
@@ -3096,7 +3792,6 @@ function TreinoDietaView() {
     </div>
   )
 }
-// </CHANGE>
 
 // ========== MAIN PAGE COMPONENT ==========
 export default function AtlasPainelPage() {
