@@ -1,5 +1,7 @@
 "use client"
 
+import { useCallback } from "react"
+
 import { useState } from "react"
 import Link from "next/link"
 import React from "react" // Import React for useRef
@@ -31,6 +33,8 @@ import {
   Heart,
   Flame,
   UserCog as UserBody,
+  TrendingUp,
+  CheckCircle2,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -44,7 +48,7 @@ import {
   type DietConfig, // Added for type safety
 } from "@/context/AtlasDataContext"
 import { AtlasPassaporte } from "@/components/AtlasPassaporte"
-import Compulsao2035 from "@/components/Compulsao2035"
+// import Compulsao2035 from "@/components/Compulsao2035" // Removed as CompulsaoView is now inlined
 
 type SectionKey =
   | "dashboard"
@@ -1189,9 +1193,628 @@ Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um 
 }
 
 // ========== OTHER VIEWS (TreinoDietaView REPLACED) ==========
-// TreinoDietaView REPLACED WITH NEW IMPLEMENTATION BELOW
+
 function CompulsaoView() {
-  return <Compulsao2035 />
+  const { currentWeekMetrics, checkins } = useAtlasData()
+  const [showCrisisModal, setShowCrisisModal] = useState(false)
+  const [showPreventModal, setShowPreventModal] = useState(false)
+  const [showRecoverModal, setShowRecoverModal] = useState(false)
+  const [showNightDefenseModal, setShowNightDefenseModal] = useState(false)
+  const [nightDefenseActive, setNightDefenseActive] = useState(false)
+
+  // Event logging state
+  const [eventLog, setEventLog] = useState<
+    Array<{
+      id: string
+      timestamp: Date
+      type: "urge_controlled" | "compulsion" | "light_desire"
+      intensity: number
+      trigger: string
+      category: string
+      notes: string
+    }>
+  >([])
+
+  const [newEvent, setNewEvent] = useState({
+    type: "urge_controlled" as "urge_controlled" | "compulsion" | "light_desire",
+    intensity: 5,
+    trigger: "",
+    category: "",
+    notes: "",
+  })
+
+  // Risk calculation based on real Atlas data
+  const calculateRisk = useCallback(() => {
+    let risk = 0
+
+    // Get latest checkin
+    const latest = checkins[checkins.length - 1]
+    if (latest) {
+      // Sleep impact (0-25 points)
+      if (latest.sleepHours < 6) risk += 25
+      else if (latest.sleepHours < 7) risk += 15
+      else if (latest.sleepHours < 8) risk += 5
+
+      // Stress impact (0-30 points)
+      risk += latest.stressLevel * 6
+
+      // Energy impact (0-25 points) - low energy = higher risk
+      risk += (5 - latest.energy) * 5
+
+      // Pain impact (0-20 points)
+      if (latest.painLevel > 0) risk += latest.painLevel * 4
+    }
+
+    // Night defense reduces risk
+    if (nightDefenseActive) risk -= 20
+
+    return Math.max(0, Math.min(100, risk))
+  }, [checkins, nightDefenseActive])
+
+  const riskLevel = calculateRisk()
+
+  const getRiskState = () => {
+    if (riskLevel < 33) return { label: "Controlado", color: "text-green-400", bgColor: "bg-green-500/10" }
+    if (riskLevel < 66) return { label: "Vigilância", color: "text-yellow-400", bgColor: "bg-yellow-500/10" }
+    return { label: "Crítico", color: "text-red-400", bgColor: "bg-red-500/10" }
+  }
+
+  const state = getRiskState()
+
+  // Critical window (mock for now, but can be calculated from event history)
+  const criticalWindow = "20:30 - 23:00"
+  const isInCriticalWindow = () => {
+    const now = new Date()
+    const currentHour = now.getHours()
+    const currentMin = now.getMinutes()
+    const currentTime = currentHour * 60 + currentMin
+    const start = 20 * 60 + 30 // 20:30
+    const end = 23 * 60 // 23:00
+    return currentTime >= start && currentTime <= end
+  }
+
+  // Week risk trend (mock data)
+  const weekTrend = [45, 52, 48, 60, 55, 50, riskLevel]
+
+  // Register event
+  const handleRegisterEvent = () => {
+    if (!newEvent.trigger || !newEvent.category) return
+
+    const event = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      ...newEvent,
+    }
+
+    setEventLog((prev) => [event, ...prev].slice(0, 20))
+    setNewEvent({
+      type: "urge_controlled",
+      intensity: 5,
+      trigger: "",
+      category: "",
+      notes: "",
+    })
+  }
+
+  // AI Insights (mock but structured)
+  const aiInsights = [
+    "Nos últimos 7 dias, 80% das crises aconteceram entre 21h e 23h, após uso prolongado de celular.",
+    "Dias com sono < 6h tiveram 3x mais registros de compulsão.",
+    "Seu gatilho dominante é: estresse (nota média 8/10).",
+  ]
+
+  return (
+    <div className="min-h-screen">
+      {/* Zone 1: Estado Atual - Top Strip */}
+      <div className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {/* Card 1: Risco Atual */}
+          <div className="relative p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
+            <div className="absolute top-4 right-4">
+              <div className="relative w-20 h-20">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" stroke="rgba(59, 130, 246, 0.1)" strokeWidth="8" fill="none" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeDasharray={`${riskLevel * 2.51} 251`}
+                    className={`${state.color} transition-all duration-500`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`text-2xl font-bold ${state.color}`}>{Math.round(riskLevel)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="text-sm font-medium text-slate-400 mb-1">Risco Agora</div>
+            <div className="text-3xl font-bold mb-1">{Math.round(riskLevel)}/100</div>
+            <div className="text-xs text-slate-500">Probabilidade de compulsão hoje</div>
+          </div>
+
+          {/* Card 2: Janela Crítica */}
+          <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-cyan-400" />
+              <div className="text-sm font-medium text-slate-400">Janela Crítica</div>
+            </div>
+            <div className="text-2xl font-bold mb-2">{criticalWindow}</div>
+            <div className="text-xs text-slate-500">Horário mais provável de ataque</div>
+            {isInCriticalWindow() && (
+              <div className="mt-2 inline-block px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-md text-xs text-red-400 font-medium">
+                Agora
+              </div>
+            )}
+          </div>
+
+          {/* Card 3: Estado Atual */}
+          <div
+            className={`p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 ${state.bgColor}`}
+          >
+            <div className="text-sm font-medium text-slate-400 mb-2">Estado Atual</div>
+            <div className={`text-2xl font-bold mb-2 ${state.color}`}>{state.label}</div>
+            <div className="text-xs text-slate-500">Baseado nos últimos 3 dias de sono, estresse e recaídas</div>
+          </div>
+
+          {/* Card 4: Tendência 7 dias */}
+          <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
+            <div className="text-sm font-medium text-slate-400 mb-3">Tendência 7 dias</div>
+            <div className="flex items-end gap-1 h-12 mb-2">
+              {weekTrend.map((value, i) => (
+                <div key={i} className="flex-1 bg-cyan-500/30 rounded-t" style={{ height: `${value}%` }} />
+              ))}
+            </div>
+            <div className="text-xs text-slate-500">Risco médio nos últimos 7 dias</div>
+          </div>
+        </div>
+
+        {/* Crisis Mode Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowCrisisModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all hover:scale-105 flex items-center gap-2"
+          >
+            <AlertTriangle className="w-5 h-5" />
+            Ativar Modo Crise (2 min)
+          </button>
+        </div>
+
+        {/* High Risk Warning */}
+        {riskLevel >= 66 && (
+          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-sm">
+            <p className="text-red-200 text-sm">
+              <strong>Risco elevado detectado.</strong> Recomendamos ativar o Modo Crise agora ou executar o protocolo
+              de prevenção. Isso não é falta de caráter, é padrão fisiológico + hábito. Estamos ajustando o sistema, não
+              te condenando.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Zone 2: Blocos de Ação */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Card 1: Prevenir */}
+        <button
+          onClick={() => setShowPreventModal(true)}
+          className="group p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/20 text-left"
+        >
+          <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 w-fit mb-4">
+            <Shield className="w-6 h-6 text-cyan-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Prevenir agora</h3>
+          <p className="text-slate-400 text-sm mb-4">Micro-ação de 90 segundos para reduzir risco imediato</p>
+          <div className="flex items-center text-cyan-400 text-sm font-medium">
+            Iniciar protocolo
+            <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </button>
+
+        {/* Card 2: Intervir */}
+        <button
+          onClick={() => setShowCrisisModal(true)}
+          className="group p-6 bg-gradient-to-br from-red-900/20 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-red-500/30 hover:border-red-400 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20 text-left"
+        >
+          <div className="p-3 bg-red-500/20 rounded-xl border border-red-500/30 w-fit mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Intervir (urge acontecendo)</h3>
+          <p className="text-slate-400 text-sm mb-4">
+            Protocolo de emergência para interromper, substituir e registrar
+          </p>
+          <div className="flex items-center text-red-400 text-sm font-medium">
+            Ativar Airbag
+            <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </button>
+
+        {/* Card 3: Recompor */}
+        <button
+          onClick={() => setShowRecoverModal(true)}
+          className="group p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-green-500 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-green-500/20 text-left"
+        >
+          <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30 w-fit mb-4">
+            <Heart className="w-6 h-6 text-green-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Recompor (pós-queda 12h)</h3>
+          <p className="text-slate-400 text-sm mb-4">Protocolo de recuperação sem punição e sem culpa</p>
+          <div className="flex items-center text-green-400 text-sm font-medium">
+            Ver protocolo
+            <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </button>
+      </div>
+
+      {/* Zone 3: Defesa Noturna & Agenda de Risco */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Defesa Noturna */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Moon className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-xl font-bold text-white">Defesa Noturna</h3>
+            </div>
+            <button
+              onClick={() => setNightDefenseActive(!nightDefenseActive)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                nightDefenseActive ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300"
+              }`}
+            >
+              {nightDefenseActive ? "Ativo" : "Inativo"}
+            </button>
+          </div>
+
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Horário típico do primeiro gatilho</label>
+              <select className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500">
+                <option>20:00 - 21:00</option>
+                <option>21:00 - 22:00</option>
+                <option>22:00 - 23:00</option>
+                <option>23:00 - 00:00</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Alimentos mais comuns nas crises</label>
+              <input
+                type="text"
+                placeholder="Ex: pão, doces, salgados..."
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+              <div className="text-xs text-slate-400 mb-1">Padrão da última semana</div>
+              <div className="text-sm text-slate-200">3 crises entre 21h–23h</div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowNightDefenseModal(true)}
+            className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors"
+          >
+            Ajustar rotina da noite
+          </button>
+        </div>
+
+        {/* Agenda de Risco */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-xl font-bold text-white">Agenda de Risco</h3>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, i) => {
+              const status = i % 3 === 0 ? "green" : i % 3 === 1 ? "yellow" : "red"
+              const colors = {
+                green: "bg-green-500/20 border-green-500/30 text-green-400",
+                yellow: "bg-yellow-500/20 border-yellow-500/30 text-yellow-400",
+                red: "bg-red-500/20 border-red-500/30 text-red-400",
+              }
+
+              return (
+                <div
+                  key={day}
+                  className={`p-3 rounded-lg border text-center transition-all hover:scale-105 ${colors[status]}`}
+                >
+                  <div className="text-xs font-medium mb-1">{day}</div>
+                  <div className="w-2 h-2 rounded-full mx-auto" style={{ backgroundColor: "currentColor" }} />
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              Sem crise
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-400" />
+              Urge controlado
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-400" />
+              Compulsão
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Zone 4: Log Inteligente & Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Log Inteligente */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <h3 className="text-xl font-bold text-white mb-4">Log Inteligente</h3>
+
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Tipo de evento</label>
+              <select
+                value={newEvent.type}
+                onChange={(e) =>
+                  setNewEvent({
+                    ...newEvent,
+                    type: e.target.value as "urge_controlled" | "compulsion" | "light_desire",
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
+              >
+                <option value="urge_controlled">Vontade intensa controlada</option>
+                <option value="compulsion">Compulsão</option>
+                <option value="light_desire">Desejo leve</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">
+                Intensidade do gatilho: {newEvent.intensity}/10
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={newEvent.intensity}
+                onChange={(e) => setNewEvent({ ...newEvent, intensity: Number.parseInt(e.target.value) })}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Categoria de gatilho</label>
+              <div className="flex flex-wrap gap-2">
+                {["Estresse", "Tédio", "Emoção forte", "Fome real", "Ambiente"].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setNewEvent({ ...newEvent, category: cat })}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      newEvent.category === cat
+                        ? "bg-cyan-500 text-white"
+                        : "bg-slate-800 border border-slate-700 text-slate-300 hover:border-cyan-500"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">O que aconteceu antes?</label>
+              <input
+                type="text"
+                value={newEvent.notes}
+                onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
+                placeholder="Ex: estava sozinho, mexendo no celular..."
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleRegisterEvent}
+            className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors mb-4"
+          >
+            Registrar evento
+          </button>
+
+          {/* Event history */}
+          {eventLog.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-slate-400 mb-2">Últimos registros</div>
+              {eventLog.slice(0, 5).map((event) => (
+                <div key={event.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-slate-300 font-medium">{event.trigger}</span>
+                    <span className="text-xs text-slate-500">{event.timestamp.toLocaleTimeString()}</span>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {event.category} • Intensidade: {event.intensity}/10
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Insights Atlas IA */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-xl font-bold text-white">Insights Atlas IA</h3>
+          </div>
+
+          <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg mb-4">
+            <div className="text-xs text-cyan-400 mb-1 flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              Atlas IA Online – monitorando seus gatilhos em tempo real
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {aiInsights.map((insight, i) => (
+              <div
+                key={i}
+                className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-cyan-500/50 transition-colors"
+              >
+                <p className="text-sm text-slate-300 leading-relaxed">{insight}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="text-xs text-blue-200">
+              <strong>Padrão Atlas detectado:</strong> Risco aumenta significativamente após 21h com uso prolongado de
+              telas e baixa energia.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Crisis Modal (reused from Compulsao2035) */}
+      {showCrisisModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-red-500/30 rounded-2xl shadow-2xl">
+            <button
+              onClick={() => setShowCrisisModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-white mb-4">Modo Crise Ativado</h2>
+              <p className="text-slate-300">Protocolo em 3 fases: Interromper → Substituir → Registrar</p>
+              <div className="mt-6 space-y-4">
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Respirar fundo (4-7-8) por 90 segundos</span>
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Trocar de cômodo agora</span>
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Água + 10 agachamentos</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCrisisModal(false)}
+                className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-xl transition-colors"
+              >
+                Concluir protocolo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Prevent Modal (placeholder) */}
+      {showPreventModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/30 rounded-2xl shadow-2xl p-8">
+            <button
+              onClick={() => setShowPreventModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-4">Protocolo de Prevenção</h2>
+            <p className="text-slate-300 mb-6">Micro-ação de 90 segundos para reduzir risco imediato.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">1. Beber um copo de água agora</div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">2. Fazer 10 respirações profundas</div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">3. Mudar de ambiente por 5 minutos</div>
+            </div>
+            <button
+              onClick={() => setShowPreventModal(false)}
+              className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Recover Modal (placeholder) */}
+      {showRecoverModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/30 rounded-2xl shadow-2xl p-8">
+            <button
+              onClick={() => setShowRecoverModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-4">Protocolo de Recuperação</h2>
+            <p className="text-slate-300 mb-6">Sem punição. Sem culpa. Apenas reconstrução.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>1. Aceitar sem julgamento:</strong> O que aconteceu, aconteceu.
+              </div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>2. Hidratar-se:</strong> 500ml de água agora.
+              </div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>3. Planejar próxima refeição:</strong> Voltar ao protocolo na próxima refeição.
+              </div>
+            </div>
+            <button
+              onClick={() => setShowRecoverModal(false)}
+              className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Night Defense Modal (placeholder) */}
+      {showNightDefenseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/30 rounded-2xl shadow-2xl p-8">
+            <button
+              onClick={() => setShowNightDefenseModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-4">Ajustar Rotina da Noite</h2>
+            <p className="text-slate-300 mb-6">Protocolo para reduzir risco durante a janela crítica.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>Janela Crítica:</strong> 20:30 - 23:00
+              </div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>Ações recomendadas:</strong> Eliminar telas 30min antes, preparar lanches de emergência, ter
+                protocolo de substituição pronto.
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowNightDefenseModal(false)
+                setNightDefenseActive(true)
+              }}
+              className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl"
+            >
+              Ativar Defesa Noturna
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function SonoView() {
@@ -1880,7 +2503,7 @@ function AtlasIAView() {
                     }
                   }}
                   placeholder="Digite sua mensagem para a Atlas IA..."
-                  className="w-full px-5 py-4 bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30 resize-none transition-all font-light"
+                  className="w-full px-5 py-4 bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30 transition-all font-light"
                   style={{
                     boxShadow: "inset 0 2px 8px rgba(0, 0, 0, 0.3)",
                   }}
