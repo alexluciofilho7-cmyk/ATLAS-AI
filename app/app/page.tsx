@@ -46,6 +46,7 @@ import {
   type BodyMeasurements,
   type BodyStatusMap, // Added for context data
 } from "@/context/AtlasDataContext"
+import { AtlasPassaporte } from "@/components/AtlasPassaporte"
 
 type SectionKey =
   | "dashboard"
@@ -1180,7 +1181,7 @@ ${
 - Dieta: ${currentWeekMetrics.dietAdherence}% de aderência
 - Energia: ${currentWeekMetrics.energyLevel}
 
-Baseado nesses dados, a resposta para "${userMessage}" depende do que você está priorizando. 
+Baseado nesses dados, a resposta para "${userMessage}" depende do que você está priorizando.
 
 Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um protocolo específico pro SEU corpo e pro SEU momento atual?`,
     type: "general",
@@ -2228,7 +2229,7 @@ function AtlasIAView() {
             </div>
           </div>
 
-          <div className="px-6 py-5 bg-slate-900/40 border-t border-blue-500/20">
+          <div className="px-6 py-5 bg-gradient-to-b from-slate-900/60 to-slate-900/80 border-t border-blue-500/20 backdrop-blur-sm">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {warShortcuts.map((shortcut, idx) => (
                 <button
@@ -2315,6 +2316,8 @@ function AtlasIAView() {
 export default function AtlasPainelPage() {
   const [activeSection, setActiveSection] = useState<SectionKey>("dashboard")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [passportOpen, setPassportOpen] = useState(false)
+  // </CHANGE>
 
   const renderContent = () => {
     switch (activeSection) {
@@ -2352,7 +2355,14 @@ export default function AtlasPainelPage() {
           </div>
           <span className="font-bold text-foreground">Atlas IA</span>
         </Link>
-        <div className="ml-auto text-sm text-muted-foreground">Bem-vindo ao seu painel</div>
+        <button
+          onClick={() => setPassportOpen(true)}
+          className="ml-auto flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20"
+        >
+          <User className="w-4 h-4" />
+          <span className="hidden md:inline">Perfil Atlas</span>
+        </button>
+        {/* </CHANGE> */}
       </header>
 
       {/* Sidebar */}
@@ -2395,6 +2405,9 @@ export default function AtlasPainelPage() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setMobileMenuOpen(false)} />
       )}
+
+      <AtlasPassaporte isOpen={passportOpen} onClose={() => setPassportOpen(false)} />
+      {/* </CHANGE> */}
     </div>
   )
 }

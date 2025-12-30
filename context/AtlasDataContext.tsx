@@ -10,6 +10,81 @@ export type BodyAreaStatus = "good" | "needs_improvement" | "injury"
 
 export type BodyStatusMap = Record<BodyAreaKey, BodyAreaStatus>
 
+export type PrimaryGoal = "muscle_gain" | "fat_loss" | "recomp" | "performance" | "pain_management"
+
+export type FitnessLevel = "beginner" | "intermediate" | "advanced"
+
+export type Equipment = "full_gym" | "home_basic" | "limited"
+
+export type InjuryRestriction = {
+  area: string
+  severity: "mild" | "moderate" | "severe"
+}
+
+export type WeakPoint =
+  | "upper_chest"
+  | "lateral_delts"
+  | "traps"
+  | "posture"
+  | "calves"
+  | "glutes"
+  | "hamstrings"
+  | "core"
+
+export type AtlasPassport = {
+  // Dados base
+  age: number | null
+  height: number | null // cm
+  currentWeight: number | null // kg
+  gender: Gender
+  primaryGoal: PrimaryGoal
+  fitnessLevel: FitnessLevel
+
+  // Disponibilidade
+  timePerDay: number | null // minutes
+  daysPerWeek: number | null
+  equipment: Equipment
+
+  // Restrições
+  injuries: InjuryRestriction[]
+
+  // Preferências de dieta
+  mealsPerDay: number | null
+  foodRestrictions: string[]
+  budget: "low" | "medium" | "high"
+
+  // Rotina
+  workSchedule: string // ex: "9h-18h"
+  trainingTime: string // ex: "19h-20h"
+  avgSleepHours: number | null
+
+  // Pontos fracos estéticos
+  weakPoints: WeakPoint[]
+
+  // Meta timestamp
+  updatedAt?: string
+}
+
+const defaultPassport: AtlasPassport = {
+  age: null,
+  height: null,
+  currentWeight: null,
+  gender: "male",
+  primaryGoal: "muscle_gain",
+  fitnessLevel: "intermediate",
+  timePerDay: null,
+  daysPerWeek: null,
+  equipment: "full_gym",
+  injuries: [],
+  mealsPerDay: null,
+  foodRestrictions: [],
+  budget: "medium",
+  workSchedule: "",
+  trainingTime: "",
+  avgSleepHours: null,
+  weakPoints: [],
+}
+
 export type BodyMeasurements = {
   shoulders: number | null
   chest: number | null
@@ -63,46 +138,6 @@ export type AtlasWeekMetrics = {
   dietAdherence: number
 }
 
-const defaultMeasurements: BodyMeasurements = {
-  shoulders: null,
-  chest: null,
-  waist: null,
-  hips: null,
-  rightArm: null,
-  leftArm: null,
-  rightThigh: null,
-  leftThigh: null,
-  rightCalf: null,
-  leftCalf: null,
-  neck: null,
-}
-
-const defaultBodyStatus: BodyStatusMap = {
-  shoulders: "needs_improvement",
-  chest: "needs_improvement",
-  back: "needs_improvement",
-  arms: "needs_improvement",
-  core: "needs_improvement",
-  hips: "needs_improvement",
-  legs: "needs_improvement",
-  calves: "needs_improvement",
-}
-
-const defaultMetrics: AtlasWeekMetrics = {
-  weekLabel: "Semana atual",
-  atlasScore: 72,
-  executionRate: 82,
-  aestheticProgress: 67,
-  metabolicHealth: 78,
-  generalConsistency: 75,
-  avgSleepHours: 7.5,
-  weightDeltaKg: -2.1,
-  energyLevel: "Alta",
-  trainingsDone: 4,
-  trainingsPlanned: 5,
-  dietAdherence: 85,
-}
-
 function computeMetricsFromCheckins(checkins: DailyCheckin[], existingMetrics: AtlasWeekMetrics): AtlasWeekMetrics {
   const last7 = checkins
     .slice()
@@ -147,7 +182,16 @@ function computeMetricsFromCheckins(checkins: DailyCheckin[], existingMetrics: A
 }
 
 function computeBodyStatus(measurements: BodyMeasurements, gender: Gender): BodyStatusMap {
-  const status: BodyStatusMap = { ...defaultBodyStatus }
+  const status: BodyStatusMap = {
+    shoulders: "needs_improvement",
+    chest: "needs_improvement",
+    back: "needs_improvement",
+    arms: "needs_improvement",
+    core: "needs_improvement",
+    hips: "needs_improvement",
+    legs: "needs_improvement",
+    calves: "needs_improvement",
+  }
 
   if (measurements.shoulders && measurements.waist) {
     const ratio = measurements.shoulders / measurements.waist
@@ -190,6 +234,8 @@ function computeBodyStatus(measurements: BodyMeasurements, gender: Gender): Body
 }
 
 type AtlasDataContextType = {
+  passport: AtlasPassport
+  updatePassport: (updates: Partial<AtlasPassport>) => void
   gender: Gender
   setGender: (g: Gender) => void
   bodyMeasurements: BodyMeasurements
@@ -207,9 +253,38 @@ type AtlasDataContextType = {
 
 const AtlasDataContext = createContext<AtlasDataContextType | null>(null)
 
+const defaultBodyStatus: BodyStatusMap = {
+  shoulders: "needs_improvement",
+  chest: "needs_improvement",
+  back: "needs_improvement",
+  arms: "needs_improvement",
+  core: "needs_improvement",
+  hips: "needs_improvement",
+  legs: "needs_improvement",
+  calves: "needs_improvement",
+}
+
+const defaultMetrics: AtlasWeekMetrics = {
+  weekLabel: "Semana atual",
+  atlasScore: 0,
+  executionRate: 0,
+  aestheticProgress: 0,
+  metabolicHealth: 0,
+  generalConsistency: 0,
+  avgSleepHours: 0,
+  weightDeltaKg: 0,
+  energyLevel: "Baixa",
+  trainingsDone: 0,
+  trainingsPlanned: 0,
+  dietAdherence: 0,
+}
+
 export function AtlasDataProvider({ children }: { children: ReactNode }) {
+  const [passport, setPassport] = useState<AtlasPassport>(defaultPassport)
   const [gender, setGender] = useState<Gender>("male")
-  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurements>(defaultMeasurements)
+  const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurements>(
+    defaultPassport.currentWeight ? { ...defaultPassport, updatedAt: new Date().toISOString() } : defaultPassport,
+  )
   const [bodyStatus, setBodyStatus] = useState<BodyStatusMap>(defaultBodyStatus)
   const [checkins, setCheckins] = useState<DailyCheckin[]>([])
   const [currentWeekMetrics, setCurrentWeekMetrics] = useState<AtlasWeekMetrics>(defaultMetrics)
@@ -221,15 +296,27 @@ export function AtlasDataProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToast({ message: "", visible: false }), 3000)
   }, [])
 
+  const updatePassport = useCallback(
+    (updates: Partial<AtlasPassport>) => {
+      setPassport((prev) => ({
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      }))
+      showToast("Perfil Atlas atualizado com sucesso.")
+    },
+    [showToast],
+  )
+
   const saveMeasurements = useCallback(
     (measurements: BodyMeasurements) => {
       const updated = { ...measurements, updatedAt: new Date().toISOString() }
       setBodyMeasurements(updated)
-      const newStatus = computeBodyStatus(updated, gender)
+      const newStatus = computeBodyStatus(updated, passport.gender)
       setBodyStatus(newStatus)
       showToast("Medidas salvas. O Dashboard foi atualizado.")
     },
-    [gender, showToast],
+    [passport.gender, showToast],
   )
 
   const registerCheckin = useCallback(
@@ -249,6 +336,8 @@ export function AtlasDataProvider({ children }: { children: ReactNode }) {
   return (
     <AtlasDataContext.Provider
       value={{
+        passport,
+        updatePassport,
         gender,
         setGender,
         bodyMeasurements,
