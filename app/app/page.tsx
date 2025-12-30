@@ -24,7 +24,6 @@ import {
   Check,
   Send,
   User,
-  ImageIcon,
   TrendingUp,
   AlertTriangle,
   AlertCircle,
@@ -36,6 +35,7 @@ import {
   Apple,
   Heart,
   Flame,
+  UserCog as UserBody,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -1645,7 +1645,7 @@ function TestosteronaView() {
   )
 }
 
-// ========== ATLAS IA VIEW (FUTUREISTIC CHAT PANEL) ==========
+// ========== ATLAS IA VIEW (PREMIUM FUTURISTIC CHAT PANEL) ==========
 function AtlasIAView() {
   const atlasData = useAtlasData()
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -1769,111 +1769,231 @@ function AtlasIAView() {
     setInputValue(message)
   }
 
+  const formatAIMessage = (content: string): React.ReactNode => {
+    const lines = content.split("\n")
+    const elements: React.ReactNode[] = []
+    let currentBlock: string[] = []
+    let blockIndex = 0
+
+    const flushBlock = () => {
+      if (currentBlock.length > 0) {
+        elements.push(
+          <div key={`block-${blockIndex}`} className="mb-4 last:mb-0">
+            {currentBlock.map((text, i) => (
+              <p key={`p-${blockIndex}-${i}`} className="text-sm leading-relaxed text-blue-50/90 mb-2 last:mb-0">
+                {text}
+              </p>
+            ))}
+          </div>,
+        )
+        blockIndex++
+        currentBlock = []
+      }
+    }
+
+    lines.forEach((line) => {
+      const trimmedLine = line.trim()
+
+      // Check if this is a section title (ends with colon)
+      if (trimmedLine && /^[A-Z][^:]*:$/.test(trimmedLine)) {
+        flushBlock()
+        elements.push(
+          <h4 key={`title-${blockIndex}`} className="text-base font-bold text-cyan-300 mb-2 mt-4 first:mt-0">
+            {trimmedLine}
+          </h4>,
+        )
+        blockIndex++
+      } else if (trimmedLine) {
+        currentBlock.push(trimmedLine)
+      } else {
+        flushBlock()
+      }
+    })
+
+    flushBlock()
+
+    return <>{elements}</>
+  }
+
+  const contextStats = {
+    execution: atlasData.currentWeekMetrics.executionRate,
+    sleep: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].sleepHours : 7,
+    energy: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].energy : 3,
+    compulsion:
+      atlasData.checkins.filter(
+        (c) => c.notes?.toLowerCase().includes("compulsão") || c.notes?.toLowerCase().includes("fome noturna"),
+      ).length === 0
+        ? "sob controle"
+        : "atenção",
+  }
+
   return (
     <div
       className="h-full min-h-screen relative overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #0a192f 0%, #112240 50%, #0a1929 100%)",
+        background: "linear-gradient(135deg, #0a0e1a 0%, #0f1419 50%, #0a0d14 100%)",
       }}
     >
-      {/* Background particles/circuit effect */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-5">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 blur-[2px]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.1) 2px, rgba(59, 130, 246, 0.1) 4px)",
-            backgroundSize: "50px 50px",
+              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.15) 2px, rgba(59, 130, 246, 0.15) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.15) 2px, rgba(59, 130, 246, 0.15) 4px)",
+            backgroundSize: "60px 60px",
           }}
         />
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
-        {/* Futuristic Chat Card */}
         <div
-          className="bg-slate-900/40 backdrop-blur-xl border-2 border-blue-500/30 rounded-3xl shadow-2xl overflow-hidden"
+          className="mb-6 bg-gradient-to-r from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl"
           style={{
-            boxShadow: "0 0 40px rgba(59, 130, 246, 0.2), 0 0 80px rgba(6, 182, 212, 0.1)",
+            boxShadow: "0 0 30px rgba(59, 130, 246, 0.15), 0 10px 40px rgba(0, 0, 0, 0.3)",
           }}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-sm border-b border-blue-500/30 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg animate-pulse"
-                  style={{
-                    boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)",
-                  }}
-                >
-                  <Brain className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-1">Atlas IA – Governança Corporal</h2>
-                  <p className="text-sm text-blue-200/70">
-                    Seu cérebro externo para treino, dieta, sono, hormônios e lesões.
-                  </p>
-                </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg relative overflow-hidden"
+                style={{
+                  boxShadow: "0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(6, 182, 212, 0.3)",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-pulse" />
+                <Brain className="w-9 h-9 text-white relative z-10" />
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-400/40 rounded-full">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                <span className="text-sm text-emerald-300 font-medium">Online</span>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Atlas IA – Governança Corporal</h2>
+                <p className="text-sm text-blue-200/60 font-light">
+                  Seu cérebro externo para treino, dieta, sono, hormônios e lesões
+                </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-400/40 rounded-full backdrop-blur-sm shadow-lg">
+              <div
+                className="w-2.5 h-2.5 bg-emerald-400 rounded-full relative"
+                style={{
+                  boxShadow: "0 0 10px rgba(52, 211, 153, 0.8)",
+                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                }}
+              />
+              <span className="text-sm text-emerald-300 font-semibold tracking-wide">
+                {isLoading ? "Analisando dados..." : "Online"}
+              </span>
             </div>
           </div>
 
+          <div className="flex items-center gap-4 text-xs text-blue-300/70 font-mono border-t border-blue-500/10 pt-4 mt-2">
+            <span className="flex items-center gap-1.5">
+              <span className="text-blue-400 font-semibold">Execução:</span>
+              <span
+                className={
+                  contextStats.execution >= 80
+                    ? "text-emerald-400"
+                    : contextStats.execution >= 60
+                      ? "text-yellow-400"
+                      : "text-red-400"
+                }
+              >
+                {contextStats.execution}%
+              </span>
+            </span>
+            <span className="text-blue-500/40">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-blue-400 font-semibold">Sono:</span>
+              <span className="text-blue-200">{contextStats.sleep}h</span>
+            </span>
+            <span className="text-blue-500/40">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-blue-400 font-semibold">Energia:</span>
+              <span className="text-blue-200">
+                {contextStats.energy === 5
+                  ? "Máxima"
+                  : contextStats.energy >= 4
+                    ? "Alta"
+                    : contextStats.energy === 3
+                      ? "Média"
+                      : "Baixa"}
+              </span>
+            </span>
+            <span className="text-blue-500/40">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-blue-400 font-semibold">Compulsão:</span>
+              <span className={contextStats.compulsion === "sob controle" ? "text-emerald-400" : "text-yellow-400"}>
+                {contextStats.compulsion}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div
+          className="bg-slate-900/40 backdrop-blur-2xl border border-blue-500/20 rounded-3xl shadow-2xl overflow-hidden"
+          style={{
+            boxShadow: "0 0 50px rgba(59, 130, 246, 0.2), 0 20px 60px rgba(0, 0, 0, 0.4)",
+          }}
+        >
           {/* Messages Area */}
-          <div className="p-6 h-[500px] overflow-y-auto bg-slate-900/20 backdrop-blur-sm">
+          <div className="p-8 h-[520px] overflow-y-auto bg-gradient-to-b from-slate-900/30 to-slate-900/50 backdrop-blur-sm">
             <div className="space-y-6">
               {messages.length === 0 && (
-                <div className="text-center py-16">
+                <div className="text-center py-20">
                   <div
-                    className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center"
+                    className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center relative overflow-hidden"
                     style={{
-                      boxShadow: "0 0 40px rgba(59, 130, 246, 0.3)",
+                      boxShadow: "0 0 50px rgba(59, 130, 246, 0.3)",
                     }}
                   >
-                    <Brain className="w-10 h-10 text-blue-400" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent animate-pulse" />
+                    <Brain className="w-12 h-12 text-blue-400 relative z-10" />
                   </div>
-                  <p className="text-blue-200/70 text-sm">
+                  <p className="text-blue-200/60 text-sm font-light">
                     Faça sua primeira pergunta ou use um dos atalhos de guerra abaixo
                   </p>
                 </div>
               )}
 
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div key={msg.id} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "assistant" && (
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Brain className="w-5 h-5 text-white" />
+                    <div
+                      className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-xl relative overflow-hidden"
+                      style={{
+                        boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent" />
+                      <Brain className="w-6 h-6 text-white relative z-10" />
                     </div>
                   )}
 
                   <div className={`max-w-[75%] ${msg.role === "user" ? "order-first" : ""}`}>
                     {msg.role === "user" ? (
+                      /* User message with stronger glow and better shadow */
                       <div
-                        className="bg-gradient-to-br from-blue-600 to-blue-500 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg"
+                        className="bg-gradient-to-br from-blue-600 to-blue-500 text-white px-6 py-4 rounded-2xl rounded-tr-md shadow-2xl"
                         style={{
-                          boxShadow: "0 4px 20px rgba(59, 130, 246, 0.3)",
+                          boxShadow: "0 8px 30px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.2)",
                         }}
                       >
-                        <p className="text-sm whitespace-pre-line leading-relaxed">{msg.content}</p>
+                        <p className="text-sm whitespace-pre-line leading-relaxed font-medium">{msg.content}</p>
                       </div>
                     ) : (
+                      /* AI message with formatted blocks, titles, and better visual hierarchy */
                       <div
-                        className="bg-slate-800/60 backdrop-blur-sm border border-blue-500/20 rounded-2xl rounded-tl-sm p-5 shadow-xl"
+                        className="bg-slate-800/70 backdrop-blur-md border border-blue-500/30 rounded-2xl rounded-tl-md p-6 shadow-2xl"
                         style={{
-                          boxShadow: "0 4px 20px rgba(6, 182, 212, 0.15)",
+                          boxShadow: "0 8px 30px rgba(6, 182, 212, 0.2), 0 0 40px rgba(6, 182, 212, 0.1)",
                         }}
                       >
-                        <div className="text-sm text-blue-50 whitespace-pre-line leading-relaxed">{msg.content}</div>
+                        <div className="space-y-3">{formatAIMessage(msg.content)}</div>
                       </div>
                     )}
                   </div>
 
                   {msg.role === "user" && (
-                    <div className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-slate-700/80 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-slate-600/50">
                       <User className="w-5 h-5 text-slate-300" />
                     </div>
                   )}
@@ -1881,24 +2001,29 @@ function AtlasIAView() {
               ))}
 
               {isLoading && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Brain className="w-5 h-5 text-white" />
+                <div className="flex gap-4 justify-start">
+                  <div
+                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-xl"
+                    style={{
+                      boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
+                    }}
+                  >
+                    <Brain className="w-6 h-6 text-white" />
                   </div>
-                  <div className="bg-slate-800/60 backdrop-blur-sm border border-blue-500/20 rounded-2xl rounded-tl-sm px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
+                  <div className="bg-slate-800/70 backdrop-blur-md border border-blue-500/30 rounded-2xl rounded-tl-md px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1.5">
                         <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" />
                         <div
                           className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
+                          style={{ animationDelay: "0.15s" }}
                         />
                         <div
                           className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0.4s" }}
+                          style={{ animationDelay: "0.3s" }}
                         />
                       </div>
-                      <span className="text-xs text-blue-300 ml-2">Atlas IA está analisando seus dados...</span>
+                      <span className="text-xs text-blue-300 font-medium">Atlas IA está analisando seus dados...</span>
                     </div>
                   </div>
                 </div>
@@ -1908,24 +2033,23 @@ function AtlasIAView() {
             </div>
           </div>
 
-          {/* Context Chips */}
-          <div className="px-6 py-4 bg-slate-900/40 border-t border-blue-500/20">
-            <div className="flex flex-wrap gap-2">
+          <div className="px-6 py-5 bg-slate-900/50 border-t border-blue-500/20 backdrop-blur-sm">
+            <div className="flex flex-wrap gap-2.5">
               {contextChips.map((chip) => {
                 const Icon = chip.icon
                 return (
                   <button
                     key={chip.id}
                     onClick={() => setActiveContext(activeContext === chip.id ? null : chip.id)}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-2 ${
+                    className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-2 ${
                       activeContext === chip.id
-                        ? "bg-blue-500/30 border-2 border-blue-400/60 text-blue-200 shadow-lg"
-                        : "bg-slate-800/50 border border-slate-700/50 text-slate-300 hover:border-blue-500/40 hover:bg-slate-700/50"
+                        ? "bg-gradient-to-r from-blue-600/40 to-cyan-600/40 border-2 border-blue-400/70 text-blue-100 shadow-lg scale-105"
+                        : "bg-slate-800/60 border border-slate-600/40 text-slate-300 hover:border-blue-500/50 hover:bg-slate-700/60 hover:scale-103"
                     }`}
                     style={
                       activeContext === chip.id
                         ? {
-                            boxShadow: "0 0 20px rgba(59, 130, 246, 0.4)",
+                            boxShadow: "0 0 25px rgba(59, 130, 246, 0.5), 0 4px 15px rgba(59, 130, 246, 0.3)",
                           }
                         : {}
                     }
@@ -1939,16 +2063,15 @@ function AtlasIAView() {
             </div>
           </div>
 
-          {/* War Shortcuts */}
-          <div className="px-6 py-4 bg-slate-900/30 border-t border-blue-500/20">
-            <div className="flex gap-3">
+          <div className="px-6 py-5 bg-slate-900/40 border-t border-blue-500/20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {warShortcuts.map((shortcut, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleShortcut(shortcut.message)}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 font-medium hover:from-cyan-600/30 hover:to-blue-600/30 hover:border-cyan-400/50 transition-all duration-200 hover:shadow-lg"
+                  className="px-5 py-3 bg-gradient-to-br from-cyan-600/15 to-blue-600/15 border border-cyan-500/40 rounded-xl text-xs text-cyan-200 font-bold hover:from-cyan-600/25 hover:to-blue-600/25 hover:border-cyan-400/60 hover:scale-105 transition-all duration-200 shadow-lg backdrop-blur-sm"
                   style={{
-                    boxShadow: "0 0 15px rgba(6, 182, 212, 0.1)",
+                    boxShadow: "0 0 20px rgba(6, 182, 212, 0.15)",
                   }}
                   disabled={isLoading}
                 >
@@ -1958,9 +2081,33 @@ function AtlasIAView() {
             </div>
           </div>
 
-          {/* Input Area */}
-          <div className="p-6 bg-slate-900/50 border-t border-blue-500/30">
+          <div className="p-6 bg-gradient-to-b from-slate-900/60 to-slate-900/80 border-t border-blue-500/30 backdrop-blur-sm">
             <div className="flex gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Enviar foto de comida ou corpo (em breve)"
+                  disabled={true}
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
+                <button
+                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Anexar exames ou documentos (em breve)"
+                  disabled={true}
+                >
+                  <FileText className="w-5 h-5" />
+                </button>
+                <button
+                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Foto de progresso ou dor (em breve)"
+                  disabled={true}
+                >
+                  <UserBody className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Input textarea */}
               <div className="flex-1 relative">
                 <textarea
                   value={inputValue}
@@ -1972,24 +2119,21 @@ function AtlasIAView() {
                     }
                   }}
                   placeholder="Digite sua mensagem para a Atlas IA..."
-                  className="w-full px-5 py-4 pr-14 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 resize-none transition-all"
+                  className="w-full px-5 py-4 bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30 resize-none transition-all font-light"
+                  style={{
+                    boxShadow: "inset 0 2px 8px rgba(0, 0, 0, 0.3)",
+                  }}
                   rows={2}
                   disabled={isLoading}
                 />
-                <button
-                  className="absolute right-4 top-4 text-slate-400 hover:text-blue-400 transition-colors disabled:opacity-50"
-                  title="Anexar imagem (em breve)"
-                  disabled={isLoading}
-                >
-                  <ImageIcon className="w-5 h-5" />
-                </button>
               </div>
+
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isLoading}
-                className="px-7 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-2xl hover:from-blue-500 hover:to-cyan-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-2xl hover:from-blue-500 hover:to-cyan-400 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-2xl flex items-center justify-center"
                 style={{
-                  boxShadow: "0 4px 20px rgba(59, 130, 246, 0.4)",
+                  boxShadow: "0 8px 30px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)",
                 }}
               >
                 <Send className="w-5 h-5" />
