@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "use"
+import { useState } from "react"
 import {
   Calendar,
   Clock,
@@ -169,7 +169,7 @@ export default function TreinoDietaRefactored() {
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-yellow-400" />
             <span className="text-sm text-slate-300">Energia:</span>
-            <span className="font-bold text-yellow-400">Média</span>
+            <span className="font-bold text-white">Média</span>
           </div>
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-emerald-400" />
