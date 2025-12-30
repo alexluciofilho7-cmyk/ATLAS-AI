@@ -42,7 +42,7 @@ import {
   type BodyStatusMap, // Added for context data
 } from "@/context/AtlasDataContext"
 import { AtlasPassaporte } from "@/components/AtlasPassaporte"
-import TreinoDieta2035 from "@/components/TreinoDieta2035"
+import TreinoDietaRefactored from "@/components/TreinoDietaRefactored"
 import Compulsao2035 from "@/components/Compulsao2035"
 
 type SectionKey =
@@ -1187,7 +1187,7 @@ Me diga: você quer uma resposta genérica de internet, ou quer que eu monte um 
 
 // ========== OTHER VIEWS (unchanged) ==========
 function TreinoDietaView() {
-  return <TreinoDieta2035 />
+  return <TreinoDietaRefactored />
 }
 
 function CompulsaoView() {
