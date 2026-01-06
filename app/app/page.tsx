@@ -36,7 +36,6 @@ import {
   Coffee,
   Wine,
   Award,
-  Book,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -970,7 +969,7 @@ Você PRECISA consultar um médico ou fisioterapeuta presencial. Não vou te dar
 Até você ser avaliado:
 - Evite movimentos que causam dor.
 - Não force "pra ver se melhora".
-- Não tome anti-inflamatório sem prescrição médica.
+- Não tome anti-inflamatório sem prescrição.
 
 Vou te orientar apenas a proteger a região enquanto você marca a consulta.`,
         type: "pain",
@@ -1315,7 +1314,15 @@ function CompulsaoView() {
             <div className="absolute top-4 right-4">
               <div className="relative w-20 h-20">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" stroke="rgba(59, 130, 246, 0.1)" strokeWidth="8" fill="none" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    className="text-slate-700/30"
+                  />
                   <circle
                     cx="50"
                     cy="50"
@@ -1819,47 +1826,7 @@ function CompulsaoView() {
   )
 }
 
-// ========== ATLAS IA VIEW (PLACEHOLDER) ==========
-function AtlasIAView() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-          <Brain className="w-6 h-6 text-blue-400" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
-          <p className="text-muted-foreground">Central de inteligência artificial para análise e recomendações</p>
-        </div>
-      </div>
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
-      </div>
-    </div>
-  )
-}
-
-// ========== TREINO & DIETA VIEW (PLACEHOLDER) ==========
-function TreinoDietaView() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-          <Dumbbell className="w-6 h-6 text-purple-400" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
-          <p className="text-muted-foreground">Sistema de governança para treino, dieta e progressão</p>
-        </div>
-      </div>
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
-      </div>
-    </div>
-  )
-}
-
-// ========== SONOView IMPLEMENTATION ==========
+// ========== SonoView IMPLEMENTATION ==========
 function SonoView() {
   const { currentWeekMetrics, checkins } = useAtlasData()
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
@@ -1997,10 +1964,9 @@ function SonoView() {
   const testosteroneRisk = asri < 72 ? "Em risco" : "Estável"
 
   const getRiskColor = (risk: string) => {
-    if (risk === "Crítico") return "text-red-400 bg-red-500/20 border-red-500/30"
-    if (risk === "Alto") return "text-orange-400 bg-orange-500/20 border-orange-500/30"
-    if (risk === "Médio") return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30"
-    return "text-green-400 bg-green-500/20 border-green-500/30"
+    if (risk === "Baixo" || risk === "Estável") return "bg-green-500/20 text-green-400 border-green-500/30"
+    if (risk === "Médio") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+    return "bg-red-500/20 text-red-400 border-red-500/30"
   }
 
   // Impact badges for habits
@@ -2033,7 +1999,7 @@ function SonoView() {
     const hours = Number.parseFloat(crisisHours) || 3.5
     setShowCrisisModal(false)
     alert(
-      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA vai ajustar seu plano automaticamente.`,
+      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA ajustará seu plano automaticamente.`,
     )
   }
 
@@ -2106,7 +2072,7 @@ function SonoView() {
               <div className="flex items-center gap-3 mb-5">
                 <span className="text-xs text-gray-500 font-medium">Status atual:</span>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriBg}`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriGlow}`}
                 >
                   {asriStatus}
                 </span>
@@ -2233,7 +2199,7 @@ function SonoView() {
         </div>
       </div>
 
-      {/* BLOCO 2 - ÚLTIMAS NOITES + HÁBITOS */}
+      {/* BLOCO 2: ÚLTIMAS NOITES + HÁBITOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Noites Recentes - Bar chart style */}
         <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/60 rounded-3xl p-7 hover:border-cyan-500/30 transition-all duration-500">
@@ -2489,7 +2455,7 @@ function SonoView() {
         </div>
       </div>
 
-      {/* BLOCO 3 - MODOS E PROTOCOLOS */}
+      {/* BLOCO 3: MODOS E PROTOCOLOS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Modo Base */}
         <div className="group bg-gradient-to-br from-blue-900/30 to-cyan-900/30 backdrop-blur-md border-2 border-blue-500/40 rounded-3xl p-7 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:scale-[1.02]">
@@ -2701,8 +2667,8 @@ function SonoView() {
 
       {/* Modal Protocolos - Enhanced */}
       {showProtocolModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-foreground">
                 {showProtocolModal === "reset"
@@ -2836,510 +2802,373 @@ function SonoView() {
   )
 }
 
-// ========== FISIOTERAPIAView IMPLEMENTATION ==========
+// ========== FisioterapiaView IMPLEMENTATION ==========
 function FisioterapiaView() {
-  const { currentWeekMetrics } = useAtlasData()
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
-  const [painIntensity, setPainIntensity] = useState(5)
-  const [painType, setPainType] = useState("Pontada")
-  const [painDuration, setPainDuration] = useState("Menos de 7 dias")
-  const [injuryLog, setInjuryLog] = useState([
-    {
-      id: "1",
-      date: "2025-01-05",
-      region: "Ombro direito",
-      intensity: 6,
-      status: "Melhorando" as const,
-    },
-    {
-      id: "2",
-      date: "2025-01-03",
-      region: "Coluna lombar",
-      intensity: 4,
-      status: "Estável" as const,
-    },
-  ])
-  const [activeProtocol, setActiveProtocol] = useState<string | null>(null)
+  const [triageData, setTriageData] = useState({
+    region: "",
+    intensity: 5,
+    duration: "",
+    nightPain: false,
+    numbness: false,
+    trauma: false,
+    impact: "Moderado",
+  })
+  const [triageSubmitted, setTriageSubmitted] = useState(false)
 
-  // Mock Pain & Mobility Index based on current metrics
-  const painIndex = Math.max(0, Math.min(100, 100 - currentWeekMetrics.atlasScore * 0.8))
-  const painStatus = painIndex < 30 ? "Estável" : painIndex < 60 ? "Atenção" : "Crítico"
-  const painStatusColor =
-    painStatus === "Estável" ? "text-green-400" : painStatus === "Atenção" ? "text-yellow-400" : "text-red-400"
-
-  // Regional risks (mock)
-  const regionalRisks = {
-    coluna: painIndex > 50 ? "Alto" : painIndex > 30 ? "Médio" : "Baixo",
-    ombros: painIndex > 60 ? "Crítico" : painIndex > 40 ? "Alto" : "Baixo",
-    joelhos: painIndex > 55 ? "Alto" : painIndex > 35 ? "Médio" : "Baixo",
-    outras: painIndex > 45 ? "Médio" : "Baixo",
-  }
-
-  const getRiskColor = (risk: string) => {
-    if (risk === "Crítico") return "text-red-400 bg-red-500/20 border-red-500/30"
-    if (risk === "Alto") return "text-orange-400 bg-orange-500/20 border-orange-500/30"
-    if (risk === "Médio") return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30"
-    return "text-green-400 bg-green-500/20 border-green-500/30"
-  }
-
-  // Body regions for pain map
   const bodyRegions = [
-    { id: "pescoco", label: "Pescoço", top: "10%", left: "50%" },
-    { id: "ombro-dir", label: "Ombro Dir.", top: "20%", left: "65%" },
-    { id: "ombro-esq", label: "Ombro Esq.", top: "20%", left: "35%" },
-    { id: "coluna-toracica", label: "Coluna Torácica", top: "30%", left: "50%" },
-    { id: "coluna-lombar", label: "Coluna Lombar", top: "40%", left: "50%" },
-    { id: "quadril", label: "Quadril", top: "50%", left: "50%" },
-    { id: "joelho-dir", label: "Joelho Dir.", top: "70%", left: "55%" },
-    { id: "joelho-esq", label: "Joelho Esq.", top: "70%", left: "45%" },
-    { id: "tornozelo-dir", label: "Tornozelo Dir.", top: "90%", left: "55%" },
-    { id: "tornozelo-esq", label: "Tornozelo Esq.", top: "90%", left: "45%" },
+    "Pescoço / Cervical",
+    "Ombro direito",
+    "Ombro esquerdo",
+    "Coluna torácica",
+    "Lombar",
+    "Quadril",
+    "Joelho direito",
+    "Joelho esquerdo",
+    "Tornozelo / Pé",
+    "Cotovelo / Punho / Mão",
   ]
 
-  const handleRegisterPain = () => {
-    if (!selectedRegion) return
-    const newEntry = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      region: bodyRegions.find((r) => r.id === selectedRegion)?.label || selectedRegion,
-      intensity: painIntensity,
-      status: "Registrado" as const,
-    }
-    setInjuryLog([newEntry, ...injuryLog])
-    setSelectedRegion(null)
-    setPainIntensity(5)
+  const handleTriageSubmit = () => {
+    setTriageSubmitted(true)
+    setTimeout(() => setTriageSubmitted(false), 5000)
   }
 
   const protocols = [
     {
-      id: "coluna-21",
-      title: "Protocolo 21 dias – Coluna sem dor",
-      objective: "Reduzir dores lombares e melhorar postura em 3 semanas.",
-      rules: [
-        "Realizar 10-15 minutos de mobilidade diária",
-        "Evitar sentar por mais de 1h seguida",
-        "Priorizar exercícios de core e glúteos",
+      title: "Protocolo Atlas – Coluna & Postura",
+      description: "Rotina base diária para quem passa muitas horas sentado ou em pé.",
+      bullets: [
+        "3 pausas de mobilidade de 3 minutos ao longo do dia",
+        "Exercícios leves de extensores de coluna",
+        "Dica de ergonomia simples (cadeira, tela, etc.)",
       ],
-      warnings: [
-        "Não realizar se houver dor aguda intensa ou irradiação para as pernas",
-        "Pausar se sentir formigamento progressivo",
-      ],
-      redFlags: ["Dor após trauma ou queda", "Perda de força súbita nas pernas", "Febre + dor nas costas"],
+      color: "blue",
     },
     {
-      id: "ombro-14",
-      title: "Protocolo 14 dias – Ombro de Atleta",
-      objective: "Fortalecer manguito rotador e prevenir tendinites.",
-      rules: [
-        "Rotação externa diária com elástico leve",
-        "Evitar press overhead com dor",
-        "Priorizar movimentos controlados",
+      title: "Protocolo Atlas – Ombro & Treino de Superior",
+      description: "Para quem sente desconforto em ombros durante treino de peito/costas/ombros.",
+      bullets: [
+        "Aquecimento específico antes de empurrar/puxar",
+        "Redução temporária de carga / amplitude",
+        "Mobilidade leve pós-treino",
       ],
-      warnings: ["Não realizar se houver dor ao levantar o braço acima de 90°", "Pausar se houver crepitação com dor"],
-      redFlags: [
-        "Dor após queda ou trauma direto no ombro",
-        "Incapacidade de levantar o braço",
-        "Dor noturna intensa que acorda",
-      ],
+      color: "cyan",
     },
     {
-      id: "joelho-10",
-      title: "Protocolo 10 dias – Joelho Resiliente",
-      objective: "Reduzir sobrecarga e fortalecer estabilizadores do joelho.",
-      rules: [
-        "Priorizar agachamentos parciais sem dor",
-        "Fortalecer quadríceps e isquiotibiais",
-        "Evitar corrida em declive",
+      title: "Protocolo Atlas – Joelho & Pernas",
+      description: "Para desconfortos leves em agachamentos e leg press.",
+      bullets: [
+        "Ajuste de amplitude no treino",
+        "Exercícios de fortalecimento estático",
+        "Orientação geral de quando procurar fisio/médico (texto educativo)",
       ],
-      warnings: ["Não realizar se houver inchaço significativo", "Pausar se sentir instabilidade ou falseio"],
-      redFlags: [
-        "Dor após torção ou trauma",
-        "Inchaço súbito sem trauma aparente",
-        "Dificuldade de apoiar peso na perna",
-      ],
+      color: "teal",
     },
   ]
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center border border-green-500/30">
-          <Activity className="w-6 h-6 text-green-400" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Fisioterapia & Dores</h2>
-          <p className="text-sm text-muted-foreground">
-            Central de inteligência para dores, mobilidade e prevenção de lesões
-          </p>
-        </div>
-      </div>
-
-      {/* BLOCO 1 - Overview de Dor & Risco */}
+    <div className="space-y-6">
+      {/* BLOCO 1: Cabeçalho - Status Geral de Dor & Mobilidade */}
       <div className="space-y-4">
-        {/* Main Pain Index Card */}
-        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="text-5xl font-bold text-foreground">{Math.round(painIndex)}</div>
-                <div className="text-sm text-muted-foreground">/100</div>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">Atlas Pain & Mobility Index</h3>
-              <p className={`text-sm font-medium ${painStatusColor} mb-3`}>Status: {painStatus}</p>
-              <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-                Quanto mais alto o índice, maior o impacto das dores na sua performance. Valores acima de 60 indicam
-                necessidade de ajustes imediatos no treino e rotina.
-              </p>
-            </div>
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center border-2 border-green-500/30">
-              <Activity className="w-12 h-12 text-green-400" />
-            </div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-green-500/20 flex items-center justify-center">
+            <Activity className="w-6 h-6 text-teal-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Fisioterapia & Dores</h2>
+            <p className="text-muted-foreground">Postura, lesões e mobilidade sob comando da Atlas IA.</p>
           </div>
         </div>
 
-        {/* Regional Risk Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { key: "coluna", label: "Coluna" },
-            { key: "ombros", label: "Ombros" },
-            { key: "joelhos", label: "Joelhos" },
-            { key: "outras", label: "Outras articulações" },
-          ].map((region) => {
-            const risk = regionalRisks[region.key as keyof typeof regionalRisks]
-            return (
-              <div
-                key={region.key}
-                className={`${getRiskColor(risk)} border rounded-xl p-3 transition-all hover:scale-105`}
-              >
-                <div className="text-xs text-muted-foreground mb-1">{region.label}</div>
-                <div className="text-sm font-semibold">{risk}</div>
-              </div>
-            )
-          })}
-        </div>
+        {/* Pain & Mobility Index Card */}
+        <div className="bg-gradient-to-br from-teal-950/30 to-green-950/30 backdrop-blur-sm border border-teal-500/30 rounded-2xl p-6 shadow-lg hover:shadow-teal-500/20 transition-all duration-300">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-teal-300 mb-1">Atlas Pain & Mobility Index</h3>
+              <p className="text-sm text-muted-foreground">Índice geral de dor e mobilidade</p>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-bold text-teal-400">78</div>
+              <div className="text-xs text-teal-500/70">de 100</div>
+            </div>
+          </div>
 
-        {/* Medical Disclaimer */}
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-          <div className="flex gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-300 leading-relaxed">
-              <strong>Importante:</strong> A Atlas IA não substitui avaliação médica presencial. Em caso de trauma, dor
-              intensa ou sinais de alerta, procure um profissional de saúde imediatamente.
-            </p>
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="px-3 py-1.5 rounded-full bg-yellow-500/20 border border-yellow-500/30">
+              <span className="text-sm font-medium text-yellow-400">Moderado</span>
+            </div>
+            <span className="text-sm text-muted-foreground">Atenção preventiva recomendada</span>
+          </div>
+
+          {/* Critical Regions */}
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Regiões mais críticas:</p>
+            <div className="flex flex-wrap gap-2">
+              <div className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+                Ombro direito
+              </div>
+              <div className="px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-sm text-orange-400">
+                Lombar
+              </div>
+              <div className="px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-sm text-yellow-400">
+                Joelho esquerdo
+              </div>
+            </div>
+          </div>
+
+          {/* Active Protocol Indicator */}
+          <div className="mt-4 pt-4 border-t border-teal-500/20">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Protocolo ativo:</span>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-sm text-green-400 font-medium">Ombro & Superior em andamento</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* BLOCO 2 - Mapa de Dor & Diário de Lesões */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Pain Map */}
-        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+      {/* BLOCO 2: Mapa Corporal + BLOCO 3: Triagem */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* BLOCO 2: Mapa Corporal Simples */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg hover:shadow-teal-500/10 transition-all duration-300">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-teal-400" />
-            Mapa de Dor
+            Mapa de Dor Corporal
           </h3>
 
-          {/* Body Hologram */}
-          <div className="relative h-96 bg-gradient-to-b from-teal-950/20 to-gray-900/20 rounded-xl border border-teal-500/20 mb-4 overflow-hidden">
-            {/* Simple body wireframe */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-20">
-              <div className="w-32 h-80 border-2 border-teal-400 rounded-full"></div>
+          {/* Body Map Wireframe (simplified) */}
+          <div className="mb-6 p-4 bg-gradient-to-b from-teal-950/20 to-transparent rounded-xl border border-teal-500/20">
+            <div className="flex justify-center mb-4">
+              <div className="relative w-32 h-64 border-2 border-teal-400/30 rounded-full">
+                {/* Head */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-teal-400/40"></div>
+                {/* Body */}
+                <div className="absolute top-12 left-1/2 -translate-x-1/2 w-20 h-32 border-2 border-teal-400/40 rounded-lg"></div>
+                {/* Arms */}
+                <div className="absolute top-16 left-0 w-6 h-24 border-2 border-teal-400/30 rounded-full -translate-x-2"></div>
+                <div className="absolute top-16 right-0 w-6 h-24 border-2 border-teal-400/30 rounded-full translate-x-2"></div>
+                {/* Legs */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-8 w-6 h-20 border-2 border-teal-400/30 rounded-full"></div>
+                <div className="absolute bottom-4 left-1/2 translate-x-2 w-6 h-20 border-2 border-teal-400/30 rounded-full"></div>
+              </div>
             </div>
+            <p className="text-center text-xs text-muted-foreground">Clique nas regiões abaixo para selecionar</p>
+          </div>
 
-            {/* Clickable regions */}
+          {/* Region Buttons */}
+          <div className="space-y-2 mb-4">
             {bodyRegions.map((region) => (
               <button
-                key={region.id}
-                onClick={() => setSelectedRegion(region.id)}
-                className={`absolute w-12 h-12 rounded-full border-2 transition-all cursor-pointer flex items-center justify-center text-xs ${
-                  selectedRegion === region.id
-                    ? "bg-teal-500/40 border-teal-400 scale-125 shadow-lg shadow-teal-500/50"
-                    : "bg-gray-800/60 border-teal-500/30 hover:bg-teal-500/20 hover:border-teal-400 hover:scale-110"
+                key={region}
+                onClick={() => setSelectedRegion(region)}
+                className={`w-full text-left px-4 py-2.5 rounded-lg border transition-all duration-200 ${
+                  selectedRegion === region
+                    ? "bg-teal-500/20 border-teal-500/50 text-teal-300 shadow-[0_0_10px_rgba(20,184,166,0.3)]"
+                    : "bg-secondary/30 border-border hover:border-teal-500/30 hover:bg-secondary/50 text-foreground"
                 }`}
-                style={{
-                  top: region.top,
-                  left: region.left,
-                  transform: "translate(-50%, -50%)",
-                }}
-                title={region.label}
               >
-                <Target className="w-4 h-4 text-teal-300" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{region}</span>
+                  {selectedRegion === region && <Check className="w-4 h-4 text-teal-400" />}
+                </div>
               </button>
             ))}
           </div>
 
-          {/* Pain Details Panel */}
+          {/* Selected Region Info */}
           {selectedRegion && (
-            <div className="space-y-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/30">
-              <div className="text-sm font-medium text-foreground">
-                Região: {bodyRegions.find((r) => r.id === selectedRegion)?.label}
+            <div className="p-4 bg-teal-950/20 border border-teal-500/30 rounded-xl space-y-2">
+              <p className="text-sm font-medium text-teal-300">Região selecionada: {selectedRegion}</p>
+              <p className="text-sm text-muted-foreground">Status: Sob atenção</p>
+              <p className="text-sm text-muted-foreground">Protocolo sugerido: Alívio + mobilidade leve</p>
+            </div>
+          )}
+        </div>
+
+        {/* BLOCO 3: Triagem Inteligente de Dor */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-400" />
+            Triagem de Dor – Atlas IA
+          </h3>
+
+          {triageSubmitted ? (
+            <div className="p-6 bg-green-950/20 border border-green-500/30 rounded-xl text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
+                <Check className="w-6 h-6 text-green-400" />
+              </div>
+              <p className="text-green-400 font-medium">Triagem registrada com sucesso!</p>
+              <p className="text-sm text-muted-foreground">
+                Em breve, a Atlas IA usará esses dados para ajustar seus protocolos de treino e recuperação.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Region Select */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Região afetada</label>
+                <select
+                  value={triageData.region}
+                  onChange={(e) => setTriageData({ ...triageData, region: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                >
+                  <option value="">Selecione...</option>
+                  {bodyRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Intensity Slider */}
+              {/* Pain Intensity */}
               <div>
-                <label className="text-xs text-muted-foreground block mb-2">
-                  Intensidade da dor (0-10): {painIntensity}
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Intensidade da dor: {triageData.intensity}/10
                 </label>
                 <input
                   type="range"
                   min="0"
                   max="10"
-                  value={painIntensity}
-                  onChange={(e) => setPainIntensity(Number(e.target.value))}
-                  className="w-full accent-teal-500"
+                  value={triageData.intensity}
+                  onChange={(e) => setTriageData({ ...triageData, intensity: Number.parseInt(e.target.value) })}
+                  className="w-full h-2 bg-secondary/50 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
-              </div>
-
-              {/* Pain Type */}
-              <div>
-                <label className="text-xs text-muted-foreground block mb-2">Tipo de dor</label>
-                <select
-                  value={painType}
-                  onChange={(e) => setPainType(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-foreground"
-                >
-                  <option>Pontada</option>
-                  <option>Queimação</option>
-                  <option>Peso</option>
-                  <option>Rigidez</option>
-                  <option>Outra</option>
-                </select>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Sem dor</span>
+                  <span>Insuportável</span>
+                </div>
               </div>
 
               {/* Duration */}
               <div>
-                <label className="text-xs text-muted-foreground block mb-2">Duração</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Duração</label>
                 <select
-                  value={painDuration}
-                  onChange={(e) => setPainDuration(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-foreground"
+                  value={triageData.duration}
+                  onChange={(e) => setTriageData({ ...triageData, duration: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
-                  <option>Menos de 7 dias</option>
-                  <option>1-4 semanas</option>
-                  <option>Mais de 1 mês</option>
+                  <option value="">Selecione...</option>
+                  <option value="today">Começou hoje</option>
+                  <option value="days">Alguns dias</option>
+                  <option value="weeks">Algumas semanas</option>
+                  <option value="months">Mais de 3 meses</option>
                 </select>
               </div>
 
+              {/* Checkboxes */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={triageData.nightPain}
+                    onChange={(e) => setTriageData({ ...triageData, nightPain: e.target.checked })}
+                    className="w-4 h-4 rounded border-border accent-blue-500"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-blue-400 transition-colors">
+                    Dor piora à noite?
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={triageData.numbness}
+                    onChange={(e) => setTriageData({ ...triageData, numbness: e.target.checked })}
+                    className="w-4 h-4 rounded border-border accent-blue-500"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-blue-400 transition-colors">
+                    Sente formigamento ou perda de força?
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={triageData.trauma}
+                    onChange={(e) => setTriageData({ ...triageData, trauma: e.target.checked })}
+                    className="w-4 h-4 rounded border-border accent-blue-500"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-blue-400 transition-colors">
+                    Teve alguma queda ou trauma recente?
+                  </span>
+                </label>
+              </div>
+
+              {/* Impact Level */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Impacto na rotina</label>
+                <select
+                  value={triageData.impact}
+                  onChange={(e) => setTriageData({ ...triageData, impact: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-secondary/50 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                >
+                  <option value="Baixo">Baixo</option>
+                  <option value="Moderado">Moderado</option>
+                  <option value="Alto">Alto</option>
+                </select>
+              </div>
+
+              {/* Submit Button */}
               <button
-                onClick={handleRegisterPain}
-                className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                onClick={handleTriageSubmit}
+                className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all duration-200"
               >
-                Registrar dor de hoje
+                Registrar triagem de hoje
               </button>
             </div>
           )}
         </div>
-
-        {/* Injury Diary */}
-        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-400" />
-            Diário de Lesões
-          </h3>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {injuryLog.map((entry) => {
-              const statusColor =
-                entry.status === "Melhorando"
-                  ? "text-green-400 bg-green-500/20"
-                  : entry.status === "Estável"
-                    ? "text-yellow-400 bg-yellow-500/20"
-                    : "text-red-400 bg-red-500/20"
-
-              return (
-                <div
-                  key={entry.id}
-                  className="p-4 bg-gray-800/50 rounded-xl border border-gray-700/30 hover:border-gray-600/50 transition-all"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{entry.region}</div>
-                      <div className="text-xs text-muted-foreground">{entry.date}</div>
-                    </div>
-                    <div className={`text-xs px-2 py-1 rounded-lg ${statusColor}`}>{entry.status}</div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Intensidade: {entry.intensity}/10</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </div>
 
-      {/* BLOCO 3 - Protocolos & Modos Atlas */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Protection Mode */}
-        <div className="bg-gradient-to-br from-orange-900/20 to-gray-800/50 backdrop-blur-sm border border-orange-500/30 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-orange-400" />
-            Modo Proteção Hoje
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-            Use este modo nos dias em que a dor aumentou para reduzir risco de piora.
-          </p>
-          <ul className="space-y-2 text-xs text-muted-foreground mb-4">
-            <li className="flex items-start gap-2">
-              <span className="text-orange-400">•</span>
-              <span>Reduzir carga na região afetada</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-orange-400">•</span>
-              <span>Priorizar movimentos sem dor</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-orange-400">•</span>
-              <span>Aumentar foco em sono/recuperação</span>
-            </li>
-          </ul>
-          <button className="w-full bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/50 text-orange-300 rounded-lg px-4 py-2 text-sm font-medium transition-all">
-            Ativar recomendações de proteção
-          </button>
-        </div>
+      {/* BLOCO 4: Protocolos Atlas – Recuperação & Postura */}
+      <div>
+        <h3 className="text-xl font-semibold text-foreground mb-4">Protocolos Atlas – Recuperação & Postura</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {protocols.map((protocol, index) => (
+            <div
+              key={index}
+              className={`bg-gradient-to-br from-${protocol.color}-950/30 to-${protocol.color}-900/20 backdrop-blur-sm border border-${protocol.color}-500/30 rounded-2xl p-6 shadow-lg hover:shadow-${protocol.color}-500/20 hover:scale-[1.02] transition-all duration-300`}
+            >
+              <h4 className={`text-lg font-semibold text-${protocol.color}-300 mb-2`}>{protocol.title}</h4>
+              <p className="text-sm text-muted-foreground mb-4">{protocol.description}</p>
 
-        {/* Atlas Protocols */}
-        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Book className="w-5 h-5 text-blue-400" />
-            Protocolos Atlas
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4">Protocolos estruturados para prevenção e fortalecimento.</p>
-          <div className="space-y-2">
-            {protocols.map((protocol) => (
+              <ul className="space-y-2 mb-4">
+                {protocol.bullets.map((bullet, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                    <Check className={`w-4 h-4 text-${protocol.color}-400 flex-shrink-0 mt-0.5`} />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+
               <button
-                key={protocol.id}
-                onClick={() => setActiveProtocol(protocol.id)}
-                className="w-full bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/30 hover:border-blue-500/50 rounded-lg px-4 py-3 text-sm transition-all"
+                className={`w-full px-4 py-2.5 bg-${protocol.color}-500/20 border border-${protocol.color}-500/30 text-${protocol.color}-400 rounded-lg font-medium hover:bg-${protocol.color}-500/30 transition-all duration-200`}
               >
-                <div className="font-medium text-foreground text-xs">{protocol.title}</div>
+                Ver rotina sugerida
               </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Red Flags */}
-        <div className="bg-gradient-to-br from-red-900/20 to-gray-800/50 backdrop-blur-sm border border-red-500/30 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            Sinais de Alerta
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4">Procure avaliação médica imediatamente se apresentar:</p>
-          <ul className="space-y-2 text-xs text-red-300 mb-4">
-            <li className="flex items-start gap-2">
-              <span className="text-red-400">•</span>
-              <span>Dor após trauma ou queda forte</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-red-400">•</span>
-              <span>Perda de força súbita ou dificuldade de levantar braço/perna</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-red-400">•</span>
-              <span>Dormência/formigamento progressivo</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-red-400">•</span>
-              <span>Febre + dor nas costas</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-red-400">•</span>
-              <span>Dor que acorda todas as noites</span>
-            </li>
-          </ul>
-          <p className="text-xs text-red-400/80 leading-relaxed">
-            Se algum desses sinais aparecer, a Atlas IA não dará orientações específicas. Procure avaliação presencial
-            imediatamente.
-          </p>
+              {/* Safety Disclaimer */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Este módulo não substitui avaliação presencial com médico ou fisioterapeuta. Se a dor for intensa,
+                  súbita ou acompanhada de outros sintomas, procure atendimento imediato.
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* Protocol Modal */}
-      {activeProtocol && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
-          onClick={() => setActiveProtocol(null)}
-        >
-          <div
-            className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {protocols
-              .filter((p) => p.id === activeProtocol)
-              .map((protocol) => (
-                <div key={protocol.id}>
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-xl font-bold text-foreground">{protocol.title}</h3>
-                    <button
-                      onClick={() => setActiveProtocol(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-blue-400 mb-2">Objetivo</h4>
-                      <p className="text-sm text-muted-foreground">{protocol.objective}</p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold text-green-400 mb-2">Regras Gerais</h4>
-                      <ul className="space-y-1">
-                        {protocol.rules.map((rule, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-green-400">•</span>
-                            <span>{rule}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold text-yellow-400 mb-2">Cuidados Básicos</h4>
-                      <ul className="space-y-1">
-                        {protocol.warnings.map((warning, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-yellow-400">•</span>
-                            <span>{warning}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold text-red-400 mb-2">Quando Parar e Procurar Ajuda</h4>
-                      <ul className="space-y-1">
-                        {protocol.redFlags.map((flag, i) => (
-                          <li key={i} className="text-sm text-red-300 flex items-start gap-2">
-                            <span className="text-red-400">•</span>
-                            <span>{flag}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
-                      <p className="text-xs text-blue-300">
-                        <strong>Importante:</strong> Este não é um protocolo prescritivo. É uma organização de rotina e
-                        prevenção. Para prescrição específica de exercícios, consulte um fisioterapeuta.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
-// ========== TESTOSTERONAView IMPLEMENTATION ==========
+// ========== TestosteronaView IMPLEMENTATION ==========
 function TestosteronaView() {
   const { currentWeekMetrics } = useAtlasData()
   const [habitosModal, setHabitosModal] = useState(false)
-  const [showProtocolModal, setShowProtocolModal] = useState<string | null>(null)
   const [protocolModal, setProtocolModal] = useState<string | null>(null)
 
   // Estado local para check-in hormonal
@@ -3582,7 +3411,7 @@ function TestosteronaView() {
               <select
                 value={habitosHoje.alcool}
                 onChange={(e) => setHabitosHoje({ ...habitosHoje, alcool: e.target.value })}
-                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option>Nenhum</option>
                 <option>Moderado</option>
@@ -3817,19 +3646,19 @@ function TestosteronaView() {
       )}
 
       {/* Modal de protocolo */}
-      {showProtocolModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+      {protocolModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl w-full my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-foreground">
-                {showProtocolModal === "reset"
+                {protocolModal === "reset"
                   ? "Reset de Higiene do Sono (7 dias)"
-                  : showProtocolModal === "screen"
+                  : protocolModal === "screen"
                     ? "Quebra de Tela Até Tarde (14 dias)"
                     : "Protocolo 30 dias – Estilo de Vida de Atleta Natural"}
               </h3>
               <button
-                onClick={() => setShowProtocolModal(null)}
+                onClick={() => setProtocolModal(null)}
                 className="w-8 h-8 rounded-lg hover:bg-secondary/50 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -3839,13 +3668,13 @@ function TestosteronaView() {
             <div className="space-y-6">
               {/* Objetivo */}
               <div>
-                <h4 className="text-sm font-bold text-blue-400 mb-2 uppercase tracking-wider">Objetivo</h4>
+                <h4 className="text-sm font-bold text-blue-400 mb-2 uppercase tracking-wider">Objetivo Único</h4>
                 <p className="text-sm text-foreground leading-relaxed">
-                  {showProtocolModal === "reset" &&
+                  {protocolModal === "reset" &&
                     "Estabelecer base sólida de hábitos que favorecem a produção natural de testosterona através de sono, treino e nutrição."}
-                  {showProtocolModal === "screen" &&
+                  {protocolModal === "screen" &&
                     "Eliminar ou reduzir drasticamente comportamentos que sabotam a produção hormonal: álcool, privação de sono, excesso de telas."}
-                  {showProtocolModal === "athlete" &&
+                  {protocolModal === "athlete" &&
                     "Integrar todos os pilares hormonais (sono, treino, nutrição, estresse, exposição solar) em uma rotina sustentável de longo prazo."}
                 </p>
               </div>
@@ -3854,7 +3683,7 @@ function TestosteronaView() {
               <div>
                 <h4 className="text-sm font-bold text-cyan-400 mb-3 uppercase tracking-wider">Regras Diárias</h4>
                 <div className="space-y-2">
-                  {showProtocolModal === "reset" ? (
+                  {protocolModal === "reset" ? (
                     <>
                       <div className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
@@ -3877,7 +3706,7 @@ function TestosteronaView() {
                         <span>Técnicas de gestão de estresse (respiração, caminhada)</span>
                       </div>
                     </>
-                  ) : showProtocolModal === "screen" ? (
+                  ) : protocolModal === "screen" ? (
                     <>
                       <div className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
@@ -3958,8 +3787,8 @@ function TestosteronaView() {
             </div>
 
             <button
-              onClick={() => setShowProtocolModal(null)}
-              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all"
+              onClick={() => setProtocolModal(null)}
+              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all duration-300"
             >
               Entendi
             </button>
@@ -3969,6 +3798,48 @@ function TestosteronaView() {
     </div>
   )
 }
+
+// ========== AtlasIAView PLACEHOLDER ==========
+function AtlasIAView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Brain className="w-6 h-6 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
+          <p className="text-muted-foreground">Chat inteligente com a Atlas IA</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Módulo Atlas IA em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== TreinoDietaView PLACEHOLDER ==========
+function TreinoDietaView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+          <Dumbbell className="w-6 h-6 text-purple-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
+          <p className="text-muted-foreground">Gestão inteligente de treino e nutrição</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Módulo Treino & Dieta em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== CompulsaoView IMPLEMENTATION ==========
 
 // ========== MAIN PAGE COMPONENT ==========
 export default function AtlasPainelPage() {
@@ -4066,12 +3937,3 @@ export default function AtlasPainelPage() {
     </div>
   )
 }
-=
-{
-  passportOpen
-}
-onClose={() => setPassportOpen(false)} />
-</div>
-  )
-}
-\
