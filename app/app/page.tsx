@@ -4,7 +4,6 @@ import { useCallback } from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import React from "react" // Import React for useRef
 import {
   LayoutDashboard,
   Target,
@@ -24,15 +23,11 @@ import {
   HelpCircle,
   Save,
   Check,
-  Send,
   User,
   AlertTriangle,
   Clock,
   Shield,
-  Apple,
   Heart,
-  Flame,
-  UserCog as UserBody,
   TrendingUp,
   CheckCircle2,
   Calendar,
@@ -41,6 +36,7 @@ import {
   Coffee,
   Wine,
   Award,
+  Book,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -52,7 +48,6 @@ import {
   type BodyStatusMap, // Added for context data
   type TrainingConfig, // Added for type safety
   type DietConfig, // Added for type safety
-  type FitnessLevel, // Added for type safety
 } from "@/context/AtlasDataContext"
 import { AtlasPassaporte } from "@/components/AtlasPassaporte"
 // import Compulsao2035 from "@/components/Compulsao2035" // Removed as CompulsaoView is now inlined
@@ -975,7 +970,7 @@ Você PRECISA consultar um médico ou fisioterapeuta presencial. Não vou te dar
 Até você ser avaliado:
 - Evite movimentos que causam dor.
 - Não force "pra ver se melhora".
-- Não tome anti-inflamatório sem prescrição.
+- Não tome anti-inflamatório sem prescrição médica.
 
 Vou te orientar apenas a proteger a região enquanto você marca a consulta.`,
         type: "pain",
@@ -1824,7 +1819,47 @@ function CompulsaoView() {
   )
 }
 
-// ========== SonoView IMPLEMENTATION ==========
+// ========== ATLAS IA VIEW (PLACEHOLDER) ==========
+function AtlasIAView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Brain className="w-6 h-6 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
+          <p className="text-muted-foreground">Central de inteligência artificial para análise e recomendações</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== TREINO & DIETA VIEW (PLACEHOLDER) ==========
+function TreinoDietaView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+          <Dumbbell className="w-6 h-6 text-purple-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
+          <p className="text-muted-foreground">Sistema de governança para treino, dieta e progressão</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== SONOView IMPLEMENTATION ==========
 function SonoView() {
   const { currentWeekMetrics, checkins } = useAtlasData()
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
@@ -1945,7 +1980,6 @@ function SonoView() {
   const asriStatus = asri >= 85 ? "Excelente" : asri >= 70 ? "Aceitável" : "Crítico"
   const asriColor = asri >= 85 ? "text-green-400" : asri >= 70 ? "text-cyan-400" : "text-red-400"
   const asriBg = asri >= 85 ? "bg-green-500/10" : asri >= 70 ? "bg-cyan-500/10" : "bg-red-500/10"
-  const asriBorder = asri >= 85 ? "border-green-500/40" : asri >= 70 ? "border-cyan-500/40" : "border-red-500/40"
   const asriGlow = asri >= 85 ? "shadow-green-500/20" : asri >= 70 ? "shadow-cyan-500/20" : "shadow-red-500/20"
 
   // Sleep status classification
@@ -1963,9 +1997,10 @@ function SonoView() {
   const testosteroneRisk = asri < 72 ? "Em risco" : "Estável"
 
   const getRiskColor = (risk: string) => {
-    if (risk === "Baixo" || risk === "Estável") return "bg-green-500/20 text-green-400 border-green-500/30"
-    if (risk === "Médio") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-    return "bg-red-500/20 text-red-400 border-red-500/30"
+    if (risk === "Crítico") return "text-red-400 bg-red-500/20 border-red-500/30"
+    if (risk === "Alto") return "text-orange-400 bg-orange-500/20 border-orange-500/30"
+    if (risk === "Médio") return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30"
+    return "text-green-400 bg-green-500/20 border-green-500/30"
   }
 
   // Impact badges for habits
@@ -1998,7 +2033,7 @@ function SonoView() {
     const hours = Number.parseFloat(crisisHours) || 3.5
     setShowCrisisModal(false)
     alert(
-      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA ajustará seu plano automaticamente.`,
+      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA vai ajustar seu plano automaticamente.`,
     )
   }
 
@@ -2025,7 +2060,7 @@ function SonoView() {
         <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_3fr] gap-5">
           {/* Card ASRI - Centro de comando */}
           <div
-            className={`group relative overflow-hidden rounded-3xl border-2 ${asriBorder} ${asriBg} backdrop-blur-md p-8 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${asriGlow}`}
+            className={`group relative overflow-hidden rounded-3xl border-2 ${asriBg} backdrop-blur-md p-8 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${asriGlow}`}
           >
             {/* Animated background gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-blue-600/5 animate-pulse" />
@@ -2071,7 +2106,7 @@ function SonoView() {
               <div className="flex items-center gap-3 mb-5">
                 <span className="text-xs text-gray-500 font-medium">Status atual:</span>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriBorder}`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriBg}`}
                 >
                   {asriStatus}
                 </span>
@@ -2198,10 +2233,10 @@ function SonoView() {
         </div>
       </div>
 
-      {/* BLOCO 2: ÚLTIMAS NOITES + HÁBITOS */}
+      {/* BLOCO 2 - ÚLTIMAS NOITES + HÁBITOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Noites Recentes - Bar chart style */}
-        <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/60 rounded-3xl p-7 hover:border-blue-500/30 transition-all duration-500">
+        <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/60 rounded-3xl p-7 hover:border-cyan-500/30 transition-all duration-500">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-3">
@@ -2454,7 +2489,7 @@ function SonoView() {
         </div>
       </div>
 
-      {/* BLOCO 3: MODOS E PROTOCOLOS */}
+      {/* BLOCO 3 - MODOS E PROTOCOLOS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Modo Base */}
         <div className="group bg-gradient-to-br from-blue-900/30 to-cyan-900/30 backdrop-blur-md border-2 border-blue-500/40 rounded-3xl p-7 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:scale-[1.02]">
@@ -2594,7 +2629,7 @@ function SonoView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-red-500/40 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-red-500/20">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+              <h3 className="text-2xl font-bold text-foreground flex items-center gap-3">
                 <AlertTriangle className="w-7 h-7 text-red-400" />
                 Modo Crise Ativado
               </h3>
@@ -2666,8 +2701,8 @@ function SonoView() {
 
       {/* Modal Protocolos - Enhanced */}
       {showProtocolModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-foreground">
                 {showProtocolModal === "reset"
@@ -2690,7 +2725,7 @@ function SonoView() {
                 <p className="leading-relaxed">
                   {showProtocolModal === "reset" &&
                     "Estabelecer base sólida de hábitos que favorecem a produção natural de testosterona através de sono, treino e nutrição."}
-                  {showProtocolModal === "14dias" &&
+                  {showProtocolModal === "screen" &&
                     "Eliminar ou reduzir drasticamente comportamentos que sabotam a produção hormonal: álcool, privação de sono, excesso de telas."}
                   {showProtocolModal === "athlete" &&
                     "Integrar todos os pilares hormonais (sono, treino, nutrição, estresse, exposição solar) em uma rotina sustentável de longo prazo."}
@@ -2801,30 +2836,510 @@ function SonoView() {
   )
 }
 
-// ========== FisioterapiaView & TestosteronaView (No changes) ==========
+// ========== FISIOTERAPIAView IMPLEMENTATION ==========
 function FisioterapiaView() {
+  const { currentWeekMetrics } = useAtlasData()
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
+  const [painIntensity, setPainIntensity] = useState(5)
+  const [painType, setPainType] = useState("Pontada")
+  const [painDuration, setPainDuration] = useState("Menos de 7 dias")
+  const [injuryLog, setInjuryLog] = useState([
+    {
+      id: "1",
+      date: "2025-01-05",
+      region: "Ombro direito",
+      intensity: 6,
+      status: "Melhorando" as const,
+    },
+    {
+      id: "2",
+      date: "2025-01-03",
+      region: "Coluna lombar",
+      intensity: 4,
+      status: "Estável" as const,
+    },
+  ])
+  const [activeProtocol, setActiveProtocol] = useState<string | null>(null)
+
+  // Mock Pain & Mobility Index based on current metrics
+  const painIndex = Math.max(0, Math.min(100, 100 - currentWeekMetrics.atlasScore * 0.8))
+  const painStatus = painIndex < 30 ? "Estável" : painIndex < 60 ? "Atenção" : "Crítico"
+  const painStatusColor =
+    painStatus === "Estável" ? "text-green-400" : painStatus === "Atenção" ? "text-yellow-400" : "text-red-400"
+
+  // Regional risks (mock)
+  const regionalRisks = {
+    coluna: painIndex > 50 ? "Alto" : painIndex > 30 ? "Médio" : "Baixo",
+    ombros: painIndex > 60 ? "Crítico" : painIndex > 40 ? "Alto" : "Baixo",
+    joelhos: painIndex > 55 ? "Alto" : painIndex > 35 ? "Médio" : "Baixo",
+    outras: painIndex > 45 ? "Médio" : "Baixo",
+  }
+
+  const getRiskColor = (risk: string) => {
+    if (risk === "Crítico") return "text-red-400 bg-red-500/20 border-red-500/30"
+    if (risk === "Alto") return "text-orange-400 bg-orange-500/20 border-orange-500/30"
+    if (risk === "Médio") return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30"
+    return "text-green-400 bg-green-500/20 border-green-500/30"
+  }
+
+  // Body regions for pain map
+  const bodyRegions = [
+    { id: "pescoco", label: "Pescoço", top: "10%", left: "50%" },
+    { id: "ombro-dir", label: "Ombro Dir.", top: "20%", left: "65%" },
+    { id: "ombro-esq", label: "Ombro Esq.", top: "20%", left: "35%" },
+    { id: "coluna-toracica", label: "Coluna Torácica", top: "30%", left: "50%" },
+    { id: "coluna-lombar", label: "Coluna Lombar", top: "40%", left: "50%" },
+    { id: "quadril", label: "Quadril", top: "50%", left: "50%" },
+    { id: "joelho-dir", label: "Joelho Dir.", top: "70%", left: "55%" },
+    { id: "joelho-esq", label: "Joelho Esq.", top: "70%", left: "45%" },
+    { id: "tornozelo-dir", label: "Tornozelo Dir.", top: "90%", left: "55%" },
+    { id: "tornozelo-esq", label: "Tornozelo Esq.", top: "90%", left: "45%" },
+  ]
+
+  const handleRegisterPain = () => {
+    if (!selectedRegion) return
+    const newEntry = {
+      id: Date.now().toString(),
+      date: new Date().toISOString().split("T")[0],
+      region: bodyRegions.find((r) => r.id === selectedRegion)?.label || selectedRegion,
+      intensity: painIntensity,
+      status: "Registrado" as const,
+    }
+    setInjuryLog([newEntry, ...injuryLog])
+    setSelectedRegion(null)
+    setPainIntensity(5)
+  }
+
+  const protocols = [
+    {
+      id: "coluna-21",
+      title: "Protocolo 21 dias – Coluna sem dor",
+      objective: "Reduzir dores lombares e melhorar postura em 3 semanas.",
+      rules: [
+        "Realizar 10-15 minutos de mobilidade diária",
+        "Evitar sentar por mais de 1h seguida",
+        "Priorizar exercícios de core e glúteos",
+      ],
+      warnings: [
+        "Não realizar se houver dor aguda intensa ou irradiação para as pernas",
+        "Pausar se sentir formigamento progressivo",
+      ],
+      redFlags: ["Dor após trauma ou queda", "Perda de força súbita nas pernas", "Febre + dor nas costas"],
+    },
+    {
+      id: "ombro-14",
+      title: "Protocolo 14 dias – Ombro de Atleta",
+      objective: "Fortalecer manguito rotador e prevenir tendinites.",
+      rules: [
+        "Rotação externa diária com elástico leve",
+        "Evitar press overhead com dor",
+        "Priorizar movimentos controlados",
+      ],
+      warnings: ["Não realizar se houver dor ao levantar o braço acima de 90°", "Pausar se houver crepitação com dor"],
+      redFlags: [
+        "Dor após queda ou trauma direto no ombro",
+        "Incapacidade de levantar o braço",
+        "Dor noturna intensa que acorda",
+      ],
+    },
+    {
+      id: "joelho-10",
+      title: "Protocolo 10 dias – Joelho Resiliente",
+      objective: "Reduzir sobrecarga e fortalecer estabilizadores do joelho.",
+      rules: [
+        "Priorizar agachamentos parciais sem dor",
+        "Fortalecer quadríceps e isquiotibiais",
+        "Evitar corrida em declive",
+      ],
+      warnings: ["Não realizar se houver inchaço significativo", "Pausar se sentir instabilidade ou falseio"],
+      redFlags: [
+        "Dor após torção ou trauma",
+        "Inchaço súbito sem trauma aparente",
+        "Dificuldade de apoiar peso na perna",
+      ],
+    },
+  ]
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center border border-green-500/30">
           <Activity className="w-6 h-6 text-green-400" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Fisioterapia</h2>
-          <p className="text-muted-foreground">Correção postural e prevenção de lesões</p>
+          <h2 className="text-2xl font-bold text-foreground">Fisioterapia & Dores</h2>
+          <p className="text-sm text-muted-foreground">
+            Central de inteligência para dores, mobilidade e prevenção de lesões
+          </p>
         </div>
       </div>
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Conteúdo do módulo em desenvolvimento...</p>
+
+      {/* BLOCO 1 - Overview de Dor & Risco */}
+      <div className="space-y-4">
+        {/* Main Pain Index Card */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="text-5xl font-bold text-foreground">{Math.round(painIndex)}</div>
+                <div className="text-sm text-muted-foreground">/100</div>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Atlas Pain & Mobility Index</h3>
+              <p className={`text-sm font-medium ${painStatusColor} mb-3`}>Status: {painStatus}</p>
+              <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+                Quanto mais alto o índice, maior o impacto das dores na sua performance. Valores acima de 60 indicam
+                necessidade de ajustes imediatos no treino e rotina.
+              </p>
+            </div>
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center border-2 border-green-500/30">
+              <Activity className="w-12 h-12 text-green-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Regional Risk Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { key: "coluna", label: "Coluna" },
+            { key: "ombros", label: "Ombros" },
+            { key: "joelhos", label: "Joelhos" },
+            { key: "outras", label: "Outras articulações" },
+          ].map((region) => {
+            const risk = regionalRisks[region.key as keyof typeof regionalRisks]
+            return (
+              <div
+                key={region.key}
+                className={`${getRiskColor(risk)} border rounded-xl p-3 transition-all hover:scale-105`}
+              >
+                <div className="text-xs text-muted-foreground mb-1">{region.label}</div>
+                <div className="text-sm font-semibold">{risk}</div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Medical Disclaimer */}
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+          <div className="flex gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-300 leading-relaxed">
+              <strong>Importante:</strong> A Atlas IA não substitui avaliação médica presencial. Em caso de trauma, dor
+              intensa ou sinais de alerta, procure um profissional de saúde imediatamente.
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* BLOCO 2 - Mapa de Dor & Diário de Lesões */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Pain Map */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-teal-400" />
+            Mapa de Dor
+          </h3>
+
+          {/* Body Hologram */}
+          <div className="relative h-96 bg-gradient-to-b from-teal-950/20 to-gray-900/20 rounded-xl border border-teal-500/20 mb-4 overflow-hidden">
+            {/* Simple body wireframe */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-20">
+              <div className="w-32 h-80 border-2 border-teal-400 rounded-full"></div>
+            </div>
+
+            {/* Clickable regions */}
+            {bodyRegions.map((region) => (
+              <button
+                key={region.id}
+                onClick={() => setSelectedRegion(region.id)}
+                className={`absolute w-12 h-12 rounded-full border-2 transition-all cursor-pointer flex items-center justify-center text-xs ${
+                  selectedRegion === region.id
+                    ? "bg-teal-500/40 border-teal-400 scale-125 shadow-lg shadow-teal-500/50"
+                    : "bg-gray-800/60 border-teal-500/30 hover:bg-teal-500/20 hover:border-teal-400 hover:scale-110"
+                }`}
+                style={{
+                  top: region.top,
+                  left: region.left,
+                  transform: "translate(-50%, -50%)",
+                }}
+                title={region.label}
+              >
+                <Target className="w-4 h-4 text-teal-300" />
+              </button>
+            ))}
+          </div>
+
+          {/* Pain Details Panel */}
+          {selectedRegion && (
+            <div className="space-y-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/30">
+              <div className="text-sm font-medium text-foreground">
+                Região: {bodyRegions.find((r) => r.id === selectedRegion)?.label}
+              </div>
+
+              {/* Intensity Slider */}
+              <div>
+                <label className="text-xs text-muted-foreground block mb-2">
+                  Intensidade da dor (0-10): {painIntensity}
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value={painIntensity}
+                  onChange={(e) => setPainIntensity(Number(e.target.value))}
+                  className="w-full accent-teal-500"
+                />
+              </div>
+
+              {/* Pain Type */}
+              <div>
+                <label className="text-xs text-muted-foreground block mb-2">Tipo de dor</label>
+                <select
+                  value={painType}
+                  onChange={(e) => setPainType(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-foreground"
+                >
+                  <option>Pontada</option>
+                  <option>Queimação</option>
+                  <option>Peso</option>
+                  <option>Rigidez</option>
+                  <option>Outra</option>
+                </select>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="text-xs text-muted-foreground block mb-2">Duração</label>
+                <select
+                  value={painDuration}
+                  onChange={(e) => setPainDuration(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-foreground"
+                >
+                  <option>Menos de 7 dias</option>
+                  <option>1-4 semanas</option>
+                  <option>Mais de 1 mês</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleRegisterPain}
+                className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white rounded-lg px-4 py-2 text-sm font-medium transition-all"
+              >
+                Registrar dor de hoje
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Injury Diary */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-400" />
+            Diário de Lesões
+          </h3>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+            {injuryLog.map((entry) => {
+              const statusColor =
+                entry.status === "Melhorando"
+                  ? "text-green-400 bg-green-500/20"
+                  : entry.status === "Estável"
+                    ? "text-yellow-400 bg-yellow-500/20"
+                    : "text-red-400 bg-red-500/20"
+
+              return (
+                <div
+                  key={entry.id}
+                  className="p-4 bg-gray-800/50 rounded-xl border border-gray-700/30 hover:border-gray-600/50 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{entry.region}</div>
+                      <div className="text-xs text-muted-foreground">{entry.date}</div>
+                    </div>
+                    <div className={`text-xs px-2 py-1 rounded-lg ${statusColor}`}>{entry.status}</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Intensidade: {entry.intensity}/10</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* BLOCO 3 - Protocolos & Modos Atlas */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Protection Mode */}
+        <div className="bg-gradient-to-br from-orange-900/20 to-gray-800/50 backdrop-blur-sm border border-orange-500/30 rounded-2xl p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-orange-400" />
+            Modo Proteção Hoje
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+            Use este modo nos dias em que a dor aumentou para reduzir risco de piora.
+          </p>
+          <ul className="space-y-2 text-xs text-muted-foreground mb-4">
+            <li className="flex items-start gap-2">
+              <span className="text-orange-400">•</span>
+              <span>Reduzir carga na região afetada</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-orange-400">•</span>
+              <span>Priorizar movimentos sem dor</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-orange-400">•</span>
+              <span>Aumentar foco em sono/recuperação</span>
+            </li>
+          </ul>
+          <button className="w-full bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/50 text-orange-300 rounded-lg px-4 py-2 text-sm font-medium transition-all">
+            Ativar recomendações de proteção
+          </button>
+        </div>
+
+        {/* Atlas Protocols */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Book className="w-5 h-5 text-blue-400" />
+            Protocolos Atlas
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4">Protocolos estruturados para prevenção e fortalecimento.</p>
+          <div className="space-y-2">
+            {protocols.map((protocol) => (
+              <button
+                key={protocol.id}
+                onClick={() => setActiveProtocol(protocol.id)}
+                className="w-full bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/30 hover:border-blue-500/50 rounded-lg px-4 py-3 text-sm transition-all"
+              >
+                <div className="font-medium text-foreground text-xs">{protocol.title}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Red Flags */}
+        <div className="bg-gradient-to-br from-red-900/20 to-gray-800/50 backdrop-blur-sm border border-red-500/30 rounded-2xl p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            Sinais de Alerta
+          </h3>
+          <p className="text-xs text-muted-foreground mb-4">Procure avaliação médica imediatamente se apresentar:</p>
+          <ul className="space-y-2 text-xs text-red-300 mb-4">
+            <li className="flex items-start gap-2">
+              <span className="text-red-400">•</span>
+              <span>Dor após trauma ou queda forte</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-red-400">•</span>
+              <span>Perda de força súbita ou dificuldade de levantar braço/perna</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-red-400">•</span>
+              <span>Dormência/formigamento progressivo</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-red-400">•</span>
+              <span>Febre + dor nas costas</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-red-400">•</span>
+              <span>Dor que acorda todas as noites</span>
+            </li>
+          </ul>
+          <p className="text-xs text-red-400/80 leading-relaxed">
+            Se algum desses sinais aparecer, a Atlas IA não dará orientações específicas. Procure avaliação presencial
+            imediatamente.
+          </p>
+        </div>
+      </div>
+
+      {/* Protocol Modal */}
+      {activeProtocol && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setActiveProtocol(null)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {protocols
+              .filter((p) => p.id === activeProtocol)
+              .map((protocol) => (
+                <div key={protocol.id}>
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-xl font-bold text-foreground">{protocol.title}</h3>
+                    <button
+                      onClick={() => setActiveProtocol(null)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-400 mb-2">Objetivo</h4>
+                      <p className="text-sm text-muted-foreground">{protocol.objective}</p>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-green-400 mb-2">Regras Gerais</h4>
+                      <ul className="space-y-1">
+                        {protocol.rules.map((rule, i) => (
+                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="text-green-400">•</span>
+                            <span>{rule}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-yellow-400 mb-2">Cuidados Básicos</h4>
+                      <ul className="space-y-1">
+                        {protocol.warnings.map((warning, i) => (
+                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="text-yellow-400">•</span>
+                            <span>{warning}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-semibold text-red-400 mb-2">Quando Parar e Procurar Ajuda</h4>
+                      <ul className="space-y-1">
+                        {protocol.redFlags.map((flag, i) => (
+                          <li key={i} className="text-sm text-red-300 flex items-start gap-2">
+                            <span className="text-red-400">•</span>
+                            <span>{flag}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-4">
+                      <p className="text-xs text-blue-300">
+                        <strong>Importante:</strong> Este não é um protocolo prescritivo. É uma organização de rotina e
+                        prevenção. Para prescrição específica de exercícios, consulte um fisioterapeuta.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// ========== TestosteronaView IMPLEMENTATION ==========
+// ========== TESTOSTERONAView IMPLEMENTATION ==========
 function TestosteronaView() {
   const { currentWeekMetrics } = useAtlasData()
   const [habitosModal, setHabitosModal] = useState(false)
+  const [showProtocolModal, setShowProtocolModal] = useState<string | null>(null)
   const [protocolModal, setProtocolModal] = useState<string | null>(null)
 
   // Estado local para check-in hormonal
@@ -3067,7 +3582,7 @@ function TestosteronaView() {
               <select
                 value={habitosHoje.alcool}
                 onChange={(e) => setHabitosHoje({ ...habitosHoje, alcool: e.target.value })}
-                className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-secondary/50 border border-border rounded-xl px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option>Nenhum</option>
                 <option>Moderado</option>
@@ -3302,19 +3817,19 @@ function TestosteronaView() {
       )}
 
       {/* Modal de protocolo */}
-      {protocolModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      {showProtocolModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl w-full my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-foreground">
-                {protocolModal === "21dias"
-                  ? "Protocolo 21 dias – Fundamentos Hormonais"
-                  : protocolModal === "14dias"
-                    ? "Protocolo 14 dias – Anti-Sabotagem"
+                {showProtocolModal === "reset"
+                  ? "Reset de Higiene do Sono (7 dias)"
+                  : showProtocolModal === "screen"
+                    ? "Quebra de Tela Até Tarde (14 dias)"
                     : "Protocolo 30 dias – Estilo de Vida de Atleta Natural"}
               </h3>
               <button
-                onClick={() => setProtocolModal(null)}
+                onClick={() => setShowProtocolModal(null)}
                 className="w-8 h-8 rounded-lg hover:bg-secondary/50 flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -3324,13 +3839,14 @@ function TestosteronaView() {
             <div className="space-y-6">
               {/* Objetivo */}
               <div>
-                <h4 className="text-sm font-bold text-blue-400 mb-2 uppercase tracking-wider">Objetivo Único</h4>
+                <h4 className="text-sm font-bold text-blue-400 mb-2 uppercase tracking-wider">Objetivo</h4>
                 <p className="text-sm text-foreground leading-relaxed">
-                  {protocolModal === "21dias"
-                    ? "Estabelecer base sólida de hábitos que favorecem a produção natural de testosterona através de sono, treino e nutrição."
-                    : protocolModal === "14dias"
-                      ? "Eliminar ou reduzir drasticamente comportamentos que sabotam a produção hormonal: álcool, privação de sono, excesso de telas."
-                      : "Integrar todos os pilares hormonais (sono, treino, nutrição, estresse, exposição solar) em uma rotina sustentável de longo prazo."}
+                  {showProtocolModal === "reset" &&
+                    "Estabelecer base sólida de hábitos que favorecem a produção natural de testosterona através de sono, treino e nutrição."}
+                  {showProtocolModal === "screen" &&
+                    "Eliminar ou reduzir drasticamente comportamentos que sabotam a produção hormonal: álcool, privação de sono, excesso de telas."}
+                  {showProtocolModal === "athlete" &&
+                    "Integrar todos os pilares hormonais (sono, treino, nutrição, estresse, exposição solar) em uma rotina sustentável de longo prazo."}
                 </p>
               </div>
 
@@ -3338,7 +3854,7 @@ function TestosteronaView() {
               <div>
                 <h4 className="text-sm font-bold text-cyan-400 mb-3 uppercase tracking-wider">Regras Diárias</h4>
                 <div className="space-y-2">
-                  {protocolModal === "21dias" ? (
+                  {showProtocolModal === "reset" ? (
                     <>
                       <div className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
@@ -3361,7 +3877,7 @@ function TestosteronaView() {
                         <span>Técnicas de gestão de estresse (respiração, caminhada)</span>
                       </div>
                     </>
-                  ) : protocolModal === "14dias" ? (
+                  ) : showProtocolModal === "screen" ? (
                     <>
                       <div className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
@@ -3442,8 +3958,8 @@ function TestosteronaView() {
             </div>
 
             <button
-              onClick={() => setProtocolModal(null)}
-              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all duration-300"
+              onClick={() => setShowProtocolModal(null)}
+              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all"
             >
               Entendi
             </button>
@@ -3453,1236 +3969,12 @@ function TestosteronaView() {
     </div>
   )
 }
-// </CHANGE>
-
-// ========== ATLAS IA VIEW (PREMIUM FUTURISTIC CHAT PANEL) ==========
-function AtlasIAView() {
-  const atlasData = useAtlasData()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [activeContext, setActiveContext] = useState<string | null>(null)
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
-  const messagesEndRef = React.useRef<HTMLDivElement>(null)
-
-  React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-
-  const contextChips = [
-    { id: "training", label: "Treino", icon: Dumbbell },
-    { id: "diet", label: "Dieta", icon: Apple },
-    { id: "sleep", label: "Sono & Recuperação", icon: Moon },
-    { id: "physio", label: "Fisioterapia & Dores", icon: Heart },
-    { id: "testosterone", label: "Testosterona Natural", icon: Flame },
-    { id: "compulsion", label: "Compulsão Alimentar", icon: AlertTriangle },
-  ]
-
-  const warShortcuts = [
-    {
-      label: "Analisar meu dia de hoje",
-      message: "Atlas IA, analise meu dia de hoje com base nos meus dados e fale a verdade sobre minha execução.",
-    },
-    {
-      label: "Protocolo 7 dias para o meu ponto fraco",
-      message: "Crie um protocolo de 7 dias focado no meu maior ponto fraco físico.",
-    },
-    {
-      label: "Revisar minha semana sem passar pano",
-      message:
-        "Revise minha semana como um treinador que não passa pano e me dê 3 elogios, 3 críticas e 3 ações para próxima semana.",
-    },
-  ]
-
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return
-
-    let finalMessage = inputValue
-    if (activeContext) {
-      const contextLabels: Record<string, string> = {
-        training: "Treino",
-        diet: "Dieta",
-        sleep: "Sono & Recuperação",
-        physio: "Fisioterapia & Dores",
-        testosterone: "Testosterona Natural",
-        compulsion: "Compulsão Alimentar",
-      }
-      finalMessage = `[Contexto de foco principal: ${contextLabels[activeContext]}] ${inputValue}`
-    }
-
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: inputValue,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMsg])
-    setInputValue("")
-    setIsLoading(true)
-
-    const context = {
-      currentWeekMetrics: atlasData.currentWeekMetrics,
-      bodyStatus: atlasData.bodyStatus,
-      recentCheckins: atlasData.checkins.slice(-7),
-      bodyMeasurements: atlasData.bodyMeasurements,
-      trainingConfig: atlasData.trainingConfig, // Pass training config
-      dietConfig: atlasData.dietConfig, // Pass diet config
-    }
-
-    const apiMessages = messages
-      .filter((msg) => msg.role === "user" || (msg.role === "assistant" && msg.content))
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
-    apiMessages.push({ role: "user", content: finalMessage })
-
-    try {
-      const response = await fetch("/api/atlas-ia-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: apiMessages,
-          context,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Erro ao processar mensagem")
-      }
-
-      const data = await response.json()
-
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.reply.oneLiner || "Resposta recebida",
-        timestamp: new Date(),
-        structuredResponse: data.reply,
-      }
-
-      setMessages((prev) => [...prev, assistantMsg])
-    } catch (error) {
-      console.error("[v0] Error calling Atlas IA API:", error)
-      const errorMsg: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: "Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente em alguns instantes.",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMsg])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleShortcut = (message: string) => {
-    setInputValue(message)
-    // Optionally, auto-send or prompt user to send
-    // handleSend()
-  }
-
-  const handleQuickQuestionClick = (questionLabel: string) => {
-    setSelectedQuestions((prev) => [...prev, questionLabel])
-    setInputValue(questionLabel)
-  }
-
-  const renderStructuredResponse = (msg: ChatMessage) => {
-    const sr = msg.structuredResponse
-    if (!sr) return null
-
-    return (
-      <div className="space-y-4">
-        {/* Confidence Badge */}
-        {sr.confidence && (
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-400/40 rounded-full">
-              <span className="text-xs font-bold text-cyan-300">Precisão {sr.confidence}%</span>
-            </div>
-          </div>
-        )}
-
-        {/* One Liner */}
-        <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-400/30 rounded-xl p-4">
-          <p className="text-base font-semibold text-cyan-100 leading-relaxed">{sr.oneLiner}</p>
-        </div>
-
-        {/* Quick Questions */}
-        {sr.quickQuestions && sr.quickQuestions.length > 0 && (
-          <div className="bg-slate-800/60 border border-blue-400/30 rounded-xl p-4">
-            <h4 className="text-xs font-bold text-blue-300 mb-3">Perguntas rápidas (20s):</h4>
-            <div className="flex flex-wrap gap-2">
-              {sr.quickQuestions.map((q) => (
-                <button
-                  key={q.id}
-                  onClick={() => handleQuickQuestionClick(q.label)}
-                  className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/40 rounded-lg text-xs text-blue-100 transition-all hover:scale-105"
-                >
-                  {q.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Plan NOW */}
-        {sr.planNow && sr.planNow.length > 0 && (
-          <div className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 border border-emerald-400/30 rounded-xl p-4">
-            <h4 className="text-sm font-bold text-emerald-300 mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Plano AGORA (2 minutos):
-            </h4>
-            <div className="space-y-2">
-              {sr.planNow.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <span className="text-emerald-400 font-bold text-sm">{idx + 1}.</span>
-                  <p className="text-sm text-blue-100/90 flex-1">{item.step}</p>
-                  {item.seconds && <span className="text-xs text-emerald-300">{item.seconds}s</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Next 24h */}
-        {sr.next24h && sr.next24h.length > 0 && (
-          <div className="bg-slate-800/60 border border-blue-400/30 rounded-xl p-4">
-            <h4 className="text-sm font-bold text-blue-300 mb-3">Próximas 24h:</h4>
-            <div className="space-y-2">
-              {sr.next24h.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <span className="text-blue-400 font-bold text-sm">{idx + 1}.</span>
-                  <p className="text-sm text-blue-100/80">{item.step}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 7 Days Plan */}
-        {sr.sevenDays && sr.sevenDays.length > 0 && (
-          <div className="bg-slate-800/60 border border-purple-400/30 rounded-xl p-4">
-            <h4 className="text-sm font-bold text-purple-300 mb-3">7 dias (anti-recaída):</h4>
-            <div className="space-y-3">
-              {sr.sevenDays.map((dayPlan, idx) => (
-                <div key={idx} className="border-l-2 border-purple-400/40 pl-3">
-                  <div className="text-xs font-bold text-purple-300 mb-1">
-                    {dayPlan.day}: {dayPlan.focus}
-                  </div>
-                  <ul className="space-y-1">
-                    {dayPlan.actions.map((action, aIdx) => (
-                      <li key={aIdx} className="text-xs text-blue-100/70">
-                        • {action}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Why it works */}
-        {sr.whyItWorks && sr.whyItWorks.length > 0 && (
-          <div className="bg-slate-800/60 border border-slate-600/30 rounded-xl p-4">
-            <h4 className="text-xs font-bold text-slate-400 mb-2">Por que isso funciona?</h4>
-            <div className="space-y-2">
-              {sr.whyItWorks.map((reason, idx) => (
-                <p key={idx} className="text-xs text-slate-300 leading-relaxed">
-                  {reason}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Care/Safety Alert */}
-        {sr.care && sr.care.message && (
-          <div
-            className={`border rounded-xl p-4 ${
-              sr.care.riskLevel === "high"
-                ? "bg-red-500/10 border-red-400/40"
-                : sr.care.riskLevel === "medium"
-                  ? "bg-yellow-500/10 border-yellow-400/40"
-                  : "bg-blue-500/10 border-blue-400/40"
-            }`}
-          >
-            <h4
-              className={`text-sm font-bold mb-2 flex items-center gap-2 ${
-                sr.care.riskLevel === "high"
-                  ? "text-red-300"
-                  : sr.care.riskLevel === "medium"
-                    ? "text-yellow-300"
-                    : "text-blue-300"
-              }`}
-            >
-              <Shield className="w-4 h-4" />
-              Alerta de segurança
-            </h4>
-            <p className="text-sm text-slate-200">{sr.care.message}</p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        {sr.actions && sr.actions.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {sr.actions.map((action) => (
-              <button
-                key={action.id}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-blue-400/40 rounded-lg text-xs font-bold text-blue-100 hover:from-blue-600/50 hover:to-cyan-600/50 transition-all"
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  const formatAIMessage = (content: string): React.ReactNode => {
-    const lines = content.split("\n")
-    const elements: React.ReactNode[] = []
-    let currentBlock: string[] = []
-    let blockIndex = 0
-
-    const flushBlock = () => {
-      if (currentBlock.length > 0) {
-        elements.push(
-          <div key={`block-${blockIndex}`} className="mb-4 last:mb-0">
-            {currentBlock.map((text, i) => (
-              <p key={`p-${blockIndex}-${i}`} className="text-sm leading-relaxed text-blue-50/90 mb-2 last:mb-0">
-                {text}
-              </p>
-            ))}
-          </div>,
-        )
-        blockIndex++
-        currentBlock = []
-      }
-    }
-
-    lines.forEach((line) => {
-      const trimmedLine = line.trim()
-
-      // Check if this is a section title (ends with colon)
-      if (trimmedLine && /^[A-Z][^:]*:$/.test(trimmedLine)) {
-        flushBlock()
-        elements.push(
-          <h4 key={`title-${blockIndex}`} className="text-base font-bold text-cyan-300 mb-2 mt-4 first:mt-0">
-            {trimmedLine}
-          </h4>,
-        )
-        blockIndex++
-      } else if (trimmedLine) {
-        currentBlock.push(trimmedLine)
-      } else {
-        flushBlock()
-      }
-    })
-
-    flushBlock()
-
-    return <>{elements}</>
-  }
-
-  const contextStats = {
-    execution: atlasData.currentWeekMetrics.executionRate,
-    sleep: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].sleepHours : 7,
-    energy: atlasData.checkins.length > 0 ? atlasData.checkins[atlasData.checkins.length - 1].energy : 3,
-    compulsion:
-      atlasData.checkins.length === 0 ||
-      atlasData.checkins.filter(
-        (c) => c.notes?.toLowerCase().includes("compulsão") || c.notes?.toLowerCase().includes("fome noturna"),
-      ).length === 0
-        ? "sob controle"
-        : "atenção",
-  }
-
-  return (
-    <div
-      className="h-full min-h-screen relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0a0e1a 0%, #0f1419 50%, #0a0d14 100%)",
-      }}
-    >
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute inset-0 blur-[2px]"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.15) 2px, rgba(59, 130, 246, 0.15) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(59, 130, 246, 0.15) 2px, rgba(59, 130, 246, 0.15) 4px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
-        <div
-          className="mb-6 bg-gradient-to-r from-slate-900/50 to-slate-800/50 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl"
-          style={{
-            boxShadow: "0 0 30px rgba(59, 130, 246, 0.15), 0 10px 40px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-500 flex items-center justify-center shadow-lg relative overflow-hidden"
-                style={{
-                  boxShadow: "0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(6, 182, 212, 0.3)",
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-pulse" />
-                <Brain className="w-9 h-9 text-white relative z-10" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Atlas IA – Governança Corporal</h2>
-                <p className="text-sm text-blue-200/60 font-light">
-                  Seu cérebro externo para treino, dieta, sono, hormônios e lesões
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-400/40 rounded-full backdrop-blur-sm shadow-lg">
-              <div
-                className="w-2.5 h-2.5 bg-emerald-400 rounded-full relative"
-                style={{
-                  boxShadow: "0 0 10px rgba(52, 211, 153, 0.8)",
-                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                }}
-              />
-              <span className="text-sm text-emerald-300 font-semibold tracking-wide">
-                {isLoading ? "Analisando dados..." : "Online"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs text-blue-300/70 font-mono border-t border-blue-500/10 pt-4 mt-2">
-            <span className="flex items-center gap-1.5">
-              <span className="text-blue-400 font-semibold">Execução:</span>
-              <span
-                className={
-                  contextStats.execution >= 80
-                    ? "text-emerald-400"
-                    : contextStats.execution >= 60
-                      ? "text-yellow-400"
-                      : "text-red-400"
-                }
-              >
-                {contextStats.execution}%
-              </span>
-            </span>
-            <span className="text-blue-500/40">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-blue-400 font-semibold">Sono:</span>
-              <span className="text-blue-200">{contextStats.sleep}h</span>
-            </span>
-            <span className="text-blue-500/40">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-blue-400 font-semibold">Energia:</span>
-              <span className="text-blue-200">
-                {contextStats.energy === 5
-                  ? "Máxima"
-                  : contextStats.energy >= 4
-                    ? "Alta"
-                    : contextStats.energy === 3
-                      ? "Média"
-                      : "Baixa"}
-              </span>
-            </span>
-            <span className="text-blue-500/40">|</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-blue-400 font-semibold">Compulsão:</span>
-              <span className={contextStats.compulsion === "sob controle" ? "text-emerald-400" : "text-yellow-400"}>
-                {contextStats.compulsion}
-              </span>
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="bg-slate-900/40 backdrop-blur-2xl border border-blue-500/20 rounded-3xl shadow-2xl overflow-hidden"
-          style={{
-            boxShadow: "0 0 50px rgba(59, 130, 246, 0.2), 0 20px 60px rgba(0, 0, 0, 0.4)",
-          }}
-        >
-          {/* Messages Area */}
-          <div className="p-8 h-[520px] overflow-y-auto bg-gradient-to-b from-slate-900/30 to-slate-900/50 backdrop-blur-sm">
-            <div className="space-y-6">
-              {messages.length === 0 && (
-                <div className="text-center py-20">
-                  <div
-                    className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center relative overflow-hidden"
-                    style={{
-                      boxShadow: "0 0 50px rgba(59, 130, 246, 0.3)",
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent animate-pulse" />
-                    <Brain className="w-12 h-12 text-blue-400 relative z-10" />
-                  </div>
-                  <p className="text-blue-200/60 text-sm font-light">
-                    Faça sua primeira pergunta ou use um dos atalhos de guerra abaixo
-                  </p>
-                </div>
-              )}
-
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-4 duration-300`}
-                >
-                  {msg.role === "assistant" && (
-                    <div
-                      className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0 shadow-xl relative overflow-hidden"
-                      style={{
-                        boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent" />
-                      <Brain className="w-6 h-6 text-white relative z-10" />
-                    </div>
-                  )}
-
-                  <div
-                    className={`max-w-[85%] rounded-2xl p-5 ${
-                      msg.role === "user"
-                        ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white"
-                        : "bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-blue-500/20"
-                    }`}
-                    style={
-                      msg.role === "user"
-                        ? {
-                            boxShadow: "0 8px 30px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.2)",
-                          }
-                        : {
-                            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.3)",
-                          }
-                    }
-                  >
-                    {msg.role === "user" ? (
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                    ) : msg.structuredResponse ? (
-                      renderStructuredResponse(msg)
-                    ) : (
-                      formatAIMessage(msg.content)
-                    )}
-                  </div>
-
-                  {msg.role === "user" && (
-                    <div className="w-11 h-11 rounded-xl bg-slate-700/80 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-slate-600/50">
-                      <User className="w-5 h-5 text-slate-300" />
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-slate-800/80 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-5 max-w-[85%]">
-                    <div className="flex items-center gap-3">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-75" />
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce delay-150" />
-                      </div>
-                      <span className="text-sm text-blue-200/70">Atlas IA está analisando seus dados...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          <div className="px-6 py-5 bg-slate-900/50 border-t border-blue-500/20 backdrop-blur-sm">
-            <div className="flex flex-wrap gap-2.5">
-              {contextChips.map((chip) => {
-                const Icon = chip.icon
-                return (
-                  <button
-                    key={chip.id}
-                    onClick={() => setActiveContext(activeContext === chip.id ? null : chip.id)}
-                    className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 flex items-center gap-2 ${
-                      activeContext === chip.id
-                        ? "bg-gradient-to-r from-blue-600/40 to-cyan-600/40 border-2 border-blue-400/70 text-blue-100 shadow-lg scale-105"
-                        : "bg-slate-800/60 border border-slate-600/40 text-slate-300 hover:border-blue-500/50 hover:bg-slate-700/60 hover:scale-103"
-                    }`}
-                    style={
-                      activeContext === chip.id
-                        ? {
-                            boxShadow: "0 0 25px rgba(59, 130, 246, 0.5), 0 4px 15px rgba(59, 130, 246, 0.3)",
-                          }
-                        : {}
-                    }
-                    disabled={isLoading}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {chip.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="px-6 py-5 bg-gradient-to-b from-slate-900/60 to-slate-900/80 border-t border-blue-500/20 backdrop-blur-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {warShortcuts.map((shortcut, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleShortcut(shortcut.message)}
-                  className="px-5 py-3 bg-gradient-to-br from-cyan-600/15 to-blue-600/15 border border-cyan-500/40 rounded-xl text-xs text-cyan-200 font-bold hover:from-cyan-600/25 hover:to-blue-600/25 hover:border-cyan-400/60 hover:scale-105 transition-all duration-200 shadow-lg backdrop-blur-sm"
-                  style={{
-                    boxShadow: "0 0 20px rgba(6, 182, 212, 0.15)",
-                  }}
-                  disabled={isLoading}
-                >
-                  {shortcut.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-6 bg-gradient-to-b from-slate-900/60 to-slate-900/80 border-t border-blue-500/30 backdrop-blur-sm">
-            <div className="flex gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Enviar foto de comida ou corpo (em breve)"
-                  disabled={true}
-                >
-                  <Camera className="w-5 h-5" />
-                </button>
-                <button
-                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Anexar exames ou documentos (em breve)"
-                  disabled={true}
-                >
-                  <FileText className="w-5 h-5" />
-                </button>
-                <button
-                  className="w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Foto de progresso ou dor (em breve)"
-                  disabled={true}
-                >
-                  <UserBody className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Input textarea */}
-              <div className="flex-1 relative">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSend()
-                    }
-                  }}
-                  placeholder="Digite sua mensagem para a Atlas IA..."
-                  className="w-full px-5 py-4 bg-slate-800/70 backdrop-blur-sm border border-slate-600/50 rounded-2xl text-blue-50 placeholder:text-slate-400 focus:outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30 transition-all font-light"
-                  style={{
-                    boxShadow: "inset 0 2px 8px rgba(0, 0, 0, 0.3)",
-                  }}
-                  rows={2}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <button
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isLoading}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-2xl hover:from-blue-500 hover:to-cyan-400 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-2xl flex items-center justify-center"
-                style={{
-                  boxShadow: "0 8px 30px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)",
-                }}
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ========== TreinoDietaView IMPLEMENTATION ==========
-function TreinoDietaView() {
-  const { trainingConfig, updateTrainingConfig, dietConfig, updateDietConfig, currentWeekMetrics, passport } =
-    useAtlasData()
-  const [activeTab, setActiveTab] = useState<"treino" | "dieta">("treino")
-
-  // Local state for forms
-  const [training, setTraining] = useState(trainingConfig)
-  const [diet, setDiet] = useState(dietConfig)
-
-  const handleSaveTraining = () => {
-    updateTrainingConfig(training)
-  }
-
-  const handleSaveDiet = () => {
-    updateDietConfig(diet)
-  }
-
-  const weekDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
-
-  // Compute risk level from metrics
-  const getRiskLevel = () => {
-    const { avgSleepHours, energyLevel, executionRate } = currentWeekMetrics
-    if (avgSleepHours < 6 || energyLevel === "Baixa" || executionRate < 50) return "Alto"
-    if (avgSleepHours < 7 || energyLevel === "Média" || executionRate < 75) return "Médio"
-    return "Baixo"
-  }
-
-  const riskLevel = getRiskLevel()
-  const riskColor = riskLevel === "Alto" ? "text-red-400" : riskLevel === "Médio" ? "text-orange-400" : "text-green-400"
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center relative">
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 animate-pulse" />
-          <Dumbbell className="w-6 h-6 text-blue-400 relative z-10" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
-          <p className="text-sm text-muted-foreground">Centro de comando da sua evolução corporal</p>
-        </div>
-      </div>
-
-      {/* Top indicators with hover effects */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="group bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-blue-500/50 hover:bg-card/70 transition-all duration-200 hover:scale-105 cursor-pointer">
-          <p className="text-xs text-muted-foreground mb-1">Execução</p>
-          <p className="text-2xl font-bold text-foreground">{currentWeekMetrics.executionRate}%</p>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground mt-1">
-            {currentWeekMetrics.trainingsDone} de {currentWeekMetrics.trainingsPlanned} treinos
-          </div>
-        </div>
-        <div className="group bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-blue-500/50 hover:bg-card/70 transition-all duration-200 hover:scale-105 cursor-pointer">
-          <p className="text-xs text-muted-foreground mb-1">Sono médio</p>
-          <p className="text-2xl font-bold text-foreground">{currentWeekMetrics.avgSleepHours}h</p>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground mt-1">
-            Impacta recuperação e energia
-          </div>
-        </div>
-        <div className="group bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-blue-500/50 hover:bg-card/70 transition-all duration-200 hover:scale-105 cursor-pointer">
-          <p className="text-xs text-muted-foreground mb-1">Energia</p>
-          <p
-            className={`text-2xl font-bold ${
-              currentWeekMetrics.energyLevel === "Alta"
-                ? "text-green-400"
-                : currentWeekMetrics.energyLevel === "Média"
-                  ? "text-yellow-400"
-                  : "text-red-400"
-            }`}
-          >
-            {currentWeekMetrics.energyLevel}
-          </p>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground mt-1">
-            Baseado nos check-ins diários
-          </div>
-        </div>
-        <div className="group bg-card/50 backdrop-blur-sm border border-border rounded-xl p-4 hover:border-orange-500/50 hover:bg-card/70 transition-all duration-200 hover:scale-105 cursor-pointer">
-          <p className="text-xs text-muted-foreground mb-1">Risco recaída</p>
-          <p className={`text-2xl font-bold ${riskColor}`}>{riskLevel}</p>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground mt-1">
-            Sono, energia e consistência
-          </div>
-        </div>
-      </div>
-
-      {/* Mission of the week - futuristic card */}
-      <div className="relative bg-gradient-to-br from-blue-600/10 via-cyan-600/5 to-blue-600/10 border border-blue-500/30 rounded-2xl p-6 overflow-hidden">
-        {/* Animated background particles */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.03),transparent_50%)] animate-pulse" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <h3 className="text-lg font-semibold text-foreground">Missão da Semana</h3>
-          </div>
-          <p className="text-muted-foreground mb-4">
-            {training.mainFocus === "muscle_gain" && "Construir massa muscular com foco estratégico"}
-            {training.mainFocus === "fat_loss" && "Queimar gordura preservando massa muscular"}
-            {training.mainFocus === "maintenance" && "Manter composição corporal e performance"}
-            {training.mainFocus === "performance" && "Aumentar força, explosão e capacidade atlética"}
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-              <span className="text-muted-foreground block text-xs mb-1">Duração</span>
-              <span className="text-foreground font-semibold">{training.minutesPerSession || 60} min</span>
-            </div>
-            <div className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-500/20">
-              <span className="text-muted-foreground block text-xs mb-1">Intensidade</span>
-              <span className="text-foreground font-semibold">
-                {training.mainFocus === "fat_loss"
-                  ? "Alta"
-                  : training.mainFocus === "performance"
-                    ? "Muito Alta"
-                    : "Moderada"}
-              </span>
-            </div>
-            <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-              <span className="text-muted-foreground block text-xs mb-1">Foco</span>
-              <span className="text-foreground font-semibold">
-                {training.mainFocus === "muscle_gain" && "Hipertrofia"}
-                {training.mainFocus === "fat_loss" && "Definição"}
-                {training.mainFocus === "maintenance" && "Manutenção"}
-                {training.mainFocus === "performance" && "Performance"}
-              </span>
-            </div>
-            <div className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-500/20">
-              <span className="text-muted-foreground block text-xs mb-1">Recuperação</span>
-              <span className="text-foreground font-semibold">
-                {currentWeekMetrics.avgSleepHours >= 7
-                  ? "Ótima"
-                  : currentWeekMetrics.avgSleepHours >= 6
-                    ? "Moderada"
-                    : "Baixa"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Configuration section */}
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Configuração Inteligente de Treino & Dieta</h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Configure sua rotina. A Atlas IA detectará seus pontos fracos automaticamente através de medidas, fotos e
-          histórico.
-        </p>
-
-        {/* Modern tabs */}
-        <div className="flex gap-2 mb-6 p-1 bg-secondary/30 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab("treino")}
-            className={`px-6 py-2.5 font-medium transition-all rounded-lg ${
-              activeTab === "treino"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            }`}
-          >
-            Treino
-          </button>
-          <button
-            onClick={() => setActiveTab("dieta")}
-            className={`px-6 py-2.5 font-medium transition-all rounded-lg ${
-              activeTab === "dieta"
-                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            }`}
-          >
-            Dieta
-          </button>
-        </div>
-
-        {/* Training tab */}
-        {activeTab === "treino" && (
-          <div className="space-y-6">
-            {/* Bloco 1 - Perfil de Treino */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-blue-500 rounded-full" />
-                Perfil de Treino
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Nível atual</label>
-                  <select
-                    value={training.level}
-                    onChange={(e) => setTraining({ ...training, level: e.target.value as FitnessLevel })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  >
-                    <option value="beginner">Iniciante</option>
-                    <option value="intermediate">Intermediário</option>
-                    <option value="advanced">Avançado</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Objetivo principal</label>
-                  <select
-                    value={training.mainFocus}
-                    onChange={(e) => setTraining({ ...training, mainFocus: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  >
-                    <option value="muscle_gain">Ganho de massa</option>
-                    <option value="fat_loss">Definição / Cutting</option>
-                    <option value="maintenance">Recomp (ganhar e perder ao mesmo tempo)</option>
-                    <option value="performance">Performance (força / explosão)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Onde treina</label>
-                  <select
-                    value={training.location}
-                    onChange={(e) => setTraining({ ...training, location: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  >
-                    <option value="gym">Academia</option>
-                    <option value="home">Casa</option>
-                    <option value="both">Misto</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Bloco 2 - Estrutura da Semana */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-cyan-500 rounded-full" />
-                Estrutura da Semana
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Dias de treino por semana</label>
-                  <select
-                    value={training.daysPerWeek || ""}
-                    onChange={(e) => setTraining({ ...training, daysPerWeek: Number(e.target.value) })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  >
-                    <option value="">Selecione</option>
-                    {[2, 3, 4, 5, 6, 7].map((n) => (
-                      <option key={n} value={n}>
-                        {n} dias
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Tempo médio por sessão</label>
-                  <select
-                    value={training.minutesPerSession || ""}
-                    onChange={(e) => setTraining({ ...training, minutesPerSession: Number(e.target.value) })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  >
-                    <option value="">Selecione</option>
-                    {[30, 45, 60, 75, 90, 120].map((n) => (
-                      <option key={n} value={n}>
-                        {n} minutos
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-3 block">Quais dias pretende treinar</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
-                  {weekDays.map((day) => (
-                    <button
-                      key={day}
-                      onClick={() => {
-                        const isSelected = training.trainingDays.includes(day)
-                        setTraining({
-                          ...training,
-                          trainingDays: isSelected
-                            ? training.trainingDays.filter((d) => d !== day)
-                            : [...training.trainingDays, day],
-                        })
-                      }}
-                      className={`px-3 py-3 rounded-xl border text-sm font-medium transition-all ${
-                        training.trainingDays.includes(day)
-                          ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105"
-                          : "bg-card/50 border-border text-muted-foreground hover:border-blue-500/50 hover:bg-blue-500/10"
-                      }`}
-                    >
-                      {day.slice(0, 3)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bloco 3 - Preferências de treino */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-blue-500 rounded-full" />
-                Preferências de Treino
-              </h4>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-3 block">Disponibilidade de equipamentos</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {[
-                      "Halteres",
-                      "Barras",
-                      "Máquinas",
-                      "Elásticos",
-                      "Peso corporal",
-                      "Kettlebell",
-                      "TRX",
-                      "Barra fixa",
-                    ].map((eq) => (
-                      <button
-                        key={eq}
-                        onClick={() => {
-                          const isSelected = training.equipment.includes(eq)
-                          setTraining({
-                            ...training,
-                            equipment: isSelected
-                              ? training.equipment.filter((e) => e !== eq)
-                              : [...training.equipment, eq],
-                          })
-                        }}
-                        className={`px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
-                          training.equipment.includes(eq)
-                            ? "bg-cyan-600 border-cyan-500 text-white"
-                            : "bg-card/50 border-border text-muted-foreground hover:border-cyan-500/50 hover:bg-cyan-500/10"
-                        }`}
-                      >
-                        {eq}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSaveTraining}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02]"
-            >
-              Salvar configuração de treino
-            </button>
-          </div>
-        )}
-
-        {/* Diet tab */}
-        {activeTab === "dieta" && (
-          <div className="space-y-6">
-            {/* Bloco 1 - Objetivo Nutricional */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-cyan-500 rounded-full" />
-                Objetivo Nutricional
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Refeições por dia</label>
-                  <select
-                    value={diet.mealsPerDay || ""}
-                    onChange={(e) => setDiet({ ...diet, mealsPerDay: Number(e.target.value) })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  >
-                    <option value="">Selecione</option>
-                    {[3, 4, 5, 6].map((n) => (
-                      <option key={n} value={n}>
-                        {n} refeições
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Orçamento</label>
-                  <select
-                    value={diet.budget}
-                    onChange={(e) => setDiet({ ...diet, budget: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  >
-                    <option value="low">Baixo</option>
-                    <option value="medium">Médio</option>
-                    <option value="high">Alto</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Flexibilidade</label>
-                  <select
-                    value={diet.flexibility}
-                    onChange={(e) => setDiet({ ...diet, flexibility: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  >
-                    <option value="rigid">Dieta rígida</option>
-                    <option value="moderate">Moderada</option>
-                    <option value="flexible">Flexível com estratégia</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Bloco 2 - Restrições & Preferências */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <div className="w-1 h-4 bg-blue-500 rounded-full" />
-                Restrições & Preferências
-              </h4>
-              <div>
-                <label className="text-sm text-muted-foreground mb-3 block">Restrições alimentares</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {[
-                    "Vegetariano",
-                    "Vegano",
-                    "Intolerância à lactose",
-                    "Intolerância ao glúten",
-                    "Não come porco",
-                    "Não come carne vermelha",
-                  ].map((restriction) => (
-                    <button
-                      key={restriction}
-                      onClick={() => {
-                        const isSelected = diet.restrictions.includes(restriction)
-                        setDiet({
-                          ...diet,
-                          restrictions: isSelected
-                            ? diet.restrictions.filter((r) => r !== restriction)
-                            : [...diet.restrictions, restriction],
-                        })
-                      }}
-                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
-                        diet.restrictions.includes(restriction)
-                          ? "bg-cyan-600 border-cyan-500 text-white"
-                          : "bg-card/50 border-border text-muted-foreground hover:border-cyan-500/50 hover:bg-cyan-500/10"
-                      }`}
-                    >
-                      {restriction}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Alimentos que não gosta ou não abre mão
-                </label>
-                <textarea
-                  value={diet.dislikedFoods}
-                  onChange={(e) => setDiet({ ...diet, dislikedFoods: e.target.value })}
-                  placeholder="Ex: não abro mão de chocolate aos sábados, não gosto de brócolis..."
-                  className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 h-24 resize-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Bloco 3 - Análise por foto (futuro) */}
-            <div className="relative bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-cyan-500/5 border border-dashed border-cyan-500/30 rounded-xl p-6 overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(34,211,238,0.05),transparent_70%)]" />
-              <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2V9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground mb-1">Em breve: Análise de prato por foto</p>
-                  <p className="text-xs text-muted-foreground">
-                    Mande foto do seu prato e a Atlas IA recalcula seu dia em segundos
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bloco 4 - Resumo Dieta */}
-            <div className="bg-gradient-to-br from-cyan-600/10 via-blue-600/5 to-cyan-600/10 border border-cyan-500/30 rounded-xl p-6">
-              <h4 className="text-sm font-semibold text-foreground mb-4">Resumo Dieta Atlas</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Calorias-alvo</p>
-                  <p className="text-lg font-bold text-foreground">2.100 kcal</p>
-                  <p className="text-xs text-cyan-400 mt-1">Moderado</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Proteína</p>
-                  <p className="text-lg font-bold text-foreground">180-200g</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Carboidrato</p>
-                  <p className="text-lg font-bold text-foreground">200-250g</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Gordura</p>
-                  <p className="text-lg font-bold text-foreground">60-70g</p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                * Valores ajustados pela Atlas IA com base no seu perfil e objetivos
-              </p>
-            </div>
-
-            <button
-              onClick={handleSaveDiet}
-              className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-[1.02]"
-            >
-              Salvar configuração de dieta
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Weekly plan */}
-      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Semana Atlas - Treino</h3>
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
-          {weekDays.map((day, i) => {
-            const isTrainingDay = training.trainingDays.includes(day)
-            return (
-              <div
-                key={day}
-                className={`p-4 rounded-xl border transition-all ${
-                  isTrainingDay
-                    ? "bg-blue-600/10 border-blue-500/30 hover:bg-blue-600/20 hover:border-blue-500/50"
-                    : "bg-secondary/30 border-border hover:bg-secondary/50"
-                }`}
-              >
-                <p className="text-xs font-medium text-muted-foreground mb-2">{day.slice(0, 3)}</p>
-                {isTrainingDay ? (
-                  <>
-                    <p className="text-sm font-semibold text-foreground mb-2">
-                      Treino {String.fromCharCode(65 + training.trainingDays.indexOf(day))}
-                    </p>
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">
-                        {training.mainFocus === "muscle_gain" && "Hipertrofia"}
-                        {training.mainFocus === "fat_loss" && "Definição"}
-                        {training.mainFocus === "performance" && "Performance"}
-                      </div>
-                      <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                        Ver plano →
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Descanso</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">Recuperação ativa</p>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ========== MAIN PAGE COMPONENT ==========
 export default function AtlasPainelPage() {
   const [activeSection, setActiveSection] = useState<SectionKey>("dashboard")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [passportOpen, setPassportOpen] = useState(false)
-  // </CHANGE>
 
   const renderContent = () => {
     switch (activeSection) {
@@ -4727,7 +4019,6 @@ export default function AtlasPainelPage() {
           <User className="w-4 h-4" />
           <span className="hidden md:inline">Perfil Atlas</span>
         </button>
-        {/* </CHANGE> */}
       </header>
 
       {/* Sidebar */}
@@ -4772,7 +4063,15 @@ export default function AtlasPainelPage() {
       )}
 
       <AtlasPassaporte isOpen={passportOpen} onClose={() => setPassportOpen(false)} />
-      {/* </CHANGE> */}
     </div>
   )
 }
+=
+{
+  passportOpen
+}
+onClose={() => setPassportOpen(false)} />
+</div>
+  )
+}
+\
