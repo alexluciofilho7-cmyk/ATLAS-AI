@@ -3,6 +3,7 @@
 import { useCallback } from "react"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   LayoutDashboard,
   Target,
@@ -12,6 +13,7 @@ import {
   Moon,
   Activity,
   Zap,
+  Menu,
   X,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +23,7 @@ import {
   HelpCircle,
   Save,
   Check,
+  User,
   AlertTriangle,
   Clock,
   Shield,
@@ -31,7 +34,8 @@ import {
   AlertCircle,
   Sun,
   Coffee,
-  XCircle,
+  Wine,
+  Award,
 } from "lucide-react"
 import {
   useAtlasData,
@@ -44,6 +48,7 @@ import {
   type TrainingConfig, // Added for type safety
   type DietConfig, // Added for type safety
 } from "@/context/AtlasDataContext"
+import { AtlasPassaporte } from "@/components/AtlasPassaporte"
 // import Compulsao2035 from "@/components/Compulsao2035" // Removed as CompulsaoView is now inlined
 
 type SectionKey =
@@ -964,7 +969,7 @@ Você PRECISA consultar um médico ou fisioterapeuta presencial. Não vou te dar
 Até você ser avaliado:
 - Evite movimentos que causam dor.
 - Não force "pra ver se melhora".
-- Não tome anti-inflamatório sem prescrição médica.
+- Não tome anti-inflamatório sem prescrição.
 
 Vou te orientar apenas a proteger a região enquanto você marca a consulta.`,
         type: "pain",
@@ -1198,27 +1203,49 @@ function CompulsaoView() {
   const [showNightDefenseModal, setShowNightDefenseModal] = useState(false)
   const [nightDefenseActive, setNightDefenseActive] = useState(false)
 
-  const [eventForm, setEventForm] = useState({
-    trigger: "",
+  // Event logging state
+  const [eventLog, setEventLog] = useState<
+    Array<{
+      id: string
+      timestamp: Date
+      type: "urge_controlled" | "compulsion" | "light_desire"
+      intensity: number
+      trigger: string
+      category: string
+      notes: string
+    }>
+  >([])
+
+  const [newEvent, setNewEvent] = useState({
+    type: "urge_controlled" as "urge_controlled" | "compulsion" | "light_desire",
     intensity: 5,
-    didEat: "no" as "no" | "light" | "heavy",
-    context: "",
+    trigger: "",
+    category: "",
+    notes: "",
   })
-  const [eventRegistered, setEventRegistered] = useState(false)
-  // </CHANGE>
 
   // Risk calculation based on real Atlas data
   const calculateRisk = useCallback(() => {
     let risk = 0
+
+    // Get latest checkin
     const latest = checkins[checkins.length - 1]
     if (latest) {
+      // Sleep impact (0-25 points)
       if (latest.sleepHours < 6) risk += 25
       else if (latest.sleepHours < 7) risk += 15
       else if (latest.sleepHours < 8) risk += 5
+
+      // Stress impact (0-30 points)
       risk += latest.stressLevel * 6
+
+      // Energy impact (0-25 points) - low energy = higher risk
       risk += (5 - latest.energy) * 5
+
+      // Pain impact (0-20 points)
       if (latest.painLevel > 0) risk += latest.painLevel * 4
     }
+
     // Night defense reduces risk
     if (nightDefenseActive) risk -= 20
 
@@ -1228,8 +1255,8 @@ function CompulsaoView() {
   const riskLevel = calculateRisk()
 
   const getRiskState = () => {
-    if (riskLevel < 33) return { label: "Baixo", color: "text-green-400", bgColor: "bg-green-500/10" }
-    if (riskLevel < 66) return { label: "Moderado", color: "text-yellow-400", bgColor: "bg-yellow-500/10" }
+    if (riskLevel < 33) return { label: "Controlado", color: "text-green-400", bgColor: "bg-green-500/10" }
+    if (riskLevel < 66) return { label: "Vigilância", color: "text-yellow-400", bgColor: "bg-yellow-500/10" }
     return { label: "Crítico", color: "text-red-400", bgColor: "bg-red-500/10" }
   }
 
@@ -1250,20 +1277,25 @@ function CompulsaoView() {
   // Week risk trend (mock data)
   const weekTrend = [45, 52, 48, 60, 55, 50, riskLevel]
 
+  // Register event
   const handleRegisterEvent = () => {
-    if (!eventForm.trigger) return
-    setEventRegistered(true)
-    setTimeout(() => {
-      setEventRegistered(false)
-      setEventForm({
-        trigger: "",
-        intensity: 5,
-        didEat: "no",
-        context: "",
-      })
-    }, 3000)
+    if (!newEvent.trigger || !newEvent.category) return
+
+    const event = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      ...newEvent,
+    }
+
+    setEventLog((prev) => [event, ...prev].slice(0, 20))
+    setNewEvent({
+      type: "urge_controlled",
+      intensity: 5,
+      trigger: "",
+      category: "",
+      notes: "",
+    })
   }
-  // </CHANGE>
 
   // AI Insights (mock but structured)
   const aiInsights = [
@@ -1273,30 +1305,13 @@ function CompulsaoView() {
   ]
 
   return (
-    <div className="min-h-screen p-6 space-y-8">
-      {/* 1) CABEÇALHO - Atlas Craving Index */}
-      <div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Compulsão Alimentar</h1>
-          <p className="text-slate-400">Centro de comando para crises, janelas críticas e recomeços inteligentes.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Atlas Craving Index */}
+    <div className="min-h-screen">
+      {/* Zone 1: Estado Atual - Top Strip */}
+      <div className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {/* Card 1: Risco Atual */}
           <div className="relative p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="text-sm font-medium text-slate-400 mb-1">Atlas Craving Index</div>
-                <div className="text-4xl font-bold mb-2">
-                  {Math.round(riskLevel)}
-                  <span className="text-xl text-slate-500">/100</span>
-                </div>
-                <div
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${state.bgColor} ${state.color}`}
-                >
-                  {state.label}
-                </div>
-              </div>
+            <div className="absolute top-4 right-4">
               <div className="relative w-20 h-20">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                   <circle
@@ -1306,7 +1321,7 @@ function CompulsaoView() {
                     stroke="currentColor"
                     strokeWidth="8"
                     fill="none"
-                    className="text-slate-700/30"
+                    className="text-secondary"
                   />
                   <circle
                     cx="50"
@@ -1320,495 +1335,392 @@ function CompulsaoView() {
                     strokeLinecap="round"
                   />
                 </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`text-2xl font-bold ${state.color}`}>{Math.round(riskLevel)}</div>
+                </div>
               </div>
             </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-400">
-                <span>Sono hoje</span>
-                <span className="text-slate-200">{checkins[checkins.length - 1]?.sleepHours || 7}h</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-400">
-                <span>Estresse</span>
-                <span className="text-slate-200">{checkins[checkins.length - 1]?.stressLevel || 3}/5</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-400">
-                <span>Déficit acumulado</span>
-                <span className="text-slate-200">-450 kcal</span>
-              </div>
-            </div>
+            <div className="text-sm font-medium text-slate-400 mb-1">Risco Agora</div>
+            <div className="text-3xl font-bold mb-1">{Math.round(riskLevel)}/100</div>
+            <div className="text-xs text-slate-500">Probabilidade de compulsão hoje</div>
           </div>
 
-          {/* Card 2: Janela Crítica de Hoje */}
+          {/* Card 2: Janela Crítica */}
           <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-5 h-5 text-cyan-400" />
-              <div className="text-sm font-medium text-slate-400">Janela Crítica de Hoje</div>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-cyan-400" />
+              <div className="text-sm font-medium text-slate-400">Janela Crítica</div>
             </div>
-            <div className="text-3xl font-bold text-white mb-3">{criticalWindow}</div>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Período do dia em que você tem maior chance de se sabotar.
+            <div className="text-2xl font-bold mb-2">{criticalWindow}</div>
+            <div className="text-xs text-slate-500">Horário mais provável de ataque</div>
+            {isInCriticalWindow() && (
+              <div className="mt-2 inline-block px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-md text-xs text-red-400 font-medium">
+                Agora
+              </div>
+            )}
+          </div>
+
+          {/* Card 3: Estado Atual */}
+          <div
+            className={`p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 ${state.bgColor}`}
+          >
+            <div className="text-sm font-medium text-slate-400 mb-2">Estado Atual</div>
+            <div className={`text-2xl font-bold mb-2 ${state.color}`}>{state.label}</div>
+            <div className="text-xs text-slate-500">Baseado nos últimos 3 dias de sono, estresse e recaídas</div>
+          </div>
+
+          {/* Card 4: Tendência 7 dias */}
+          <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300">
+            <div className="text-sm font-medium text-slate-400 mb-3">Tendência 7 dias</div>
+            <div className="flex items-end gap-1 h-12 mb-2">
+              {weekTrend.map((value, i) => (
+                <div key={i} className="flex-1 bg-cyan-500/30 rounded-t" style={{ height: `${value}%` }} />
+              ))}
+            </div>
+            <div className="text-xs text-slate-500">Risco médio nos últimos 7 dias</div>
+          </div>
+        </div>
+
+        {/* Crisis Mode Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowCrisisModal(true)}
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all hover:scale-105 flex items-center gap-2"
+          >
+            <AlertTriangle className="w-5 h-5" />
+            Ativar Modo Crise (2 min)
+          </button>
+        </div>
+
+        {/* High Risk Warning */}
+        {riskLevel >= 66 && (
+          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-sm">
+            <p className="text-red-200 text-sm">
+              <strong>Risco elevado detectado.</strong> Recomendamos ativar o Modo Crise agora ou executar o protocolo
+              de prevenção. Isso não é falta de caráter, é padrão fisiológico + hábito. Estamos ajustando o sistema, não
+              te condenando.
             </p>
           </div>
-
-          {/* Card 3: Estado Atual + Botão Crise */}
-          <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 flex flex-col justify-between">
-            <div>
-              <div className="text-sm font-medium text-slate-400 mb-2">Estado Atual</div>
-              <div className={`text-2xl font-bold mb-4 ${state.color}`}>{state.label}</div>
-            </div>
-            <button
-              onClick={() => setShowCrisisModal(true)}
-              className="w-full px-4 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-all hover:scale-105 flex items-center justify-center gap-2"
-            >
-              <AlertTriangle className="w-5 h-5" />
-              Ativar Modo Crise (2 min)
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* 2) LINHA DO TEMPO DO DIA & NOITES RECENTES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Timeline do Dia */}
-        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-cyan-400" />
-            Timeline do Dia
-          </h3>
-
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2 text-xs text-slate-500">
-              <span>6h</span>
-              <span>12h</span>
-              <span>18h</span>
-              <span>24h</span>
-            </div>
-
-            <div className="relative h-12 bg-slate-800/50 rounded-full overflow-hidden">
-              {/* Morning - Green */}
-              <div className="absolute left-0 top-0 h-full w-1/4 bg-green-500/30" />
-              {/* Afternoon - Green */}
-              <div className="absolute left-1/4 top-0 h-full w-1/4 bg-green-500/30" />
-              {/* Evening - Yellow (pre-risk) */}
-              <div className="absolute left-1/2 top-0 h-full w-1/6 bg-yellow-500/30" />
-              {/* Night - Red (critical window) */}
-              <div className="absolute left-2/3 top-0 h-full w-1/3 bg-red-500/30" />
-
-              {/* Meal markers */}
-              <div
-                className="absolute left-[12.5%] top-1/2 -translate-y-1/2 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900"
-                title="Café"
-              />
-              <div
-                className="absolute left-[37.5%] top-1/2 -translate-y-1/2 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900"
-                title="Almoço"
-              />
-              <div
-                className="absolute left-[58%] top-1/2 -translate-y-1/2 w-3 h-3 bg-yellow-400 rounded-full border-2 border-slate-900"
-                title="Lanche"
-              />
-              <div
-                className="absolute left-[75%] top-1/2 -translate-y-1/2 w-3 h-3 bg-yellow-400 rounded-full border-2 border-slate-900"
-                title="Jantar"
-              />
-              <div
-                className="absolute left-[87%] top-1/2 -translate-y-1/2 w-4 h-4 bg-red-400 rounded-full border-2 border-slate-900 animate-pulse"
-                title="Zona de Risco"
-              />
-            </div>
-
-            <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500/50 rounded" />
-                <span className="text-slate-400">Períodos OK</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-500/50 rounded" />
-                <span className="text-slate-400">Pré-Risco</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500/50 rounded" />
-                <span className="text-slate-400">Crítico</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Noites Recentes */}
-        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
-            Noites Recentes (7 dias)
-          </h3>
-
-          <div className="grid grid-cols-7 gap-2">
-            {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, i) => {
-              const status = i % 3 === 0 ? "ok" : i % 3 === 1 ? "alert" : "crisis"
-              const config = {
-                ok: {
-                  icon: CheckCircle2,
-                  color: "text-green-400",
-                  bg: "bg-green-500/10",
-                  border: "border-green-500/30",
-                },
-                alert: {
-                  icon: AlertCircle,
-                  color: "text-yellow-400",
-                  bg: "bg-yellow-500/10",
-                  border: "border-yellow-500/30",
-                },
-                crisis: { icon: XCircle, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30" },
-              }[status]
-              const Icon = config.icon
-
-              return (
-                <div
-                  key={day}
-                  className={`p-3 rounded-xl border ${config.bg} ${config.border} text-center hover:scale-105 transition-transform cursor-pointer`}
-                >
-                  <div className="text-[10px] font-medium text-slate-400 mb-2">{day}</div>
-                  <Icon className={`w-5 h-5 ${config.color} mx-auto mb-1`} />
-                  <div className="text-[9px] text-slate-500">
-                    {status === "ok" ? "Sem compulsão" : status === "alert" ? "22:30" : "21:15"}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* 3) PROTOCOLOS ATLAS - 3 MODOS DE AÇÃO */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Prevenir Agora */}
+      {/* Zone 2: Blocos de Ação */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Card 1: Prevenir */}
         <button
           onClick={() => setShowPreventModal(true)}
           className="group p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-cyan-500 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/20 text-left"
         >
           <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 w-fit mb-4">
-            <Shield className="w-7 h-7 text-cyan-400" />
+            <Shield className="w-6 h-6 text-cyan-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Prevenir Agora</h3>
-          <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-            Micro-ação de 90 segundos para reduzir o risco imediato.
-          </p>
-          <ul className="space-y-2 mb-4 text-sm text-slate-300">
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-              <span>Respiração curta guiada (30s)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-              <span>Anotar fome de 0 a 10</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-              <span>Beber água / chá sem calorias</span>
-            </li>
-          </ul>
-          <div className="flex items-center text-cyan-400 text-sm font-medium group-hover:gap-2 transition-all">
+          <h3 className="text-xl font-bold text-white mb-2">Prevenir agora</h3>
+          <p className="text-slate-400 text-sm mb-4">Micro-ação de 90 segundos para reduzir risco imediato</p>
+          <div className="flex items-center text-cyan-400 text-sm font-medium">
             Iniciar protocolo
             <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
 
-        {/* Card 2: Intervir (Crise Acontecendo) */}
+        {/* Card 2: Intervir */}
         <button
           onClick={() => setShowCrisisModal(true)}
           className="group p-6 bg-gradient-to-br from-red-900/20 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-red-500/30 hover:border-red-400 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20 text-left"
         >
           <div className="p-3 bg-red-500/20 rounded-xl border border-red-500/30 w-fit mb-4">
-            <AlertTriangle className="w-7 h-7 text-red-400" />
+            <AlertTriangle className="w-6 h-6 text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Intervir (Crise Acontecendo)</h3>
-          <p className="text-sm text-slate-400 mb-4 leading-relaxed">Quando você já está em frente à geladeira.</p>
-          <ul className="space-y-2 mb-4 text-sm text-slate-300">
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <span>Passo 1 – Pausa de 60s</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <span>Passo 2 – Troca inteligente</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <span>Passo 3 – Registrar gatilho</span>
-            </li>
-          </ul>
-          <div className="flex items-center text-red-400 text-sm font-medium group-hover:gap-2 transition-all">
+          <h3 className="text-xl font-bold text-white mb-2">Intervir (urge acontecendo)</h3>
+          <p className="text-slate-400 text-sm mb-4">
+            Protocolo de emergência para interromper, substituir e registrar
+          </p>
+          <div className="flex items-center text-red-400 text-sm font-medium">
             Ativar Airbag
             <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
 
-        {/* Card 3: Recompor (Pós-Queda 12h) */}
+        {/* Card 3: Recompor */}
         <button
           onClick={() => setShowRecoverModal(true)}
           className="group p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50 hover:border-green-500 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-green-500/20 text-left"
         >
           <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30 w-fit mb-4">
-            <Heart className="w-7 h-7 text-green-400" />
+            <Heart className="w-6 h-6 text-green-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Recompor (Pós-Queda 12h)</h3>
-          <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-            Como levantar sem transformar uma noite ruim em semana perdida.
-          </p>
-          <ul className="space-y-2 mb-4 text-sm text-slate-300">
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Ajuste leve na dieta (sem punição)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Reforço de proteína e vegetais</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Foco em sono e hidratação</span>
-            </li>
-          </ul>
-          <div className="flex items-center text-green-400 text-sm font-medium group-hover:gap-2 transition-all">
-            Ver protocolo completo
+          <h3 className="text-xl font-bold text-white mb-2">Recompor (pós-queda 12h)</h3>
+          <p className="text-slate-400 text-sm mb-4">Protocolo de recuperação sem punição e sem culpa</p>
+          <div className="flex items-center text-green-400 text-sm font-medium">
+            Ver protocolo
             <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
       </div>
 
-      {/* 4) LOG INTELIGENTE DE GATILHOS & EMOÇÕES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna 1: Registro Rápido */}
+      {/* Zone 3: Defesa Noturna & Agenda de Risco */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Defesa Noturna */}
         <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-cyan-400" />
-            Log Inteligente – Gatilhos & Emoções
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Moon className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-xl font-bold text-white">Defesa Noturna</h3>
+            </div>
+            <button
+              onClick={() => setNightDefenseActive(!nightDefenseActive)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                nightDefenseActive ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-300"
+              }`}
+            >
+              {nightDefenseActive ? "Ativo" : "Inativo"}
+            </button>
+          </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 mb-4">
             <div>
-              <label className="text-sm font-medium text-slate-300 mb-2 block">Gatilho principal de hoje</label>
-              <select
-                value={eventForm.trigger}
-                onChange={(e) => setEventForm({ ...eventForm, trigger: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-cyan-500 transition-colors"
-              >
-                <option value="">Selecione...</option>
-                <option value="stress">Estresse</option>
-                <option value="boredom">Tédio</option>
-                <option value="anxiety">Ansiedade</option>
-                <option value="hunger">Fome real</option>
-                <option value="social">Ambiente social</option>
-                <option value="sleep">Sono ruim</option>
+              <label className="text-xs text-slate-400 mb-1 block">Horário típico do primeiro gatilho</label>
+              <select className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500">
+                <option>20:00 - 21:00</option>
+                <option>21:00 - 22:00</option>
+                <option>22:00 - 23:00</option>
+                <option>23:00 - 00:00</option>
               </select>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-300 mb-2 block">
-                Intensidade da vontade de comer: {eventForm.intensity}/10
+              <label className="text-xs text-slate-400 mb-1 block">Alimentos mais comuns nas crises</label>
+              <input
+                type="text"
+                placeholder="Ex: pão, doces, salgados..."
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+              <div className="text-xs text-slate-400 mb-1">Padrão da última semana</div>
+              <div className="text-sm text-slate-200">3 crises entre 21h–23h</div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowNightDefenseModal(true)}
+            className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors"
+          >
+            Ajustar rotina da noite
+          </button>
+        </div>
+
+        {/* Agenda de Risco */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-xl font-bold text-white">Agenda de Risco</h3>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2">
+            {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day, i) => {
+              const status = i % 3 === 0 ? "green" : i % 3 === 1 ? "yellow" : "red"
+              const colors = {
+                green: "bg-green-500/20 border-green-500/30 text-green-400",
+                yellow: "bg-yellow-500/20 border-yellow-500/30 text-yellow-400",
+                red: "bg-red-500/20 border-red-500/30 text-red-400",
+              }
+
+              return (
+                <div
+                  key={day}
+                  className={`p-3 rounded-lg border text-center transition-all hover:scale-105 ${colors[status]}`}
+                >
+                  <div className="text-xs font-medium mb-1">{day}</div>
+                  <div className="w-2 h-2 rounded-full mx-auto" style={{ backgroundColor: "currentColor" }} />
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              Sem crise
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-yellow-400" />
+              Urge controlado
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-400" />
+              Compulsão
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Zone 4: Log Inteligente & Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Log Inteligente */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <h3 className="text-xl font-bold text-white mb-4">Log Inteligente</h3>
+
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Tipo de evento</label>
+              <select
+                value={newEvent.type}
+                onChange={(e) =>
+                  setNewEvent({
+                    ...newEvent,
+                    type: e.target.value as "urge_controlled" | "compulsion" | "light_desire",
+                  })
+                }
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500"
+              >
+                <option value="urge_controlled">Vontade intensa controlada</option>
+                <option value="compulsion">Compulsão</option>
+                <option value="light_desire">Desejo leve</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">
+                Intensidade do gatilho: {newEvent.intensity}/10
               </label>
               <input
                 type="range"
                 min="0"
                 max="10"
-                value={eventForm.intensity}
-                onChange={(e) => setEventForm({ ...eventForm, intensity: Number(e.target.value) })}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                value={newEvent.intensity}
+                onChange={(e) => setNewEvent({ ...newEvent, intensity: Number.parseInt(e.target.value) })}
+                className="w-full"
               />
-              <div className="flex justify-between text-xs text-slate-500 mt-1">
-                <span>0</span>
-                <span>5</span>
-                <span>10</span>
-              </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-300 mb-2 block">Você comeu fora do plano?</label>
-              <div className="flex gap-2">
-                {[
-                  { value: "no", label: "Não" },
-                  { value: "light", label: "Sim, leve" },
-                  { value: "heavy", label: "Sim, pesado" },
-                ].map((opt) => (
+              <label className="text-xs text-slate-400 mb-1 block">Categoria de gatilho</label>
+              <div className="flex flex-wrap gap-2">
+                {["Estresse", "Tédio", "Emoção forte", "Fome real", "Ambiente"].map((cat) => (
                   <button
-                    key={opt.value}
-                    onClick={() => setEventForm({ ...eventForm, didEat: opt.value as "no" | "light" | "heavy" })}
-                    className={`flex-1 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      eventForm.didEat === opt.value
+                    key={cat}
+                    onClick={() => setNewEvent({ ...newEvent, category: cat })}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      newEvent.category === cat
                         ? "bg-cyan-500 text-white"
                         : "bg-slate-800 border border-slate-700 text-slate-300 hover:border-cyan-500"
                     }`}
                   >
-                    {opt.label}
+                    {cat}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-300 mb-2 block">O que estava acontecendo na hora?</label>
-              <textarea
-                value={eventForm.context}
-                onChange={(e) => setEventForm({ ...eventForm, context: e.target.value })}
+              <label className="text-xs text-slate-400 mb-1 block">O que aconteceu antes?</label>
+              <input
+                type="text"
+                value={newEvent.notes}
+                onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
                 placeholder="Ex: estava sozinho, mexendo no celular..."
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
-
-            <button
-              onClick={handleRegisterEvent}
-              disabled={!eventForm.trigger}
-              className="w-full px-6 py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-xl transition-all hover:scale-105 disabled:hover:scale-100 disabled:cursor-not-allowed"
-            >
-              Registrar evento
-            </button>
-
-            {eventRegistered && (
-              <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
-                <p className="text-sm text-cyan-200">
-                  <strong>Evento registrado.</strong> Em breve a Atlas IA vai cruzar esses gatilhos com seu sono, treino
-                  e dieta.
-                </p>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Coluna 2: Padrões da Semana */}
-        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
-            Padrões da Semana
-          </h3>
+          <button
+            onClick={handleRegisterEvent}
+            className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg transition-colors mb-4"
+          >
+            Registrar evento
+          </button>
 
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-cyan-500/50 transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-cyan-500/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-white mb-1">Gatilho mais frequente</div>
-                  <div className="text-sm text-slate-400">Estresse no fim da tarde</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-yellow-500/50 transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <Clock className="w-5 h-5 text-yellow-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-white mb-1">Janelas com maior risco</div>
-                  <div className="text-sm text-slate-400">20h–23h (3 de 5 dias)</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <CheckCircle2 className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-white mb-1">Dias com mais controle</div>
-                  <div className="text-sm text-slate-400">Terça e Quinta (sono {">"} 7h)</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Activity className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-blue-200 mb-1">Atlas IA detectou</div>
-                  <div className="text-sm text-blue-300 leading-relaxed">
-                    Compulsões aumentam 3x nos dias com sono {"<"} 6h. Considere priorizar recuperação.
+          {/* Event history */}
+          {eventLog.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-slate-400 mb-2">Últimos registros</div>
+              {eventLog.slice(0, 5).map((event) => (
+                <div key={event.id} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-slate-300 font-medium">{event.trigger}</span>
+                    <span className="text-xs text-slate-500">{event.timestamp.toLocaleTimeString()}</span>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {event.category} • Intensidade: {event.intensity}/10
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Insights Atlas IA */}
+        <div className="p-6 bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-2xl border border-slate-700/50">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-xl font-bold text-white">Insights Atlas IA</h3>
+          </div>
+
+          <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg mb-4">
+            <div className="text-xs text-cyan-400 mb-1 flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              Atlas IA Online – monitorando seus gatilhos em tempo real
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {aiInsights.map((insight, i) => (
+              <div
+                key={i}
+                className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-cyan-500/50 transition-colors"
+              >
+                <p className="text-sm text-slate-300 leading-relaxed">{insight}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="text-xs text-blue-200">
+              <strong>Padrão Atlas detectado:</strong> Risco aumenta significativamente após 21h com uso prolongado de
+              telas e baixa energia.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* MODALS */}
-      {/* Crisis Modal */}
+      {/* Crisis Modal (reused from Compulsao2035) */}
       {showCrisisModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-red-500/30 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-red-500/30 rounded-2xl shadow-2xl">
             <button
               onClick={() => setShowCrisisModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors z-10"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
             <div className="p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-red-500/20 rounded-xl">
-                  <AlertTriangle className="w-8 h-8 text-red-400" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Protocolo de Crise Ativado</h2>
-                  <p className="text-slate-400">Em 3 fases: Interromper → Substituir → Registrar</p>
-                </div>
-              </div>
-
-              <div className="space-y-4 mt-6">
-                <div className="p-5 bg-slate-800/50 rounded-xl border border-slate-700">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-red-500/20 rounded-lg">
-                      <span className="text-red-400 font-bold">1</span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-bold mb-2">Pausa de 60 segundos</h4>
-                      <p className="text-sm text-slate-400">
-                        Respire fundo (4-7-8). Saia do cômodo. Beba um copo de água.
-                      </p>
-                    </div>
+              <h2 className="text-2xl font-bold text-white mb-4">Modo Crise Ativado</h2>
+              <p className="text-slate-300">Protocolo em 3 fases: Interromper → Substituir → Registrar</p>
+              <div className="mt-6 space-y-4">
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Respirar fundo (4-7-8) por 90 segundos</span>
                   </div>
                 </div>
-
-                <div className="p-5 bg-slate-800/50 rounded-xl border border-slate-700">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-orange-500/20 rounded-lg">
-                      <span className="text-orange-400 font-bold">2</span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-bold mb-2">Troca inteligente</h4>
-                      <p className="text-sm text-slate-400 mb-2">
-                        Se não conseguir parar, escolha a opção menos prejudicial:
-                      </p>
-                      <ul className="text-sm text-slate-300 space-y-1">
-                        <li>• Fruta + iogurte proteico</li>
-                        <li>• Ovos mexidos com pão integral</li>
-                        <li>• Shake de proteína com banana</li>
-                      </ul>
-                    </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Trocar de cômodo agora</span>
                   </div>
                 </div>
-
-                <div className="p-5 bg-slate-800/50 rounded-xl border border-slate-700">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-yellow-500/20 rounded-lg">
-                      <span className="text-yellow-400 font-bold">3</span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-bold mb-2">Registrar gatilho e emoção</h4>
-                      <p className="text-sm text-slate-400">
-                        Anote rapidamente o que aconteceu. A Atlas IA vai aprender o seu padrão.
-                      </p>
-                    </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-slate-200">Água + 10 agachamentos</span>
                   </div>
                 </div>
               </div>
-
               <button
                 onClick={() => setShowCrisisModal(false)}
-                className="mt-6 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-colors"
+                className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-xl transition-colors"
               >
                 Concluir protocolo
               </button>
@@ -1817,106 +1729,96 @@ function CompulsaoView() {
         </div>
       )}
 
-      {/* Prevent Modal */}
+      {/* Prevent Modal (placeholder) */}
       {showPreventModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/30 rounded-2xl shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/30 rounded-2xl shadow-2xl p-8">
             <button
               onClick={() => setShowPreventModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
             >
               <X className="w-6 h-6" />
             </button>
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-cyan-500/20 rounded-xl">
-                  <Shield className="w-8 h-8 text-cyan-400" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Protocolo de Prevenção</h2>
-                  <p className="text-sm text-slate-400">90 segundos para baixar o risco</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { num: 1, text: "Beber um copo grande de água agora" },
-                  { num: 2, text: "10 respirações profundas (4-7-8)" },
-                  { num: 3, text: "Mudar de ambiente por 5 minutos" },
-                ].map((step) => (
-                  <div
-                    key={step.num}
-                    className="p-4 bg-slate-800/50 rounded-xl border border-slate-700 flex items-center gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-cyan-400 font-bold">{step.num}</span>
-                    </div>
-                    <p className="text-slate-200">{step.text}</p>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setShowPreventModal(false)}
-                className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 rounded-xl transition-colors"
-              >
-                Iniciar
-              </button>
+            <h2 className="text-2xl font-bold text-white mb-4">Protocolo de Prevenção</h2>
+            <p className="text-slate-300 mb-6">Micro-ação de 90 segundos para reduzir risco imediato.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">1. Beber um copo de água agora</div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">2. Fazer 10 respirações profundas</div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">3. Mudar de ambiente por 5 minutos</div>
             </div>
+            <button
+              onClick={() => setShowPreventModal(false)}
+              className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl"
+            >
+              Fechar
+            </button>
           </div>
         </div>
       )}
 
-      {/* Recover Modal */}
+      {/* Recover Modal (placeholder) */}
       {showRecoverModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/30 rounded-2xl shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/30 rounded-2xl shadow-2xl p-8">
             <button
               onClick={() => setShowRecoverModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
             >
               <X className="w-6 h-6" />
             </button>
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-green-500/20 rounded-xl">
-                  <Heart className="w-8 h-8 text-green-400" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Protocolo de Recuperação</h2>
-                  <p className="text-sm text-slate-400">Sem punição. Sem culpa. Só reconstrução.</p>
-                </div>
+            <h2 className="text-2xl font-bold text-white mb-4">Protocolo de Recuperação</h2>
+            <p className="text-slate-300 mb-6">Sem punição. Sem culpa. Apenas reconstrução.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>1. Aceitar sem julgamento:</strong> O que aconteceu, aconteceu.
               </div>
-
-              <div className="space-y-3">
-                {[
-                  { title: "Aceitar sem julgamento", desc: "O que aconteceu, aconteceu. Não existe perfeição." },
-                  { title: "Hidratar-se bem", desc: "500ml de água agora. Ajuda a reduzir desconforto." },
-                  { title: "Próxima refeição no plano", desc: "Volte ao protocolo normal na próxima refeição." },
-                ].map((step, i) => (
-                  <div key={i} className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                    <div className="font-bold text-white mb-1">
-                      {i + 1}. {step.title}
-                    </div>
-                    <div className="text-sm text-slate-400">{step.desc}</div>
-                  </div>
-                ))}
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>2. Hidratar-se:</strong> 500ml de água agora.
               </div>
-
-              <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <p className="text-sm text-blue-200">
-                  <strong>Lembre-se:</strong> Uma noite ruim não destrói semanas de progresso. O que importa é voltar ao
-                  plano o quanto antes.
-                </p>
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>3. Planejar próxima refeição:</strong> Voltar ao protocolo na próxima refeição.
               </div>
-
-              <button
-                onClick={() => setShowRecoverModal(false)}
-                className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors"
-              >
-                Entendi
-              </button>
             </div>
+            <button
+              onClick={() => setShowRecoverModal(false)}
+              className="mt-6 w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Night Defense Modal (placeholder) */}
+      {showNightDefenseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md mx-4 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/30 rounded-2xl shadow-2xl p-8">
+            <button
+              onClick={() => setShowNightDefenseModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold text-white mb-4">Ajustar Rotina da Noite</h2>
+            <p className="text-slate-300 mb-6">Protocolo para reduzir risco durante a janela crítica.</p>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>Janela Crítica:</strong> 20:30 - 23:00
+              </div>
+              <div className="p-3 bg-slate-800/50 rounded-lg">
+                <strong>Ações recomendadas:</strong> Eliminar telas 30min antes, preparar lanches de emergência, ter
+                protocolo de substituição pronto.
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowNightDefenseModal(false)
+                setNightDefenseActive(true)
+              }}
+              className="mt-6 w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl"
+            >
+              Ativar Defesa Noturna
+            </button>
           </div>
         </div>
       )}
@@ -1924,7 +1826,7 @@ function CompulsaoView() {
   )
 }
 
-// ========== SONOVIEW IMPLEMENTATION ==========
+// ========== SonoView IMPLEMENTATION ==========
 function SonoView() {
   const { currentWeekMetrics, checkins } = useAtlasData()
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
@@ -2045,6 +1947,7 @@ function SonoView() {
   const asriStatus = asri >= 85 ? "Excelente" : asri >= 70 ? "Aceitável" : "Crítico"
   const asriColor = asri >= 85 ? "text-green-400" : asri >= 70 ? "text-cyan-400" : "text-red-400"
   const asriBg = asri >= 85 ? "bg-green-500/10" : asri >= 70 ? "bg-cyan-500/10" : "bg-red-500/10"
+  const asriBorder = asri >= 85 ? "border-green-500/40" : asri >= 70 ? "border-cyan-500/40" : "border-red-500/40"
   const asriGlow = asri >= 85 ? "shadow-green-500/20" : asri >= 70 ? "shadow-cyan-500/20" : "shadow-red-500/20"
 
   // Sleep status classification
@@ -2097,7 +2000,7 @@ function SonoView() {
     const hours = Number.parseFloat(crisisHours) || 3.5
     setShowCrisisModal(false)
     alert(
-      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA ajustará seu plano automaticamente.`,
+      `Modo Crise ativado para ${hours}h de sono e energia nível ${crisisEnergy}:\n\n• Treino: reduzir intensidade, sem PR, foco em técnica.\n• Dieta: manter proteína alta, carbo moderado.\n• Sono hoje: alvo 7h30, sem cafeína após 15h.\n\nA Atlas IA vai ajustar seu plano automaticamente.`,
     )
   }
 
@@ -2124,7 +2027,7 @@ function SonoView() {
         <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_3fr] gap-5">
           {/* Card ASRI - Centro de comando */}
           <div
-            className={`group relative overflow-hidden rounded-3xl border-2 ${asriBg} backdrop-blur-md p-8 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${asriGlow}`}
+            className={`group relative overflow-hidden rounded-3xl border-2 ${asriBorder} ${asriBg} backdrop-blur-md p-8 transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl ${asriGlow}`}
           >
             {/* Animated background gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-purple-600/5 to-blue-600/5 animate-pulse" />
@@ -2170,7 +2073,7 @@ function SonoView() {
               <div className="flex items-center gap-3 mb-5">
                 <span className="text-xs text-gray-500 font-medium">Status atual:</span>
                 <span
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriGlow}`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold ${asriBg} ${asriColor} border-2 ${asriBorder}`}
                 >
                   {asriStatus}
                 </span>
@@ -2765,8 +2668,8 @@ function SonoView() {
 
       {/* Modal Protocolos - Enhanced */}
       {showProtocolModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/40 rounded-3xl p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl shadow-cyan-500/20">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl w-full my-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-foreground">
                 {showProtocolModal === "reset"
@@ -2830,67 +2733,76 @@ function SonoView() {
                   <ul className="space-y-2 text-xs">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Evitar cafeína após 15h
+                      Última cafeína até 15h
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Snack de proteína às 16h
+                      Treino ideal: 16h-19h
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Treino de força 17h-18h
+                      Refeição pesada no almoço
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Refeição pós-treino rica em carbo
+                      Sem cochilos após 16h
                     </li>
                   </ul>
                 </div>
 
                 <div className="p-5 bg-slate-800/60 rounded-2xl border border-slate-700/50">
-                  <h4 className="font-bold text-indigo-400 mb-3 flex items-center gap-2">
+                  <h4 className="font-bold text-purple-400 mb-3 flex items-center gap-2">
                     <Moon className="w-4 h-4" />
-                    Rotina Noturna
+                    Rotina da Noite
                   </h4>
                   <ul className="space-y-2 text-xs">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Desligar telas 1h antes de dormir
+                      Jantar leve até 20h
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Jantar leve e cedo (até 20h)
+                      Telas off 60 min antes
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Leitura ou meditação
+                      Banho morno 30 min antes
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                      Quarto escuro e fresco
+                      Dormir 22h-23h
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <div className="mt-6 p-5 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                <h4 className="font-bold text-blue-400 mb-3 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  Protocolo Detalhado
+              <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl">
+                <h4 className="font-bold text-green-400 mb-2 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Métrica de Sucesso
                 </h4>
-                <p className="leading-relaxed">
-                  Cada protocolo inclui uma lista diária de tarefas, métricas de acompanhamento e "dicas de ouro" da
-                  Atlas IA. Aderência é chave.
+                <p>
+                  {showProtocolModal === "reset" && "Aumentar ASRI de 55 → 75+ em 7 dias"}
+                  {showProtocolModal === "screen" && "Aumentar ASRI de 60 → 80+ em 14 dias"}
+                  {showProtocolModal === "athlete" && "Atingir ASRI > 85 e manter por 21 dias consecutivos"}
                 </p>
               </div>
 
-              <button
-                onClick={() => setShowProtocolModal(null)}
-                className="mt-6 w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-2xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/40 hover:scale-[1.02]"
-              >
-                Começar Protocolo
-              </button>
+              <div className="pt-5 border-t border-slate-700/50">
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <AlertCircle className="w-3 h-3 inline mr-1 text-yellow-400" />
+                  No futuro, esse protocolo será integrado automaticamente com seu treino, dieta e outros módulos da
+                  Atlas IA para ajustes dinâmicos baseados em dados reais.
+                </p>
+              </div>
             </div>
+
+            <button
+              onClick={() => setShowProtocolModal(null)}
+              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all"
+            >
+              Entendi
+            </button>
           </div>
         </div>
       )}
@@ -2898,4 +2810,1340 @@ function SonoView() {
   )
 }
 
-export default DashboardView
+// ========== FisioterapiaView & TestosteronaView (No changes) ==========
+function FisioterapiaView() {
+  // State for pain triage
+  const [selectedRegion, setSelectedRegion] = useState<string>("")
+  const [painIntensity, setPainIntensity] = useState(0)
+  const [painDuration, setPainDuration] = useState<"days" | "weeks" | "months">("days")
+  const [traumaHistory, setTraumaHistory] = useState(false)
+  const [nightPain, setNightPain] = useState(false)
+  const [neurologicalSymptoms, setNeurologicalSymptoms] = useState(false)
+
+  // State for body map
+  const [hoveredRegion, setHoveredRegion] = useState<string | null>(null)
+  const [showRegionDetails, setShowRegionDetails] = useState<string | null>(null)
+
+  // Check for red flags
+  const hasRedFlags = traumaHistory || neurologicalSymptoms || nightPain || painIntensity >= 8
+
+  // Pain regions
+  const painRegions = [
+    { id: "cervical", label: "Cervical / Pescoço", icon: "🔵" },
+    { id: "shoulder", label: "Ombro", icon: "🔵" },
+    { id: "thoracic", label: "Coluna Torácica", icon: "🔵" },
+    { id: "lumbar", label: "Lombar", icon: "🔵" },
+    { id: "hip", label: "Quadril", icon: "🔵" },
+    { id: "knee", label: "Joelho", icon: "🔵" },
+    { id: "ankle", label: "Tornozelo / Pé", icon: "🔵" },
+    { id: "other", label: "Outro", icon: "🔵" },
+  ]
+
+  // Body map regions with recommendations
+  const bodyMapRegions: Record<string, { description: string; recommendations: string[] }> = {
+    cervical: {
+      description:
+        "Região cervical: frequentemente afetada por má postura ao trabalhar no computador ou uso excessivo de celular.",
+      recommendations: [
+        "Evite movimentos bruscos de rotação",
+        "Faça pausas a cada 45-60 min de trabalho",
+        "Mantenha tela do computador na altura dos olhos",
+        "Evite dormir de bruços",
+      ],
+    },
+    shoulder: {
+      description: "Ombros: sobrecarga comum em exercícios de supino, desenvolvimento e movimentos acima da cabeça.",
+      recommendations: [
+        "Evite movimentos explosivos acima da cabeça",
+        "Reduza carga em supino e desenvolvimento",
+        "Fortaleça manguito rotador com exercícios leves",
+        "Priorize amplitude de movimento antes de carga",
+      ],
+    },
+    thoracic: {
+      description: "Coluna torácica: rigidez comum por postura curvada e falta de mobilidade.",
+      recommendations: [
+        "Faça extensões torácicas diárias",
+        "Evite ficar muito tempo sentado",
+        "Inclua foam roller na rotina",
+        "Trabalhe mobilidade em rotação",
+      ],
+    },
+    lumbar: {
+      description: "Região lombar: área de maior incidência de dores, geralmente por fraqueza do core e sobrecarga.",
+      recommendations: [
+        "Evite agachamentos pesados temporariamente",
+        "Fortaleça core com exercícios isométricos",
+        "Reduza exercícios com flexão de coluna sob carga",
+        "Mantenha postura neutra ao levantar objetos",
+      ],
+    },
+    hip: {
+      description: "Quadril: tensão comum em quem fica muito sentado ou tem encurtamento de flexores.",
+      recommendations: [
+        "Alongue flexores de quadril diariamente",
+        "Evite agachamentos muito profundos se houver dor",
+        "Fortaleça glúteos com exercícios específicos",
+        "Faça pausas para caminhar durante o dia",
+      ],
+    },
+    knee: {
+      description: "Joelhos: articulação vulnerável a sobrecarga, especialmente em corrida e agachamentos.",
+      recommendations: [
+        "Reduza impacto de corrida por alguns dias",
+        "Evite leg press com amplitude excessiva",
+        "Fortaleça quadríceps e posteriores de coxa",
+        "Use gelo após atividades se houver inchaço",
+      ],
+    },
+    ankle: {
+      description: "Tornozelo e pé: frequentemente afetados por entorses, fascite plantar ou sobrecarga.",
+      recommendations: [
+        "Evite corrida em terreno irregular",
+        "Use calçados adequados para treino",
+        "Fortaleça músculos do pé com exercícios descalço",
+        "Faça mobilidade de tornozelo antes de agachar",
+      ],
+    },
+    other: {
+      description: "Outras regiões: cada área tem suas particularidades e requer avaliação específica.",
+      recommendations: [
+        "Identifique o movimento que causa dor",
+        "Evite esse movimento temporariamente",
+        "Monitore se a dor melhora ou piora",
+        "Procure um profissional se persistir",
+      ],
+    },
+  }
+
+  // Mock history data
+  const painHistory = [
+    { date: "05/01/2026", region: "Lombar", before: 7, after: 4, status: "melhorando" },
+    { date: "28/12/2025", region: "Ombro D", before: 5, after: 3, status: "melhorando" },
+    { date: "15/12/2025", region: "Joelho E", before: 6, after: 6, status: "estável" },
+    { date: "01/12/2025", region: "Cervical", before: 4, after: 2, status: "melhorando" },
+  ]
+
+  // Get protocol based on selected region
+  const getProtocolTitle = () => {
+    if (!selectedRegion) return "Protocolo Atlas – 7 dias de recuperação"
+    const region = painRegions.find((r) => r.id === selectedRegion)
+    return `Protocolo Atlas – 7 dias de proteção para ${region?.label || "a região afetada"}`
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500/20 to-green-500/20 flex items-center justify-center border border-teal-500/30">
+          <Activity className="w-6 h-6 text-teal-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">
+            Fisioterapia & Dores – Reconstrução inteligente do seu corpo
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Atlas IA usa seus dados, suas queixas e princípios de fisioterapia baseada em evidência para organizar sua
+            recuperação — sempre lembrando que não substitui um profissional presencial.
+          </p>
+        </div>
+      </div>
+
+      {/* Card 1: Triagem de Dor Atual */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-teal-500/30 transition-all duration-300">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-teal-400" />
+          Triagem de Dor Atual
+        </h3>
+
+        {/* Region selector */}
+        <div className="mb-6">
+          <label className="text-sm text-muted-foreground mb-3 block">Região principal da dor</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {painRegions.map((region) => (
+              <button
+                key={region.id}
+                onClick={() => setSelectedRegion(region.id)}
+                className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                  selectedRegion === region.id
+                    ? "bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-500/20"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-teal-500/50 hover:bg-teal-500/10"
+                }`}
+              >
+                {region.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Pain intensity slider */}
+        <div className="mb-6">
+          <label className="text-sm text-muted-foreground mb-2 block">
+            Intensidade da dor: <span className="font-bold text-foreground">{painIntensity}/10</span>
+            <span className="ml-2 text-xs">
+              {painIntensity === 0 && "(Sem dor)"}
+              {painIntensity >= 1 && painIntensity <= 3 && "(Leve)"}
+              {painIntensity >= 4 && painIntensity <= 6 && "(Moderada)"}
+              {painIntensity >= 7 && painIntensity <= 8 && "(Intensa)"}
+              {painIntensity >= 9 && "(Muito intensa)"}
+            </span>
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="10"
+            value={painIntensity}
+            onChange={(e) => setPainIntensity(Number.parseInt(e.target.value))}
+            className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-teal-500"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>0</span>
+            <span>5</span>
+            <span>10</span>
+          </div>
+        </div>
+
+        {/* Pain duration */}
+        <div className="mb-6">
+          <label className="text-sm text-muted-foreground mb-2 block">Tempo de dor</label>
+          <div className="flex gap-2">
+            {[
+              { value: "days", label: "Dias" },
+              { value: "weeks", label: "Semanas" },
+              { value: "months", label: "Meses" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setPainDuration(option.value as any)}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                  painDuration === option.value
+                    ? "bg-teal-600 border-teal-500 text-white"
+                    : "bg-card/50 border-border text-muted-foreground hover:border-teal-500/50"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Red flag questions */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-400" />
+            Perguntas de segurança
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              onClick={() => setTraumaHistory(!traumaHistory)}
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                traumaHistory
+                  ? "bg-red-500/10 border-red-500/50"
+                  : "bg-card/50 border-border hover:border-yellow-500/30"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Trauma / Queda?</span>
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    traumaHistory ? "bg-red-500 border-red-500" : "border-muted-foreground"
+                  }`}
+                >
+                  {traumaHistory && <Check className="w-3 h-3 text-white" />}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">A dor começou após trauma, queda ou acidente?</p>
+            </div>
+
+            <div
+              onClick={() => setNightPain(!nightPain)}
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                nightPain ? "bg-red-500/10 border-red-500/50" : "bg-card/50 border-border hover:border-yellow-500/30"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Dor noturna?</span>
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    nightPain ? "bg-red-500 border-red-500" : "border-muted-foreground"
+                  }`}
+                >
+                  {nightPain && <Check className="w-3 h-3 text-white" />}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">A dor piora à noite ou te acorda?</p>
+            </div>
+
+            <div
+              onClick={() => setNeurologicalSymptoms(!neurologicalSymptoms)}
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                neurologicalSymptoms
+                  ? "bg-red-500/10 border-red-500/50"
+                  : "bg-card/50 border-border hover:border-yellow-500/30"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Sintomas neurológicos?</span>
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    neurologicalSymptoms ? "bg-red-500 border-red-500" : "border-muted-foreground"
+                  }`}
+                >
+                  {neurologicalSymptoms && <Check className="w-3 h-3 text-white" />}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Formigamento, perda de força ou dormência?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Alert based on red flags */}
+      {selectedRegion && (
+        <div
+          className={`rounded-2xl p-6 border transition-all duration-300 ${
+            hasRedFlags ? "bg-red-500/10 border-red-500/30" : "bg-teal-500/10 border-teal-500/30"
+          }`}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                hasRedFlags ? "bg-red-500/20" : "bg-teal-500/20"
+              }`}
+            >
+              {hasRedFlags ? (
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+              ) : (
+                <CheckCircle2 className="w-6 h-6 text-teal-400" />
+              )}
+            </div>
+            <div>
+              <h4 className={`text-lg font-semibold mb-2 ${hasRedFlags ? "text-red-300" : "text-teal-300"}`}>
+                {hasRedFlags
+                  ? "Atenção: Sinais que merecem avaliação presencial"
+                  : "Boa notícia: Sem sinais claros de emergência"}
+              </h4>
+              <p className={`text-sm ${hasRedFlags ? "text-red-200/80" : "text-teal-200/80"}`}>
+                {hasRedFlags
+                  ? "Esses sinais indicam que você pode precisar de avaliação presencial com médico/fisioterapeuta. A Atlas IA NÃO faz diagnóstico. Use esse painel apenas como orientação geral até consultar um profissional."
+                  : "Pelos seus dados, não há sinais claros de emergência. Vamos focar em organizar sua recuperação com segurança e progressão inteligente."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card 2: Mapa de Regiões & Riscos */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Target className="w-5 h-5 text-blue-400" />
+          Mapa de Regiões & Riscos
+        </h3>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Body map visualization */}
+          <div className="bg-gradient-to-b from-slate-900/50 to-slate-800/50 rounded-xl p-6 border border-slate-700/50">
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Clique em uma região para ver recomendações
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {painRegions
+                .filter((r) => r.id !== "other")
+                .map((region) => (
+                  <button
+                    key={region.id}
+                    onClick={() => setShowRegionDetails(showRegionDetails === region.id ? null : region.id)}
+                    onMouseEnter={() => setHoveredRegion(region.id)}
+                    onMouseLeave={() => setHoveredRegion(null)}
+                    className={`p-4 rounded-xl border transition-all duration-300 ${
+                      showRegionDetails === region.id
+                        ? "bg-blue-500/20 border-blue-500/50 shadow-lg shadow-blue-500/10"
+                        : hoveredRegion === region.id
+                          ? "bg-blue-500/10 border-blue-500/30"
+                          : "bg-slate-800/50 border-slate-700/50 hover:border-blue-500/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          selectedRegion === region.id ? "bg-red-400 shadow-lg shadow-red-400/50" : "bg-blue-400/50"
+                        }`}
+                      />
+                      <span className="text-sm font-medium text-foreground">{region.label}</span>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+
+          {/* Region details panel */}
+          <div className="bg-slate-900/30 rounded-xl p-6 border border-slate-700/50">
+            {showRegionDetails && bodyMapRegions[showRegionDetails] ? (
+              <div className="space-y-4">
+                <h4 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" />
+                  {painRegions.find((r) => r.id === showRegionDetails)?.label}
+                </h4>
+                <p className="text-sm text-muted-foreground">{bodyMapRegions[showRegionDetails].description}</p>
+                <div>
+                  <h5 className="text-sm font-semibold text-foreground mb-2">Recomendações de segurança:</h5>
+                  <ul className="space-y-2">
+                    {bodyMapRegions[showRegionDetails].recommendations.map((rec, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm text-teal-300/80">
+                        <CheckCircle2 className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                <p>Selecione uma região no mapa para ver detalhes e recomendações</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Card 3: Protocolo Inteligente da Semana */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-purple-400" />
+            {getProtocolTitle()}
+          </h3>
+          <span className="text-xs text-muted-foreground bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
+            Rascunho de protocolo
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Objetivo da semana */}
+          <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-purple-300 mb-2 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Objetivo da semana
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              Reduzir dor de {painIntensity}/10 para {Math.max(0, painIntensity - 3)}/10 e restaurar movimentos básicos
+              sem piora.
+            </p>
+          </div>
+
+          {/* Movimentos a evitar */}
+          <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-red-300 mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Movimentos a evitar temporariamente
+            </h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              {selectedRegion === "shoulder" && (
+                <>
+                  <li>• Supino pesado</li>
+                  <li>• Desenvolvimento militar em pé</li>
+                  <li>• Movimentos acima da cabeça com carga</li>
+                </>
+              )}
+              {selectedRegion === "lumbar" && (
+                <>
+                  <li>• Agachamento com barra alta</li>
+                  <li>• Levantamento terra pesado</li>
+                  <li>• Abdominais tradicionais</li>
+                </>
+              )}
+              {selectedRegion === "knee" && (
+                <>
+                  <li>• Corrida de alta intensidade</li>
+                  <li>• Leg press com amplitude excessiva</li>
+                  <li>• Saltos e pliometria</li>
+                </>
+              )}
+              {(!selectedRegion || !["shoulder", "lumbar", "knee"].includes(selectedRegion)) && (
+                <>
+                  <li>• Movimentos que causam dor</li>
+                  <li>• Exercícios com carga alta na região</li>
+                  <li>• Movimentos explosivos</li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          {/* Rotina diária sugerida */}
+          <div className="bg-teal-500/5 border border-teal-500/20 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-teal-300 mb-2 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Rotina diária sugerida
+            </h4>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <span className="text-teal-400 font-bold">1.</span>
+                <div>
+                  <span className="font-medium text-foreground">Aquecimento:</span> 5-10 min de mobilidade geral
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-teal-400 font-bold">2.</span>
+                <div>
+                  <span className="font-medium text-foreground">Mobilidade suave:</span> 2-3 exercícios focados na
+                  região
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-teal-400 font-bold">3.</span>
+                <div>
+                  <span className="font-medium text-foreground">Fortalecimento leve:</span> 2-3 exercícios com baixo
+                  volume
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hábitos que aceleram */}
+          <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-green-300 mb-2 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Hábitos que aceleram recuperação
+            </h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Sono de 7-9h de qualidade</li>
+              <li>• Hidratação adequada (2-3L/dia)</li>
+              <li>• Controlar carga semanal de treino</li>
+              <li>• Pausas regulares no trabalho</li>
+              <li>• Alimentação anti-inflamatória</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Quando parar */}
+        <div className="mt-6 bg-red-500/5 border border-red-500/20 rounded-xl p-4">
+          <h4 className="text-sm font-semibold text-red-300 mb-2 flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Quando PARAR e procurar ajuda presencial
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Dor piorando significativamente</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Perda de força progressiva</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Inchaço ou vermelhidão</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Febre ou sintomas sistêmicos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Dor irradiada para membros</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span>Limitação funcional severa</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-4 italic">
+          * Este é um rascunho de protocolo baseado em dados gerais. A prescrição personalizada será gerada pela Atlas
+          IA após análise completa do seu perfil e histórico.
+        </p>
+      </div>
+
+      {/* Card 4: Histórico de Dores & Recuperação */}
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-cyan-400" />
+          Histórico de Dores & Recuperação
+        </h3>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left text-xs font-semibold text-muted-foreground py-3 px-2">Data</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground py-3 px-2">Região</th>
+                <th className="text-center text-xs font-semibold text-muted-foreground py-3 px-2">Dor (antes)</th>
+                <th className="text-center text-xs font-semibold text-muted-foreground py-3 px-2">Dor (depois)</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground py-3 px-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {painHistory.map((entry, idx) => (
+                <tr key={idx} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                  <td className="py-3 px-2 text-sm text-foreground">{entry.date}</td>
+                  <td className="py-3 px-2 text-sm text-foreground">{entry.region}</td>
+                  <td className="py-3 px-2 text-center">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300">
+                      {entry.before}/10
+                    </span>
+                  </td>
+                  <td className="py-3 px-2 text-center">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        entry.after < entry.before
+                          ? "bg-green-500/20 text-green-300"
+                          : "bg-yellow-500/20 text-yellow-300"
+                      }`}
+                    >
+                      {entry.after}/10
+                    </span>
+                  </td>
+                  <td className="py-3 px-2">
+                    <span
+                      className={`flex items-center gap-1 text-xs font-medium ${
+                        entry.status === "melhorando"
+                          ? "text-green-400"
+                          : entry.status === "piorando"
+                            ? "text-red-400"
+                            : "text-yellow-400"
+                      }`}
+                    >
+                      {entry.status === "melhorando" && <TrendingUp className="w-3 h-3" />}
+                      {entry.status === "melhorando"
+                        ? "Melhorando"
+                        : entry.status === "piorando"
+                          ? "Piorando"
+                          : "Estável"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-4">
+          * Dados mockados para demonstração. O histórico real será preenchido conforme você registrar dores e
+          acompanhar sua evolução.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ========== TestosteronaView IMPLEMENTATION ==========
+function TestosteronaView() {
+  const { currentWeekMetrics } = useAtlasData()
+  const [habitosModal, setHabitosModal] = useState(false)
+  const [protocolModal, setProtocolModal] = useState<string | null>(null)
+
+  // Estado local para check-in hormonal
+  const [habitosHoje, setHabitosHoje] = useState({
+    sol: false,
+    treino: false,
+    passos: false,
+    alcool: "Nenhum",
+    sono: 3,
+    estresse: 3,
+  })
+
+  // Mock de dados baseado em métricas reais do contexto
+  const atlasTestIndex = Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(
+        (currentWeekMetrics.avgSleepHours / 8) * 30 +
+          currentWeekMetrics.executionRate * 0.25 +
+          (5 - habitosHoje.estresse) * 10 +
+          (habitosHoje.sol ? 10 : 0) +
+          (habitosHoje.treino ? 10 : 0),
+      ),
+    ),
+  )
+
+  let testStatus = "Subótimo"
+  let testColor = "text-yellow-400"
+  if (atlasTestIndex >= 75) {
+    testStatus = "Excelente"
+    testColor = "text-green-400"
+  } else if (atlasTestIndex >= 60) {
+    testStatus = "Bom"
+    testColor = "text-cyan-400"
+  }
+
+  const sonoQuality =
+    currentWeekMetrics.avgSleepHours >= 7 ? "Alta" : currentWeekMetrics.avgSleepHours >= 6 ? "Média" : "Baixa"
+  const sonoColor =
+    currentWeekMetrics.avgSleepHours >= 7
+      ? "text-green-400"
+      : currentWeekMetrics.avgSleepHours >= 6
+        ? "text-yellow-400"
+        : "text-red-400"
+
+  const cargaSemanal =
+    currentWeekMetrics.trainingsDone >= 4 ? "Alta" : currentWeekMetrics.trainingsDone >= 2 ? "Moderada" : "Leve"
+  const riscoOver = currentWeekMetrics.trainingsDone > 5 && currentWeekMetrics.avgSleepHours < 7 ? "Alto" : "Baixo"
+
+  const nivelEstresse = habitosHoje.estresse >= 4 ? "Alto" : habitosHoje.estresse >= 3 ? "Médio" : "Baixo"
+  const usoAlcool = habitosHoje.alcool
+
+  // Mock de timeline dos últimos 30 dias
+  const timelineData = Array.from({ length: 30 }, (_, i) => ({
+    dia: i + 1,
+    score: Math.round(atlasTestIndex + (Math.random() - 0.5) * 20),
+  }))
+
+  const registrarHabitos = () => {
+    setHabitosModal(true)
+    setTimeout(() => setHabitosModal(false), 2000)
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* BLOCO 1 - OVERVIEW HORMONAL */}
+      <div>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center">
+            <Zap className="w-6 h-6 text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Testosterona Natural</h2>
+            <p className="text-muted-foreground text-sm">
+              Centro de comando para hábitos, recuperação e performance hormonal – sem uso de fármacos.
+            </p>
+          </div>
+        </div>
+
+        {/* Cards principais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Atlas Test Index */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:shadow-[0_0_25px_rgba(250,204,21,0.15)] transition-all duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="w-5 h-5 text-yellow-400" />
+              <span className="text-sm text-muted-foreground font-medium">Atlas Test Index</span>
+            </div>
+            <div className={`text-4xl font-bold ${testColor} mb-2`}>
+              {atlasTestIndex}
+              <span className="text-2xl text-muted-foreground">/100</span>
+            </div>
+            <div className="text-sm text-muted-foreground mb-3">
+              Status: <span className={testColor}>{testStatus}</span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Índice estimado com base nos seus hábitos de sono, treino, estresse e nutrição.
+            </p>
+          </div>
+
+          {/* Sono & Recuperação */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:shadow-[0_0_25px_rgba(59,130,246,0.15)] transition-all duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <Moon className="w-5 h-5 text-blue-400" />
+              <span className="text-sm text-muted-foreground font-medium">Sono & Recuperação</span>
+            </div>
+            <div className={`text-lg font-bold ${sonoColor} mb-2`}>Qualidade: {sonoQuality}</div>
+            <div className="text-sm text-muted-foreground">
+              Horas médias:{" "}
+              <span className="text-foreground font-medium">{currentWeekMetrics.avgSleepHours.toFixed(1)}h</span>
+            </div>
+          </div>
+
+          {/* Treino & Carga */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:shadow-[0_0_25px_rgba(168,85,247,0.15)] transition-all duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <Dumbbell className="w-5 h-5 text-purple-400" />
+              <span className="text-sm text-muted-foreground font-medium">Treino & Carga</span>
+            </div>
+            <div className="text-sm text-muted-foreground mb-2">
+              Carga semanal: <span className="text-foreground font-medium">{cargaSemanal}</span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Risco de overtraining:{" "}
+              <span className={riscoOver === "Alto" ? "text-red-400" : "text-green-400"}>{riscoOver}</span>
+            </div>
+          </div>
+
+          {/* Estresse & Estilo de vida */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 hover:shadow-[0_0_25px_rgba(34,197,94,0.15)] transition-all duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <Heart className="w-5 h-5 text-green-400" />
+              <span className="text-sm text-muted-foreground font-medium">Estresse & Estilo de vida</span>
+            </div>
+            <div className="text-sm text-muted-foreground mb-2">
+              Nível de estresse:{" "}
+              <span
+                className={
+                  nivelEstresse === "Alto"
+                    ? "text-red-400"
+                    : nivelEstresse === "Médio"
+                      ? "text-yellow-400"
+                      : "text-green-400"
+                }
+              >
+                {nivelEstresse}
+              </span>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Uso de álcool: <span className="text-foreground font-medium">{usoAlcool}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Banner de segurança */}
+        <div className="bg-blue-600/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-200/90 leading-relaxed">
+            Este painel não substitui exames laboratoriais nem acompanhamento médico. A Atlas IA organiza seus hábitos
+            para favorecer a testosterona natural com base em evidências científicas.
+          </p>
+        </div>
+      </div>
+
+      {/* BLOCO 2 - HÁBITOS HORMONAIS DO DIA */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna esquerda - Check-in */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">Hábitos de Hoje</h3>
+          <p className="text-sm text-muted-foreground mb-6">Registre seus hábitos hormonais diários</p>
+
+          <div className="space-y-5">
+            {/* Exposição ao sol */}
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-foreground flex items-center gap-2">
+                <Sun className="w-4 h-4 text-yellow-400" />
+                Exposição ao sol pela manhã
+              </label>
+              <button
+                onClick={() => setHabitosHoje({ ...habitosHoje, sol: !habitosHoje.sol })}
+                className={`w-12 h-6 rounded-full transition-all duration-300 ${
+                  habitosHoje.sol ? "bg-green-500" : "bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-300 ${
+                    habitosHoje.sol ? "translate-x-6" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Treino de força */}
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-foreground flex items-center gap-2">
+                <Dumbbell className="w-4 h-4 text-purple-400" />
+                Treino de força hoje
+              </label>
+              <button
+                onClick={() => setHabitosHoje({ ...habitosHoje, treino: !habitosHoje.treino })}
+                className={`w-12 h-6 rounded-full transition-all duration-300 ${
+                  habitosHoje.treino ? "bg-green-500" : "bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-300 ${
+                    habitosHoje.treino ? "translate-x-6" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Passos */}
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-foreground flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                Passou de 10.000 passos?
+              </label>
+              <button
+                onClick={() => setHabitosHoje({ ...habitosHoje, passos: !habitosHoje.passos })}
+                className={`w-12 h-6 rounded-full transition-all duration-300 ${
+                  habitosHoje.passos ? "bg-green-500" : "bg-gray-600"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-300 ${
+                    habitosHoje.passos ? "translate-x-6" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Álcool */}
+            <div>
+              <label className="text-sm text-foreground flex items-center gap-2 mb-2">
+                <Wine className="w-4 h-4 text-red-400" />
+                Ingestão de álcool
+              </label>
+              <select
+                value={habitosHoje.alcool}
+                onChange={(e) => setHabitosHoje({ ...habitosHoje, alcool: e.target.value })}
+                className="w-full bg-secondary/50 border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Nenhum</option>
+                <option>Moderado</option>
+                <option>Alto</option>
+              </select>
+            </div>
+
+            {/* Sono */}
+            <div>
+              <label className="text-sm text-foreground flex items-center gap-2 mb-2">
+                <Moon className="w-4 h-4 text-blue-400" />
+                Qualidade do sono (última noite)
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={habitosHoje.sono}
+                onChange={(e) => setHabitosHoje({ ...habitosHoje, sono: Number.parseInt(e.target.value) })}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Péssimo</span>
+                <span className="font-medium text-foreground">{habitosHoje.sono}/5</span>
+                <span>Excelente</span>
+              </div>
+            </div>
+
+            {/* Estresse */}
+            <div>
+              <label className="text-sm text-foreground flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-orange-400" />
+                Nível de estresse hoje
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="5"
+                value={habitosHoje.estresse}
+                onChange={(e) => setHabitosHoje({ ...habitosHoje, estresse: Number.parseInt(e.target.value) })}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Baixo</span>
+                <span className="font-medium text-foreground">{habitosHoje.estresse}/5</span>
+                <span>Alto</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={registrarHabitos}
+            className="w-full mt-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(250,204,21,0.4)] transition-all duration-300"
+          >
+            Registrar hábitos hormonais de hoje
+          </button>
+        </div>
+
+        {/* Coluna direita - Recomendação */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">Foco de Hoje</h3>
+          <p className="text-sm text-muted-foreground mb-6">Recomendação da Atlas IA</p>
+
+          <div className="bg-gradient-to-br from-blue-600/10 to-cyan-600/10 border border-blue-500/30 rounded-xl p-5 mb-6">
+            <p className="text-sm text-blue-100/90 leading-relaxed">
+              {currentWeekMetrics.avgSleepHours < 7
+                ? "Hoje o foco é: reduzir estímulos à noite e proteger seu sono de 23h–7h."
+                : habitosHoje.estresse >= 4
+                  ? "Hoje o foco é: gerenciar o estresse com técnicas de respiração e caminhada ao ar livre."
+                  : "Hoje o foco é: manter a consistência dos hábitos que estão funcionando."}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <Moon className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-1">Ajuste de sono sugerido</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {currentWeekMetrics.avgSleepHours < 7
+                    ? "Antecipar o horário de dormir em 30 minutos para atingir 7-8h de sono."
+                    : "Manter a consistência do horário de sono atual."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <Dumbbell className="w-4 h-4 text-purple-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-1">Ajuste de treino</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {currentWeekMetrics.trainingsDone < 3
+                    ? "Aumentar frequência semanal para 3-4 treinos de força."
+                    : riscoOver === "Alto"
+                      ? "Reduzir volume ou adicionar dia de descanso ativo."
+                      : "Manter intensidade e volume atuais."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <Coffee className="w-4 h-4 text-green-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-1">Ajuste de rotina</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {habitosHoje.alcool !== "Nenhum"
+                    ? "Reduzir ou eliminar álcool por 14 dias para observar impacto no sono e energia."
+                    : habitosHoje.estresse >= 4
+                      ? "Implementar pausas de 5 minutos a cada 2h de trabalho com respiração profunda."
+                      : "Manter exposição solar matinal e limitar telas após 21h."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BLOCO 3 - PROTOCOLOS & LINHA DO TEMPO */}
+      <div className="space-y-6">
+        {/* Linha do Tempo */}
+        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-foreground mb-1">Evolução do Atlas Test Index</h3>
+          <p className="text-sm text-muted-foreground mb-6">Últimos 30 dias</p>
+
+          {/* Gráfico simplificado */}
+          <div className="h-48 flex items-end justify-between gap-1">
+            {timelineData.map((item, i) => {
+              const height = (item.score / 100) * 100
+              let barColor = "bg-yellow-500/60"
+              if (item.score >= 75) barColor = "bg-green-500/60"
+              else if (item.score >= 60) barColor = "bg-cyan-500/60"
+              else if (item.score < 50) barColor = "bg-red-500/60"
+
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 ${barColor} rounded-t transition-all duration-300 hover:opacity-100 opacity-80 cursor-pointer group relative`}
+                  style={{ height: `${height}%` }}
+                  title={`Dia ${item.dia}: ${item.score}`}
+                >
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Dia {item.dia}: {item.score}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="flex justify-between text-xs text-muted-foreground mt-4">
+            <span>Dia 1</span>
+            <span>Dia 15</span>
+            <span>Dia 30 (Hoje)</span>
+          </div>
+        </div>
+
+        {/* Protocolos */}
+        <div>
+          <h3 className="text-lg font-bold text-foreground mb-4">Protocolos Atlas de Testosterona Natural</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Protocolo 21 dias */}
+            <button
+              onClick={() => setProtocolModal("21dias")}
+              className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 text-left hover:shadow-[0_0_25px_rgba(59,130,246,0.2)] hover:border-blue-500/50 transition-all duration-300"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-blue-400" />
+                </div>
+                <span className="text-xs font-medium text-blue-400">21 DIAS</span>
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Fundamentos Hormonais</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Foco em sono, treino de força, nutrição básica e gestão de estresse.
+              </p>
+            </button>
+
+            {/* Protocolo 14 dias */}
+            <button
+              onClick={() => setProtocolModal("14dias")}
+              className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 text-left hover:shadow-[0_0_25px_rgba(234,179,8,0.2)] hover:border-yellow-500/50 transition-all duration-300"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-yellow-400" />
+                </div>
+                <span className="text-xs font-medium text-yellow-400">14 DIAS</span>
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Anti-Sabotagem</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Cortar ou reduzir estímulos que derrubam sono e ejeção hormonal.
+              </p>
+            </button>
+
+            {/* Protocolo 30 dias */}
+            <button
+              onClick={() => setProtocolModal("30dias")}
+              className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 text-left hover:shadow-[0_0_25px_rgba(168,85,247,0.2)] hover:border-purple-500/50 transition-all duration-300"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                  <Award className="w-5 h-5 text-purple-400" />
+                </div>
+                <span className="text-xs font-medium text-purple-400">30 DIAS</span>
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Estilo de Vida de Atleta Natural</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Combinação de sono consistente, treino inteligente e rotina alinhada.
+              </p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de sucesso */}
+      {habitosModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full text-center animate-in zoom-in-95 fade-in duration-300">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-green-400" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Hábitos Registrados!</h3>
+            <p className="text-sm text-muted-foreground">Suas métricas hormonais foram atualizadas.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de protocolo */}
+      {protocolModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl w-full my-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-foreground">
+                {protocolModal === "21dias"
+                  ? "Protocolo 21 dias – Fundamentos Hormonais"
+                  : protocolModal === "14dias"
+                    ? "Protocolo 14 dias – Anti-Sabotagem"
+                    : "Protocolo 30 dias – Estilo de Vida de Atleta Natural"}
+              </h3>
+              <button
+                onClick={() => setProtocolModal(null)}
+                className="w-8 h-8 rounded-lg hover:bg-secondary/50 flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Objetivo */}
+              <div>
+                <h4 className="text-sm font-bold text-blue-400 mb-2 uppercase tracking-wider">Objetivo</h4>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {protocolModal === "21dias"
+                    ? "Estabelecer base sólida de hábitos que favorecem a produção natural de testosterona através de sono, treino e nutrição."
+                    : protocolModal === "14dias"
+                      ? "Eliminar ou reduzir drasticamente comportamentos que sabotam a produção hormonal: álcool, privação de sono, excesso de telas."
+                      : "Integrar todos os pilares hormonais (sono, treino, nutrição, estresse, exposição solar) em uma rotina sustentável de longo prazo."}
+                </p>
+              </div>
+
+              {/* Regras diárias */}
+              <div>
+                <h4 className="text-sm font-bold text-cyan-400 mb-3 uppercase tracking-wider">Regras Diárias</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Duração</div>
+                    <div className="text-lg font-bold text-foreground">7-9h</div>
+                  </div>
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Consistência</div>
+                    <div className="text-lg font-bold text-foreground">Alta</div>
+                  </div>
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Prioridade</div>
+                    <div className="text-lg font-bold text-foreground">Sono</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Métricas de sucesso */}
+              <div>
+                <h4 className="text-sm font-bold text-purple-400 mb-3 uppercase tracking-wider">Métricas de Sucesso</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Sono Médio</div>
+                    <div className="text-lg font-bold text-foreground">7+ horas</div>
+                  </div>
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Energia Diária</div>
+                    <div className="text-lg font-bold text-foreground">4-5/5</div>
+                  </div>
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Consistência de Treino</div>
+                    <div className="text-lg font-bold text-foreground">85%+</div>
+                  </div>
+                  <div className="bg-secondary/30 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Atlas Test Index</div>
+                    <div className="text-lg font-bold text-foreground">70+</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Alertas de segurança */}
+              <div className="bg-red-600/10 border border-red-500/30 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-red-400 mb-2">Alertas de Segurança</h4>
+                    <p className="text-sm text-red-200/90 leading-relaxed">
+                      Se você estiver usando ou considerar usar hormônios, converse com um médico/endócrino. A Atlas IA
+                      não orienta uso de fármacos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setProtocolModal(null)}
+              className="w-full mt-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3 rounded-xl hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] transition-all"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ========== PLACEHOLDER VIEWS ==========
+function AtlasIAView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Brain className="w-6 h-6 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Atlas IA</h2>
+          <p className="text-muted-foreground">Seu assistente de governança corporal</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Chat da Atlas IA em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+function TreinoDietaView() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+          <Dumbbell className="w-6 h-6 text-purple-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Treino & Dieta</h2>
+          <p className="text-muted-foreground">Configure seu plano de treino e alimentação</p>
+        </div>
+      </div>
+      <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-6 min-h-64 flex items-center justify-center">
+        <p className="text-muted-foreground">Módulo de Treino & Dieta em desenvolvimento...</p>
+      </div>
+    </div>
+  )
+}
+
+// ========== MAIN PAGE COMPONENT ==========
+export default function AtlasPainelPage() {
+  const [activeSection, setActiveSection] = useState<SectionKey>("dashboard")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [passportOpen, setPassportOpen] = useState(false)
+  // </CHANGE>
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "dashboard":
+        return <DashboardView />
+      case "visao360":
+        return <Visao360View />
+      case "atlasIA":
+        return <AtlasIAView />
+      case "treinoDieta":
+        return <TreinoDietaView />
+      case "compulsao":
+        return <CompulsaoView />
+      case "sono":
+        return <SonoView />
+      case "fisioterapia":
+        return <FisioterapiaView />
+      case "testosterona":
+        return <TestosteronaView />
+      default:
+        return <DashboardView />
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-md border-b border-border z-40 flex items-center px-4 md:px-6">
+        <button className="md:hidden mr-4" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">A</span>
+          </div>
+          <span className="font-bold text-foreground">Atlas IA</span>
+        </Link>
+        <button
+          onClick={() => setPassportOpen(true)}
+          className="ml-auto flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20"
+        >
+          <User className="w-4 h-4" />
+          <span className="hidden md:inline">Perfil Atlas</span>
+        </button>
+      </header>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-16 left-0 bottom-0 w-64 bg-card/50 backdrop-blur-md border-r border-border z-30 transform transition-transform duration-300 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        <nav className="p-4 space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeSection === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => {
+                  setActiveSection(item.key)
+                  setMobileMenuOpen(false)
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                  isActive
+                    ? "bg-blue-600/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
+
+      {/* Main content */}
+      <main className="pt-16 md:pl-64">
+        <div className="p-6 md:p-8 max-w-6xl">{renderContent()}</div>
+      </main>
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      <AtlasPassaporte isOpen={passportOpen} onClose={() => setPassportOpen(false)} />
+    </div>
+  )
+}
