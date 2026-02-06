@@ -62,12 +62,13 @@ import {
   type EnergyScore,
   type DailyCheckin,
   type BodyMeasurements,
-  type BodyStatusMap, // Added for context data
-  type TrainingConfig, // Added for type safety
-  type DietConfig, // Added for type safety
+  type BodyStatusMap,
+  type TrainingConfig,
+  type DietConfig,
+  type AtlasWeekMetrics,
+  type EnergyLevel,
 } from "@/context/AtlasDataContext"
 import { AtlasPassaporte } from "@/components/AtlasPassaporte"
-// import Compulsao2035 from "@/components/Compulsao2035" // Removed as CompulsaoView is now inlined
 
 type SectionKey =
   | "dashboard"
@@ -78,110 +79,6 @@ type SectionKey =
   | "sono"
   | "fisioterapia"
   | "testosterona"
-
-type EnergyLevel = "Alta" | "Média" | "Baixa"
-
-type AtlasWeekMetrics = {
-  weekLabel: string
-  atlasScore: number
-  executionRate: number
-  aestheticProgress: number
-  metabolicHealth: number
-  generalConsistency: number
-  avgSleepHours: number
-  weightDeltaKg: number
-  energyLevel: EnergyLevel
-  trainingsDone: number
-  trainingsPlanned: number
-  dietAdherence: number
-}
-
-const mockWeeks: AtlasWeekMetrics[] = [
-  {
-    weekLabel: "Semana 1",
-    atlasScore: 58,
-    executionRate: 60,
-    aestheticProgress: 45,
-    metabolicHealth: 55,
-    generalConsistency: 50,
-    avgSleepHours: 6.2,
-    weightDeltaKg: 0.5,
-    energyLevel: "Baixa",
-    trainingsDone: 3,
-    trainingsPlanned: 5,
-    dietAdherence: 55,
-  },
-  {
-    weekLabel: "Semana 2",
-    atlasScore: 63,
-    executionRate: 70,
-    aestheticProgress: 52,
-    metabolicHealth: 60,
-    generalConsistency: 58,
-    avgSleepHours: 6.8,
-    weightDeltaKg: -0.3,
-    energyLevel: "Média",
-    trainingsDone: 4,
-    trainingsPlanned: 5,
-    dietAdherence: 65,
-  },
-  {
-    weekLabel: "Semana 3",
-    atlasScore: 68,
-    executionRate: 75,
-    aestheticProgress: 58,
-    metabolicHealth: 68,
-    generalConsistency: 65,
-    avgSleepHours: 7.0,
-    weightDeltaKg: -0.8,
-    energyLevel: "Média",
-    trainingsDone: 4,
-    trainingsPlanned: 5,
-    dietAdherence: 72,
-  },
-  {
-    weekLabel: "Semana 4",
-    atlasScore: 72,
-    executionRate: 80,
-    aestheticProgress: 63,
-    metabolicHealth: 72,
-    generalConsistency: 70,
-    avgSleepHours: 7.2,
-    weightDeltaKg: -1.2,
-    energyLevel: "Alta",
-    trainingsDone: 4,
-    trainingsPlanned: 5,
-    dietAdherence: 78,
-  },
-  {
-    weekLabel: "Semana 5",
-    atlasScore: 78,
-    executionRate: 85,
-    aestheticProgress: 70,
-    metabolicHealth: 78,
-    generalConsistency: 76,
-    avgSleepHours: 7.5,
-    weightDeltaKg: -1.8,
-    energyLevel: "Alta",
-    trainingsDone: 5,
-    trainingsPlanned: 5,
-    dietAdherence: 82,
-  },
-  {
-    weekLabel: "Semana 6",
-    atlasScore: 82,
-    executionRate: 88,
-    aestheticProgress: 75,
-    metabolicHealth: 82,
-    generalConsistency: 80,
-    avgSleepHours: 7.8,
-    weightDeltaKg: -2.1,
-    energyLevel: "Alta",
-    trainingsDone: 5,
-    trainingsPlanned: 5,
-    dietAdherence: 88,
-  },
-]
 
 // Specter Elite 2036 - Navigation Modules
 type MenuStatus = "optimal" | "attention" | "processing"
@@ -267,250 +164,399 @@ const hotspotPositions: Record<BodyAreaKey, { top: string; left: string }> = {
 
 // ========== DASHBOARD VIEW ==========
 function DashboardView() {
-  const { currentWeekMetrics } = useAtlasData()
-  const [weekIndex, setWeekIndex] = useState(mockWeeks.length - 1)
+  const {
+    currentWeekMetrics,
+    checkins,
+    bodyMeasurements,
+    bodyStatus,
+    trainingConfig,
+    dietConfig,
+    passport,
+  } = useAtlasData()
+
   const [showSummary, setShowSummary] = useState(false)
   const [animatedScore, setAnimatedScore] = useState(0)
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
-  const currentWeek = mockWeeks[weekIndex]
-  const canGoPrev = weekIndex > 0
-  const canGoNext = weekIndex < mockWeeks.length - 1
+  // ── Derived state ──────────────────────────────────────────────
+  const hasData = checkins.length > 0
+  const currentWeek = currentWeekMetrics // always from context
+  const totalCheckins = checkins.length
+  const currentDayNum = hasData ? Math.min(totalCheckins, 7) : 1
+  const currentWeekNum = hasData ? Math.ceil(totalCheckins / 7) : 1
+  const weekLabel = `Semana ${currentWeekNum}`
 
+  // Build week-history from actual check-in snapshots (group by 7)
+  const weekHistory = React.useMemo(() => {
+    if (!hasData) return []
+    const sorted = [...checkins].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    )
+    const weeks: { label: string; score: number }[] = []
+    for (let i = 0; i < sorted.length; i += 7) {
+      const slice = sorted.slice(i, i + 7)
+      const trainDone = slice.filter((c) => c.trainedToday).length
+      const avgDiet = slice.reduce((s, c) => s + c.followedDiet, 0) / slice.length
+      const avgSleep = slice.reduce((s, c) => s + c.sleepHours, 0) / slice.length
+      const avgEnergy = slice.reduce((s, c) => s + c.energy, 0) / slice.length
+      const exec = (trainDone / slice.length) * 100
+      const score = Math.round(
+        Math.min(100, Math.max(0, 0.4 * exec + 0.25 * avgDiet + 0.2 * avgSleep * 10 + 0.15 * avgEnergy * 20)),
+      )
+      weeks.push({ label: `S${weeks.length + 1}`, score })
+    }
+    return weeks
+  }, [checkins, hasData])
+
+  // Circumference for SVG ring
   const circumference = 2 * Math.PI * 54
-  const strokeDashoffset = circumference - (currentWeek.atlasScore / 100) * circumference
+  const targetScore = hasData ? currentWeek.atlasScore : 0
+  const strokeDashoffset = circumference - (targetScore / 100) * circumference
 
-  // Animate score from 0 to target
+  // Animate score counter
   useEffect(() => {
     setAnimatedScore(0)
-    const target = currentWeek.atlasScore
+    if (targetScore === 0) return
     const duration = 1500
     const steps = 60
-    const increment = target / steps
+    const increment = targetScore / steps
     let current = 0
     const timer = setInterval(() => {
       current += increment
-      if (current >= target) {
-        setAnimatedScore(target)
+      if (current >= targetScore) {
+        setAnimatedScore(targetScore)
         clearInterval(timer)
       } else {
         setAnimatedScore(Math.floor(current))
       }
     }, duration / steps)
     return () => clearInterval(timer)
-  }, [currentWeek.atlasScore, weekIndex])
+  }, [targetScore])
 
-  // 14-day predictive data
-  const predictiveData = [
-    { day: 1, score: currentWeek.atlasScore },
-    { day: 3, score: currentWeek.atlasScore + 2 },
-    { day: 5, score: currentWeek.atlasScore + 3 },
-    { day: 7, score: currentWeek.atlasScore + 5 },
-    { day: 10, score: currentWeek.atlasScore + 7 },
-    { day: 14, score: Math.min(currentWeek.atlasScore + 10, 100) },
-  ]
+  // Predictive data — only meaningful when we have real data
+  const predictiveData = hasData
+    ? [
+        { day: 1, score: targetScore },
+        { day: 3, score: Math.min(100, targetScore + 2) },
+        { day: 5, score: Math.min(100, targetScore + 4) },
+        { day: 7, score: Math.min(100, targetScore + 6) },
+        { day: 10, score: Math.min(100, targetScore + 8) },
+        { day: 14, score: Math.min(100, targetScore + 12) },
+      ]
+    : []
 
-  // 3D tilt effect handler
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, cardId: string) => {
-    if (hoveredCard !== cardId) return
-    const card = e.currentTarget
-    const rect = card.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    const centerX = rect.width / 2
-    const centerY = rect.height / 2
-    const rotateX = (y - centerY) / 10
-    const rotateY = (centerX - x) / 10
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`
-  }
-
-  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)'
-    setHoveredCard(null)
-  }
-
+  // ── Verdict logic ──────────────────────────────────────────────
   const getVerdict = () => {
-    if (currentWeek.dietAdherence < 70) return "Sua dieta precisa de atenção imediata. Sem ela, treino vira cardio."
-    if (currentWeek.avgSleepHours < 7) return "Sono abaixo do ideal. Recuperacao comprometida = ganhos perdidos."
-    if (currentWeek.executionRate < 80) return "Execucao inconsistente. Compromisso nao e negociavel."
+    if (!hasData)
+      return "Aguardando dados iniciais. Complete seu perfil biometrico e primeiro check-in para gerar o veredito."
+    if (currentWeek.dietAdherence < 70)
+      return "Sua dieta precisa de atencao imediata. Sem ela, treino vira cardio."
+    if (currentWeek.avgSleepHours < 7)
+      return "Sono abaixo do ideal. Recuperacao comprometida = ganhos perdidos."
+    if (currentWeek.executionRate < 80)
+      return "Execucao inconsistente. Compromisso nao e negociavel."
     return "Operando em nivel de elite. Mantenha a disciplina."
   }
 
   const getOperationMode = () => {
-    if (currentWeek.atlasScore >= 85) return { mode: "Modo Atleta", color: "text-emerald-400" }
-    if (currentWeek.atlasScore >= 70) return { mode: "Modo Otimizado", color: "text-cyan-400" }
-    if (currentWeek.atlasScore >= 50) return { mode: "Modo Recuperacao", color: "text-amber-400" }
-    return { mode: "Modo Critico", color: "text-red-400" }
+    if (!hasData) return { mode: "Calibrando", color: "text-white/30", bg: "bg-white/10" }
+    if (targetScore >= 85) return { mode: "Modo Atleta", color: "text-emerald-400", bg: "bg-emerald-400" }
+    if (targetScore >= 70) return { mode: "Modo Otimizado", color: "text-cyan-400", bg: "bg-cyan-400" }
+    if (targetScore >= 50) return { mode: "Modo Recuperacao", color: "text-amber-400", bg: "bg-amber-400" }
+    return { mode: "Modo Critico", color: "text-red-400", bg: "bg-red-400" }
+  }
+  const operation = getOperationMode()
+
+  // 3D tilt
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, cardId: string) => {
+    if (hoveredCard !== cardId) return
+    const card = e.currentTarget
+    const rect = card.getBoundingClientRect()
+    const rotateX = (e.clientY - rect.top - rect.height / 2) / 12
+    const rotateY = (rect.width / 2 - (e.clientX - rect.left)) / 12
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(8px)`
+  }
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = "perspective(1000px) rotateX(0) rotateY(0) translateZ(0)"
+    setHoveredCard(null)
   }
 
-  const operation = getOperationMode()
+  // ── Scanning skeleton card (zero-data) ─────────────────────────
+  const ScanningCard = ({ label, icon: Icon }: { label: string; icon: React.ComponentType<{ className?: string }> }) => (
+    <div className="relative bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-2xl p-6 overflow-hidden">
+      {/* Scanning sweep */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-b from-cyan-500/[0.06] via-transparent to-transparent"
+        animate={{ y: ["-100%", "200%"] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
+      />
+      <Icon className="w-4 h-4 text-white/10 mb-3" />
+      <p className="text-[10px] tracking-[0.2em] uppercase text-white/20 mb-2">{label}</p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-3xl font-extralight text-white/10">0</span>
+        <span className="text-lg text-white/10">%</span>
+      </div>
+      <p className="text-[8px] tracking-wider uppercase text-cyan-500/30 mt-2">Aguardando dados</p>
+    </div>
+  )
+
+  // ── Metrics config ─────────────────────────────────────────────
+  const metricsConfig = [
+    { key: "exec", label: "Execucao", value: currentWeek.executionRate, unit: "%", icon: Zap },
+    { key: "esth", label: "Estetica", value: currentWeek.aestheticProgress, unit: "%", icon: Target },
+    { key: "meta", label: "Metabolica", value: currentWeek.metabolicHealth, unit: "%", icon: Activity },
+    { key: "cons", label: "Consistencia", value: currentWeek.generalConsistency, unit: "%", icon: TrendingUp },
+    { key: "ener", label: "Energia", value: currentWeek.energyLevel, unit: "", icon: Battery },
+  ]
+
+  // ── Connection map — which modules feed the dashboard ──────────
+  const connectionModules = [
+    {
+      label: "Check-ins",
+      connected: hasData,
+      detail: hasData ? `${totalCheckins} registro(s)` : "Nenhum",
+      icon: CheckCircle2,
+    },
+    {
+      label: "Sono",
+      connected: hasData && currentWeek.avgSleepHours > 0,
+      detail: hasData ? `${currentWeek.avgSleepHours}h media` : "Sem dados",
+      icon: Moon,
+    },
+    {
+      label: "Medidas",
+      connected: !!bodyMeasurements.updatedAt,
+      detail: bodyMeasurements.updatedAt ? "Atualizado" : "Pendente",
+      icon: Scale,
+    },
+    {
+      label: "Treino",
+      connected: !!trainingConfig.updatedAt,
+      detail: trainingConfig.updatedAt ? "Configurado" : "Pendente",
+      icon: Dumbbell,
+    },
+    {
+      label: "Dieta",
+      connected: !!dietConfig.updatedAt,
+      detail: dietConfig.updatedAt ? "Configurada" : "Pendente",
+      icon: Utensils,
+    },
+  ]
 
   return (
     <div className="space-y-8 pb-8">
-      {/* Week navigation - minimal */}
-      <div className="flex items-center justify-center gap-8">
-        <button
-          onClick={() => canGoPrev && setWeekIndex(weekIndex - 1)}
-          disabled={!canGoPrev}
-          className="p-3 rounded-full bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300"
-        >
-          <ChevronLeft className="w-5 h-5 text-white/70" />
-        </button>
-        <span className="text-sm font-light tracking-[0.3em] uppercase text-white/50">{currentWeek.weekLabel}</span>
-        <button
-          onClick={() => canGoNext && setWeekIndex(weekIndex + 1)}
-          disabled={!canGoNext}
-          className="p-3 rounded-full bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300"
-        >
-          <ChevronRight className="w-5 h-5 text-white/70" />
-        </button>
+      {/* ── Week header ───────────────────────────────────────── */}
+      <div className="flex items-center justify-center gap-6">
+        <span className="text-sm font-light tracking-[0.3em] uppercase text-white/50">
+          {weekLabel} &mdash; Dia {currentDayNum}
+        </span>
       </div>
 
-      {/* Atlas Score - Holographic Scanner */}
+      {/* ── Atlas Score — Holographic Scanner ─────────────────── */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent rounded-3xl" />
-        <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-10 overflow-hidden">
-          {/* Orbital background animation */}
+        <div className="relative bg-black/40 backdrop-blur-xl border border-white/[0.06] rounded-3xl p-10 overflow-hidden">
+          {/* Orbital rings */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-80 h-80 border border-cyan-500/10 rounded-full animate-[spin_20s_linear_infinite]" />
-            <div className="absolute w-64 h-64 border border-cyan-500/5 rounded-full animate-[spin_15s_linear_infinite_reverse]" />
-            <div className="absolute w-96 h-96 border border-cyan-500/5 rounded-full animate-[spin_30s_linear_infinite]" />
+            <div className="w-80 h-80 border border-cyan-500/[0.06] rounded-full animate-[spin_20s_linear_infinite]" />
+            <div className="absolute w-64 h-64 border border-cyan-500/[0.04] rounded-full animate-[spin_15s_linear_infinite_reverse]" />
+            <div className="absolute w-96 h-96 border border-cyan-500/[0.04] rounded-full animate-[spin_30s_linear_infinite]" />
           </div>
-          
+
           <div className="relative flex flex-col items-center">
-            {/* Holographic Scanner Ring */}
             <div className="relative w-48 h-48 mb-8">
-              {/* Outer glow pulse */}
-              <div className="absolute inset-[-20px] rounded-full bg-cyan-500/20 blur-xl animate-pulse" />
-              <div className="absolute inset-[-10px] rounded-full bg-cyan-400/10 blur-md animate-[pulse_2s_ease-in-out_infinite]" />
-              
-              {/* Main ring */}
+              {/* Glow — only when data exists */}
+              {hasData && (
+                <>
+                  <div className="absolute inset-[-20px] rounded-full bg-cyan-500/20 blur-xl animate-pulse" />
+                  <div className="absolute inset-[-10px] rounded-full bg-cyan-400/10 blur-md" />
+                </>
+              )}
+
               <svg className="w-full h-full -rotate-90 relative z-10" viewBox="0 0 120 120">
-                {/* Background ring */}
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="2"
-                />
+                <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" />
                 {/* Progress ring */}
                 <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  fill="none"
-                  stroke="url(#holoGradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
+                  cx="60" cy="60" r="54" fill="none"
+                  stroke={hasData ? "url(#holoGradientD)" : "rgba(255,255,255,0.08)"}
+                  strokeWidth="3" strokeLinecap="round"
                   strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  className="transition-all duration-1000 ease-out"
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(0,242,255,0.6))' }}
+                  strokeDashoffset={hasData ? strokeDashoffset : circumference}
+                  className="transition-all duration-[1.2s] ease-out"
+                  style={hasData ? { filter: "drop-shadow(0 0 8px rgba(0,242,255,0.6))" } : undefined}
                 />
-                {/* Scanner line */}
+                {/* Scanner line — always spinning as calibration */}
                 <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  fill="none"
-                  stroke="rgba(0,242,255,0.3)"
-                  strokeWidth="1"
-                  strokeDasharray="10 340"
+                  cx="60" cy="60" r="54" fill="none"
+                  stroke={hasData ? "rgba(0,242,255,0.3)" : "rgba(0,242,255,0.12)"}
+                  strokeWidth="1" strokeDasharray="10 340"
                   className="animate-[spin_3s_linear_infinite] origin-center"
-                  style={{ transformOrigin: '60px 60px' }}
+                  style={{ transformOrigin: "60px 60px" }}
                 />
                 <defs>
-                  <linearGradient id="holoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient id="holoGradientD" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#00F2FF" />
                     <stop offset="50%" stopColor="#00D4FF" />
                     <stop offset="100%" stopColor="#0099FF" />
                   </linearGradient>
                 </defs>
               </svg>
-              
-              {/* Center content */}
+
+              {/* Center value */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span 
-                  className="text-6xl font-extralight tracking-tight text-white"
-                  style={{ textShadow: '0 0 30px rgba(0,242,255,0.5), 0 0 60px rgba(0,242,255,0.3)' }}
-                >
-                  {animatedScore}
-                </span>
-                <span className="text-[10px] tracking-[0.4em] uppercase text-cyan-400/70 mt-1">Atlas Score</span>
+                {hasData ? (
+                  <>
+                    <span
+                      className="text-6xl font-extralight tracking-tight text-white"
+                      style={{ textShadow: "0 0 30px rgba(0,242,255,0.5), 0 0 60px rgba(0,242,255,0.3)" }}
+                    >
+                      {animatedScore}
+                    </span>
+                    <span className="text-[10px] tracking-[0.4em] uppercase text-cyan-400/70 mt-1">Atlas Score</span>
+                  </>
+                ) : (
+                  <>
+                    <motion.span
+                      className="text-5xl font-extralight tracking-tight text-white/15"
+                      animate={{ opacity: [0.15, 0.35, 0.15] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      0
+                    </motion.span>
+                    <span className="text-[9px] tracking-[0.3em] uppercase text-cyan-500/30 mt-1">Calibrando</span>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Status text */}
+            {/* Status message */}
             <p className="text-center text-white/40 text-sm font-light max-w-md leading-relaxed">
-              {getAtlasScoreMessage(currentWeek.atlasScore)}
+              {hasData
+                ? getAtlasScoreMessage(targetScore)
+                : "O sistema esta em modo de calibragem. Registre seu primeiro check-in em Ativos Biometricos para ativar o Score."}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Metrics Grid - Floating 3D Cards */}
+      {/* ── Metrics Grid ──────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
-        {[
-          { label: "Execucao", value: currentWeek.executionRate, unit: "%", icon: Zap },
-          { label: "Estetica", value: currentWeek.aestheticProgress, unit: "%", icon: Target },
-          { label: "Metabolica", value: currentWeek.metabolicHealth, unit: "%", icon: Activity },
-          { label: "Consistencia", value: currentWeek.generalConsistency, unit: "%", icon: TrendingUp },
-          { label: "Energia", value: currentWeek.energyLevel, unit: "", icon: Battery },
-        ].map((metric) => (
-          <div
-            key={metric.label}
-            onMouseEnter={() => setHoveredCard(metric.label)}
-            onMouseMove={(e) => handleMouseMove(e, metric.label)}
-            onMouseLeave={handleMouseLeave}
-            className="group relative bg-black/30 backdrop-blur-xl border border-white/5 rounded-2xl p-6 transition-all duration-300 hover:border-cyan-500/30 hover:shadow-[0_0_40px_rgba(0,242,255,0.1)]"
-            style={{ transformStyle: 'preserve-3d', transition: 'transform 0.1s ease-out, border-color 0.3s, box-shadow 0.3s' }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-            <metric.icon className="w-4 h-4 text-cyan-500/50 mb-3" />
-            <p className="text-[10px] tracking-[0.2em] uppercase text-white/30 mb-2">{metric.label}</p>
-            <p className="text-3xl font-extralight text-white tracking-tight">
-              {metric.value}
-              <span className="text-lg text-white/30">{metric.unit}</span>
-            </p>
-          </div>
-        ))}
+        {metricsConfig.map((metric) =>
+          hasData ? (
+            <div
+              key={metric.key}
+              onMouseEnter={() => setHoveredCard(metric.key)}
+              onMouseMove={(e) => handleMouseMove(e, metric.key)}
+              onMouseLeave={handleMouseLeave}
+              className="group relative bg-black/30 backdrop-blur-xl border border-white/5 rounded-2xl p-6 transition-all duration-300 hover:border-cyan-500/30 hover:shadow-[0_0_40px_rgba(0,242,255,0.1)]"
+              style={{
+                transformStyle: "preserve-3d",
+                transition: "transform 0.1s ease-out, border-color 0.3s, box-shadow 0.3s",
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+              <metric.icon className="w-4 h-4 text-cyan-500/50 mb-3" />
+              <p className="text-[10px] tracking-[0.2em] uppercase text-white/30 mb-2">{metric.label}</p>
+              <p className="text-3xl font-extralight text-white tracking-tight">
+                {metric.value}
+                <span className="text-lg text-white/30">{metric.unit}</span>
+              </p>
+            </div>
+          ) : (
+            <ScanningCard key={metric.key} label={metric.label} icon={metric.icon} />
+          ),
+        )}
       </div>
 
-      {/* Tactical Command Briefing */}
+      {/* ── Data Connection Map ───────────────────────────────── */}
+      <div className="bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <Database className="w-4 h-4 text-cyan-500/50" />
+          <h3 className="text-[10px] tracking-[0.25em] uppercase text-white/30">Conexao de Modulos</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {connectionModules.map((mod) => (
+            <div
+              key={mod.label}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 ${
+                mod.connected
+                  ? "bg-cyan-500/[0.04] border-cyan-500/20"
+                  : "bg-white/[0.01] border-white/[0.04]"
+              }`}
+            >
+              {!mod.connected && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/[0.02] to-transparent"
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 2 }}
+                />
+              )}
+              <div
+                className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                  mod.connected ? "bg-emerald-400 led-green" : "bg-white/15"
+                }`}
+              />
+              <div className="min-w-0">
+                <p className={`text-[10px] tracking-wider uppercase truncate ${mod.connected ? "text-white/60" : "text-white/25"}`}>
+                  {mod.label}
+                </p>
+                <p className={`text-[8px] tracking-wide truncate ${mod.connected ? "text-cyan-400/50" : "text-white/15"}`}>
+                  {mod.detail}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tactical Command Briefing ─────────────────────────── */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-blue-500/5 rounded-3xl" />
         <div className="relative bg-black/30 backdrop-blur-xl rounded-3xl p-8 border border-white/5 overflow-hidden">
-          {/* Gradient border effect */}
-          <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-r from-cyan-500/20 via-transparent to-blue-500/20 pointer-events-none" />
-          
+          <div className="absolute inset-0 rounded-3xl p-px bg-gradient-to-r from-cyan-500/20 via-transparent to-blue-500/20 pointer-events-none" />
+
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
               <Sparkles className="w-5 h-5 text-cyan-400" />
             </div>
-            <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Comando Tatico</h3>
+            <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Briefing do Dia</h3>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Left: Operation Status */}
+            {/* Left — Operation Status */}
             <div className="space-y-4">
               <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">Status da Operacao</p>
               <div className="flex items-baseline gap-3">
-                <div className={`w-2 h-2 rounded-full ${operation.color.replace('text-', 'bg-')} animate-pulse`} />
+                <div className={`w-2 h-2 rounded-full ${operation.bg} ${hasData ? "animate-pulse" : ""}`} />
                 <span className={`text-2xl font-light ${operation.color}`}>{operation.mode}</span>
               </div>
-              <div className="space-y-2 text-sm text-white/40">
-                <p>Treinos: {currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}</p>
-                <p>Dieta: {currentWeek.dietAdherence}% aderencia</p>
-                <p>Sono: {currentWeek.avgSleepHours}h/noite</p>
-              </div>
+              {hasData ? (
+                <div className="space-y-2 text-sm text-white/40">
+                  <p>
+                    Treinos: {currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}
+                  </p>
+                  <p>Dieta: {currentWeek.dietAdherence}% aderencia</p>
+                  <p>Sono: {currentWeek.avgSleepHours}h/noite</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="relative h-4 w-3/4 rounded bg-white/[0.03] overflow-hidden">
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent"
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Right: The Verdict */}
+            {/* Right — The Verdict */}
             <div className="space-y-4 md:border-l md:border-white/5 md:pl-8">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">The Verdict</p>
-              <p className="text-lg font-light text-white/70 leading-relaxed">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-white/30">Veredito</p>
+              <p className={`text-lg font-light leading-relaxed ${hasData ? "text-white/70" : "text-white/25"}`}>
                 {getVerdict()}
               </p>
             </div>
@@ -518,129 +564,163 @@ function DashboardView() {
         </div>
       </div>
 
-      {/* Predictive Performance Chart */}
+      {/* ── Predictive Chart ──────────────────────────────────── */}
       <div className="bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h3 className="text-sm tracking-[0.2em] uppercase text-white/50 mb-1">Tendencia Preditiva</h3>
             <p className="text-[10px] text-white/30">Projecao dos proximos 14 dias</p>
           </div>
-          <div className="flex items-center gap-2 text-emerald-400">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-sm">+{Math.min(10, 100 - currentWeek.atlasScore)}%</span>
-          </div>
+          {hasData && (
+            <div className="flex items-center gap-2 text-emerald-400">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm">+{Math.min(12, 100 - targetScore)}%</span>
+            </div>
+          )}
         </div>
 
-        {/* Line chart */}
-        <div className="relative h-32">
-          <svg className="w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="none">
-            {/* Grid lines */}
-            {[0, 25, 50, 75, 100].map((y) => (
-              <line key={y} x1="0" y1={100 - y} x2="400" y2={100 - y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-            ))}
-            
-            {/* Area fill */}
-            <defs>
-              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(0,242,255,0.3)" />
-                <stop offset="100%" stopColor="rgba(0,242,255,0)" />
-              </linearGradient>
-            </defs>
-            <path
-              d={`M 0 ${100 - predictiveData[0].score} ${predictiveData.map((d, i) => `L ${(i / (predictiveData.length - 1)) * 400} ${100 - d.score}`).join(' ')} L 400 100 L 0 100 Z`}
-              fill="url(#areaGradient)"
-            />
-            
-            {/* Line */}
-            <path
-              d={`M 0 ${100 - predictiveData[0].score} ${predictiveData.map((d, i) => `L ${(i / (predictiveData.length - 1)) * 400} ${100 - d.score}`).join(' ')}`}
-              fill="none"
-              stroke="#00F2FF"
-              strokeWidth="2"
-              style={{ filter: 'drop-shadow(0 0 4px rgba(0,242,255,0.5))' }}
-            />
-            
-            {/* Data points */}
-            {predictiveData.map((d, i) => (
-              <circle
-                key={i}
-                cx={(i / (predictiveData.length - 1)) * 400}
-                cy={100 - d.score}
-                r="4"
-                fill="#000"
-                stroke="#00F2FF"
-                strokeWidth="2"
+        {hasData ? (
+          <div className="relative h-32">
+            <svg className="w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="none">
+              {[0, 25, 50, 75, 100].map((y) => (
+                <line key={y} x1="0" y1={100 - y} x2="400" y2={100 - y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              ))}
+              <defs>
+                <linearGradient id="areaGradD" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(0,242,255,0.3)" />
+                  <stop offset="100%" stopColor="rgba(0,242,255,0)" />
+                </linearGradient>
+              </defs>
+              <path
+                d={`M 0 ${100 - predictiveData[0].score} ${predictiveData.map((d, i) => `L ${(i / (predictiveData.length - 1)) * 400} ${100 - d.score}`).join(" ")} L 400 100 L 0 100 Z`}
+                fill="url(#areaGradD)"
               />
-            ))}
-          </svg>
-          
-          {/* X-axis labels */}
-          <div className="absolute bottom-[-24px] left-0 right-0 flex justify-between text-[10px] text-white/30">
-            {predictiveData.map((d) => (
-              <span key={d.day}>D{d.day}</span>
-            ))}
+              <path
+                d={`M 0 ${100 - predictiveData[0].score} ${predictiveData.map((d, i) => `L ${(i / (predictiveData.length - 1)) * 400} ${100 - d.score}`).join(" ")}`}
+                fill="none" stroke="#00F2FF" strokeWidth="2"
+                style={{ filter: "drop-shadow(0 0 4px rgba(0,242,255,0.5))" }}
+              />
+              {predictiveData.map((d, i) => (
+                <circle
+                  key={d.day}
+                  cx={(i / (predictiveData.length - 1)) * 400}
+                  cy={100 - d.score} r="4"
+                  fill="#000" stroke="#00F2FF" strokeWidth="2"
+                />
+              ))}
+            </svg>
+            <div className="absolute bottom-[-24px] left-0 right-0 flex justify-between text-[10px] text-white/30">
+              {predictiveData.map((d) => (
+                <span key={d.day}>D{d.day}</span>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Zero-data scanning placeholder */
+          <div className="relative h-32 flex items-center justify-center overflow-hidden rounded-2xl border border-dashed border-white/[0.04]">
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 w-px bg-cyan-500/20"
+              animate={{ left: ["0%", "100%"] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="text-center">
+              <Scan className="w-6 h-6 text-white/10 mx-auto mb-2" />
+              <p className="text-[10px] tracking-[0.2em] uppercase text-white/20">
+                Grafico ativado apos primeiro check-in
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Summary button */}
+      {/* ── Summary toggle ────────────────────────────────────── */}
       <button
         onClick={() => setShowSummary(!showSummary)}
-        className="w-full py-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 text-white/70 font-light tracking-[0.1em] rounded-2xl hover:border-cyan-500/40 hover:text-white transition-all duration-300 flex items-center justify-center gap-3"
+        disabled={!hasData}
+        className="w-full py-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 text-white/70 font-light tracking-[0.1em] rounded-2xl hover:border-cyan-500/40 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-3"
       >
         <FileText className="w-4 h-4" />
         {showSummary ? "Ocultar Resumo" : "Gerar Resumo Completo"}
       </button>
 
-      {showSummary && (
-        <div className="bg-black/30 backdrop-blur-xl border border-cyan-500/20 rounded-3xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h4 className="text-sm tracking-[0.2em] uppercase text-white/50 mb-6">Resumo Executivo - {currentWeek.weekLabel}</h4>
-          <div className="grid md:grid-cols-2 gap-6 text-white/40 text-sm">
-            <div className="space-y-3">
-              <p>Atlas Score: <span className="text-white/70">{currentWeek.atlasScore}/100</span></p>
-              <p>Treinos: <span className="text-white/70">{currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}</span></p>
-              <p>Execucao: <span className="text-white/70">{currentWeek.executionRate}%</span></p>
+      <AnimatePresence>
+        {showSummary && hasData && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-black/30 backdrop-blur-xl border border-cyan-500/20 rounded-3xl p-8"
+          >
+            <h4 className="text-sm tracking-[0.2em] uppercase text-white/50 mb-6">
+              Resumo Executivo &mdash; {weekLabel}
+            </h4>
+            <div className="grid md:grid-cols-2 gap-6 text-white/40 text-sm">
+              <div className="space-y-3">
+                <p>Atlas Score: <span className="text-white/70">{currentWeek.atlasScore}/100</span></p>
+                <p>Treinos: <span className="text-white/70">{currentWeek.trainingsDone}/{currentWeek.trainingsPlanned}</span></p>
+                <p>Execucao: <span className="text-white/70">{currentWeek.executionRate}%</span></p>
+              </div>
+              <div className="space-y-3">
+                <p>Dieta: <span className="text-white/70">{currentWeek.dietAdherence}%</span></p>
+                <p>Sono: <span className="text-white/70">{currentWeek.avgSleepHours}h/noite</span></p>
+                <p>Peso: <span className="text-white/70">{currentWeek.weightDeltaKg > 0 ? "+" : ""}{currentWeek.weightDeltaKg}kg</span></p>
+              </div>
             </div>
-            <div className="space-y-3">
-              <p>Dieta: <span className="text-white/70">{currentWeek.dietAdherence}%</span></p>
-              <p>Sono: <span className="text-white/70">{currentWeek.avgSleepHours}h/noite</span></p>
-              <p>Peso: <span className="text-white/70">{currentWeek.weightDeltaKg > 0 ? "+" : ""}{currentWeek.weightDeltaKg}kg</span></p>
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Evolution chart - Minimal */}
+      {/* ── Evolution History ──────────────────────────────────── */}
       <div className="bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8">
         <h3 className="text-sm tracking-[0.2em] uppercase text-white/50 mb-6">Evolucao Historica</h3>
-        <div className="flex items-end justify-between gap-3 h-32">
-          {mockWeeks.map((week, idx) => (
-            <button
-              key={week.weekLabel}
-              onClick={() => setWeekIndex(idx)}
-              className={`flex-1 rounded-t-xl transition-all duration-500 relative group ${
-                idx === weekIndex 
-                  ? "bg-gradient-to-t from-cyan-500/80 to-cyan-400/60" 
-                  : "bg-white/5 hover:bg-white/10"
-              }`}
-              style={{ height: `${week.atlasScore}%` }}
-            >
-              {idx === weekIndex && (
-                <div className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-xl" />
-              )}
-              <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                {week.atlasScore}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-between mt-4 text-[10px] tracking-[0.1em] text-white/30">
-          {mockWeeks.map((week) => (
-            <span key={week.weekLabel} className="flex-1 text-center">
-              S{week.weekLabel.split(" ")[1]}
-            </span>
-          ))}
-        </div>
+        {weekHistory.length > 0 ? (
+          <>
+            <div className="flex items-end justify-between gap-3 h-32">
+              {weekHistory.map((week, idx) => {
+                const isCurrent = idx === weekHistory.length - 1
+                return (
+                  <motion.div
+                    key={week.label}
+                    initial={{ height: 0 }}
+                    animate={{ height: `${Math.max(8, week.score)}%` }}
+                    transition={{ duration: 0.6, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    className={`flex-1 rounded-t-xl relative group cursor-default ${
+                      isCurrent
+                        ? "bg-gradient-to-t from-cyan-500/80 to-cyan-400/60"
+                        : "bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    {isCurrent && <div className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-xl" />}
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {week.score}
+                    </span>
+                  </motion.div>
+                )
+              })}
+            </div>
+            <div className="flex justify-between mt-4 text-[10px] tracking-[0.1em] text-white/30">
+              {weekHistory.map((week) => (
+                <span key={week.label} className="flex-1 text-center">{week.label}</span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="relative h-32 flex items-center justify-center rounded-2xl border border-dashed border-white/[0.04] overflow-hidden">
+            {/* Scanning sweep */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-b from-cyan-500/[0.04] via-transparent to-transparent"
+              animate={{ y: ["-100%", "200%"] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="text-center relative">
+              <Activity className="w-6 h-6 text-white/10 mx-auto mb-2" />
+              <p className="text-[10px] tracking-[0.2em] uppercase text-white/20">
+                Historico gerado a partir dos seus check-ins
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
