@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect, useCallback, useState } from "react"
+import React, { useRef, useEffect, useCallback, useState, useMemo } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -799,6 +799,460 @@ function DashboardView() {
   )
 }
 
+// ========== BIO-SYNTHETIC 3D HOLOGRAM ==========
+// VFX-grade holographic body scanner — pseudo-3D with layered wireframes,
+// scanning beam, floating particles, idle breathing, and reactive node projection.
+
+interface BioHologramProps {
+  gender: "male" | "female"
+  isMale: boolean
+  accentRgb: string
+  accentHex: string
+  accentText: string
+  isGenderSwitching: boolean
+  bodyStatus: Record<BodyAreaKey, BodyAreaStatus>
+  measurements: BodyMeasurements
+  latestPain: number
+  hotspotPos: Record<BodyAreaKey, { top: string; left: string }>
+  hoveredArea: BodyAreaKey | null
+  setHoveredArea: (area: BodyAreaKey | null) => void
+}
+
+function BioSyntheticHologram({
+  gender,
+  isMale,
+  accentRgb,
+  accentHex,
+  accentText,
+  isGenderSwitching,
+  bodyStatus,
+  measurements,
+  latestPain,
+  hotspotPos,
+  hoveredArea,
+  setHoveredArea,
+}: BioHologramProps) {
+  // Stable particle field — generated once per gender switch
+  const particles = useMemo(() => {
+    return Array.from({ length: 28 }, (_, i) => ({
+      id: i,
+      x: 10 + Math.random() * 80,
+      y: 5 + Math.random() * 90,
+      size: 1 + Math.random() * 2.5,
+      dur: 3 + Math.random() * 5,
+      delay: Math.random() * 4,
+      drift: -10 + Math.random() * 20,
+    }))
+  }, [gender]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Male wireframe paths — angular V-Taper
+  const maleOuterPath =
+    "M60 8 C66 8 70 14 70 22 C70 27 68 30 67 32 C77 37 88 48 90 62 L90 68 C90 74 86 78 82 79 L80 80 C78 84 76 92 76 100 L76 104 C76 110 72 114 68 114 L68 118 C74 118 78 112 78 104 L78 92 C78 78 82 72 86 68 L90 68 M30 68 C34 72 38 78 38 92 L38 104 C38 112 42 118 48 118 L48 114 C44 114 40 110 40 104 L40 100 C40 92 38 84 36 80 L34 79 C30 78 26 74 26 68 L26 62 C28 48 39 37 49 32 C48 30 46 27 46 22 C46 14 50 8 60 8 Z M48 118 L47 134 C46 140 46 150 47 158 L48 174 C48 188 46 204 44 218 L42 236 L52 236 L54 218 C56 204 57 188 57 174 L57 158 C57 150 57 140 57 134 L60 128 L63 134 C63 140 63 150 63 158 L63 174 C63 188 64 204 66 218 L68 236 L78 236 L76 218 C74 204 72 188 72 174 L73 158 C74 150 74 140 73 134 L72 118"
+  // Male inner wireframe (slightly smaller) for depth illusion
+  const maleInnerPath =
+    "M60 14 C64 14 67 18 67 24 C67 28 66 30 65 32 C72 36 80 44 82 56 L82 62 C82 66 80 70 77 71 M43 71 C40 70 38 66 38 62 L38 56 C40 44 48 36 55 32 C54 30 53 28 53 24 C53 18 56 14 60 14 Z M52 118 L52 132 C52 140 52 150 52 158 L52 174 C52 186 50 200 48 214 M68 118 L68 132 C68 140 68 150 68 158 L68 174 C68 186 70 200 72 214"
+
+  // Female wireframe paths — fluid Hourglass (Mewtwo aesthetic)
+  const femaleOuterPath =
+    "M60 8 C65 8 68 14 68 22 C68 27 67 30 66 32 C73 36 80 46 82 58 L82 66 C82 72 78 76 74 77 L72 78 C70 82 68 90 68 98 L68 102 C68 108 66 112 62 112 L62 116 C68 118 72 126 74 136 C76 148 76 156 74 164 L72 174 C72 188 70 204 68 218 L66 236 L56 236 L58 218 C60 204 61 188 61 174 L61 164 L60 158 L59 164 L59 174 C59 188 60 204 62 218 L54 236 L44 236 L46 218 C48 204 48 188 48 174 L46 164 C44 156 44 148 46 136 C48 126 52 118 58 116 L58 112 C54 112 52 108 52 102 L52 98 C52 90 50 82 48 78 L46 77 C42 76 38 72 38 66 L38 58 C40 46 47 36 54 32 C53 30 52 27 52 22 C52 14 55 8 60 8 Z"
+  const femaleInnerPath =
+    "M60 14 C63 14 66 18 66 24 C66 28 65 30 64 32 C70 36 76 44 78 54 L78 60 C78 66 76 70 73 71 M47 71 C44 70 42 66 42 60 L42 54 C44 44 50 36 56 32 C55 30 54 28 54 24 C54 18 57 14 60 14 Z M56 116 C52 120 50 130 50 140 C50 150 52 160 54 168 M64 116 C68 120 70 130 70 140 C70 150 68 160 66 168"
+
+  const outerPath = isMale ? maleOuterPath : femaleOuterPath
+  const innerPath = isMale ? maleInnerPath : femaleInnerPath
+
+  return (
+    <div className="relative bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8 overflow-hidden">
+      {/* Ambient gradient wash */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 60% 50% at 50% 40%, rgba(${accentRgb},0.06) 0%, transparent 70%)`,
+        }}
+      />
+
+      <h3 className="relative text-sm tracking-[0.2em] uppercase text-white/40 mb-6 flex items-center gap-3">
+        <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accentHex, boxShadow: `0 0 8px rgba(${accentRgb},0.6)` }} />
+        Holograma Bio-Sintetico
+      </h3>
+
+      {/* 3D Stage — perspective container */}
+      <div
+        className={`relative w-full h-[480px] bg-black rounded-2xl overflow-hidden transition-all duration-500 ${
+          isGenderSwitching ? "opacity-0 scale-90 blur-sm" : "opacity-100 scale-100 blur-0"
+        }`}
+        style={{ perspective: "800px" }}
+      >
+        {/* CRT scan lines */}
+        <div
+          className="absolute inset-0 pointer-events-none z-[1]"
+          style={{
+            backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(${accentRgb},0.015) 1px, rgba(${accentRgb},0.015) 2px)`,
+            mixBlendMode: "screen",
+          }}
+        />
+
+        {/* Floor grid — receding perspective plane */}
+        <div className="absolute bottom-0 left-0 right-0 h-[35%] pointer-events-none overflow-hidden z-[1]" style={{ perspective: "400px" }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: "rotateX(65deg)",
+              transformOrigin: "bottom center",
+              backgroundImage: `
+                linear-gradient(rgba(${accentRgb},0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(${accentRgb},0.08) 1px, transparent 1px)
+              `,
+              backgroundSize: "40px 40px",
+            }}
+          />
+          {/* Floor fade */}
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-black" />
+        </div>
+
+        {/* Orbital rings — slow rotation in 3D space */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2]">
+          <motion.div
+            className="absolute w-52 h-52 rounded-full border"
+            style={{
+              borderColor: `rgba(${accentRgb},0.08)`,
+              transformStyle: "preserve-3d",
+            }}
+            animate={{ rotateY: [0, 360], rotateX: [20, 20] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute w-72 h-72 rounded-full border"
+            style={{
+              borderColor: `rgba(${accentRgb},0.04)`,
+              transformStyle: "preserve-3d",
+            }}
+            animate={{ rotateY: [360, 0], rotateX: [-15, -15] }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute w-40 h-40 rounded-full border border-dashed"
+            style={{
+              borderColor: `rgba(${accentRgb},0.06)`,
+              transformStyle: "preserve-3d",
+            }}
+            animate={{ rotateZ: [0, -360] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+
+        {/* === SCANNER BAR — horizontal beam with particle trail === */}
+        <motion.div
+          className="absolute left-0 right-0 z-[5] pointer-events-none"
+          animate={{ top: ["0%", "100%"] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.5 }}
+        >
+          {/* Main beam */}
+          <div
+            className="h-[2px] w-full"
+            style={{
+              background: `linear-gradient(90deg, transparent 5%, rgba(${accentRgb},0.7) 30%, rgba(${accentRgb},1) 50%, rgba(${accentRgb},0.7) 70%, transparent 95%)`,
+              boxShadow: `0 0 20px 4px rgba(${accentRgb},0.4), 0 0 60px 10px rgba(${accentRgb},0.15)`,
+            }}
+          />
+          {/* Trailing glow */}
+          <div
+            className="h-12 w-full -mt-1"
+            style={{
+              background: `linear-gradient(to bottom, rgba(${accentRgb},0.12) 0%, transparent 100%)`,
+            }}
+          />
+        </motion.div>
+
+        {/* === FLOATING ENERGY PARTICLES === */}
+        <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden">
+          {particles.map((p) => (
+            <motion.div
+              key={p.id}
+              className="absolute rounded-full"
+              style={{
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                width: p.size,
+                height: p.size,
+                background: `rgba(${accentRgb},0.6)`,
+                boxShadow: `0 0 ${p.size * 3}px rgba(${accentRgb},0.4)`,
+              }}
+              animate={{
+                y: [0, p.drift, 0],
+                x: [0, p.drift * 0.5, 0],
+                opacity: [0, 0.8, 0],
+                scale: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: p.dur,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: p.delay,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* === 3D BODY — multi-layer pseudo-3D wireframe + translucent fill === */}
+        <div className="absolute inset-0 flex items-center justify-center z-[4]">
+          {/* Idle breathing + subtle Y rotation */}
+          <motion.div
+            className="relative w-52 h-[370px]"
+            style={{ transformStyle: "preserve-3d" }}
+            animate={{
+              rotateY: [-2, 2, -2],
+              scaleY: [1, 1.008, 1],
+            }}
+            transition={{
+              rotateY: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+              scaleY: { duration: 3.5, repeat: Infinity, ease: "easeInOut" },
+            }}
+          >
+            <svg
+              viewBox="0 0 120 244"
+              className="w-full h-full"
+              style={{ filter: `drop-shadow(0 0 30px rgba(${accentRgb},0.4))` }}
+            >
+              <defs>
+                {/* Translucent fill gradient — "solid light" effect */}
+                <linearGradient id="bioFillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={`rgba(${accentRgb},0.12)`} />
+                  <stop offset="40%" stopColor={`rgba(${accentRgb},0.06)`} />
+                  <stop offset="100%" stopColor={`rgba(${accentRgb},0.02)`} />
+                </linearGradient>
+                <linearGradient id="bioStrokeMain" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={`rgba(${accentRgb},0.9)`} />
+                  <stop offset="50%" stopColor={`rgba(${accentRgb},0.5)`} />
+                  <stop offset="100%" stopColor={`rgba(${accentRgb},0.15)`} />
+                </linearGradient>
+                <linearGradient id="bioStrokeInner" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={`rgba(${accentRgb},0.4)`} />
+                  <stop offset="100%" stopColor={`rgba(${accentRgb},0.08)`} />
+                </linearGradient>
+                {/* Glow filter for the main body */}
+                <filter id="bioGlow">
+                  <feGaussianBlur stdDeviation="2" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {/* Layer 1: Back shadow body (depth) — offset & blurred */}
+              <g style={{ transform: "translate(2px, 1px)", opacity: 0.15 }}>
+                <path d={outerPath} fill="none" stroke={`rgba(${accentRgb},0.3)`} strokeWidth="1.2" />
+              </g>
+
+              {/* Layer 2: Mid wireframe (inner structure) */}
+              <path
+                d={innerPath}
+                fill="none"
+                stroke="url(#bioStrokeInner)"
+                strokeWidth="0.5"
+                strokeDasharray="3 5"
+                opacity="0.6"
+              />
+
+              {/* Layer 3: Translucent fill — "solid light" body volume */}
+              <path d={outerPath} fill="url(#bioFillGrad)" stroke="none" />
+
+              {/* Layer 4: Main wireframe outline — brightest */}
+              <path
+                d={outerPath}
+                fill="none"
+                stroke="url(#bioStrokeMain)"
+                strokeWidth="0.8"
+                strokeLinejoin="round"
+                filter="url(#bioGlow)"
+              />
+
+              {/* Layer 5: Highlight wireframe — front contour glow */}
+              <path
+                d={outerPath}
+                fill="none"
+                stroke={`rgba(${accentRgb},0.12)`}
+                strokeWidth="3"
+                strokeLinejoin="round"
+                style={{ filter: `blur(4px)` }}
+              />
+
+              {/* Horizontal wireframe cross-lines for 3D mesh illusion */}
+              {[40, 62, 80, 100, 120, 142, 165, 190, 215].map((y) => (
+                <line
+                  key={y}
+                  x1="30"
+                  y1={y}
+                  x2="90"
+                  y2={y}
+                  stroke={`rgba(${accentRgb},0.06)`}
+                  strokeWidth="0.5"
+                  strokeDasharray="2 4"
+                />
+              ))}
+            </svg>
+          </motion.div>
+        </div>
+
+        {/* === REACTIVE NODES — proportion-aware with glow irradiation === */}
+        {(Object.keys(bodyStatus) as BodyAreaKey[]).map((area) => {
+          const nodeInfo = computeNodeStatus(area, gender, bodyStatus, measurements, latestPain)
+          const pos = hotspotPos[area]
+          const areaIdx = Object.keys(bodyStatus).indexOf(area)
+          const isFocus = nodeInfo.priority === "focus"
+          const isRisk = nodeInfo.priority === "risk"
+
+          return (
+            <motion.div
+              key={`${area}-${gender}`}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.06 * areaIdx, type: "spring", stiffness: 200 }}
+              className="absolute cursor-pointer -translate-x-1/2 -translate-y-1/2 z-[6]"
+              style={{ top: pos.top, left: pos.left }}
+              onMouseEnter={() => setHoveredArea(area)}
+              onMouseLeave={() => setHoveredArea(null)}
+            >
+              {/* Irradiation field — large area glow projected onto wireframe */}
+              <motion.div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  inset: isFocus || isRisk ? -24 : -16,
+                  background: `radial-gradient(circle, ${nodeInfo.glow.replace("0.7", "0.15")} 0%, transparent 70%)`,
+                }}
+                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
+                transition={{ duration: isFocus ? 1.5 : 2.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+
+              {/* Outer pulse ring */}
+              <div
+                className={`absolute inset-[-10px] rounded-full animate-ping ${nodeInfo.color}`}
+                style={{
+                  animationDuration: isFocus ? "1.2s" : "2.5s",
+                  opacity: 0.2,
+                }}
+              />
+
+              {/* Mid glow ring */}
+              <div
+                className={`absolute inset-[-6px] rounded-full blur-sm ${nodeInfo.color}`}
+                style={{ opacity: 0.35 }}
+              />
+
+              {/* Core node */}
+              <motion.div
+                className={`relative w-4 h-4 rounded-full ${nodeInfo.color}`}
+                style={{
+                  boxShadow: `0 0 12px ${nodeInfo.glow}, 0 0 24px ${nodeInfo.glow.replace("0.7", "0.3")}`,
+                }}
+                animate={
+                  hoveredArea === area
+                    ? { scale: 1.8 }
+                    : { scale: [1, 1.15, 1] }
+                }
+                transition={
+                  hoveredArea === area
+                    ? { duration: 0.15 }
+                    : { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }
+              />
+
+              {/* Node label on hover */}
+              <AnimatePresence>
+                {hoveredArea === area && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap z-10"
+                  >
+                    <div className="px-2.5 py-1 bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg">
+                      <p className="text-[9px] tracking-wider uppercase text-white/70 font-medium">
+                        {bodyAreaLabels[area]}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )
+        })}
+
+        {/* Tooltip — full detail panel at bottom */}
+        <AnimatePresence>
+          {hoveredArea && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-5 left-5 right-5 bg-black/80 backdrop-blur-2xl rounded-xl p-4 border z-[8]"
+              style={{ borderColor: `rgba(${accentRgb},0.2)` }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{
+                    background: computeNodeStatus(hoveredArea, gender, bodyStatus, measurements, latestPain).glow,
+                    boxShadow: `0 0 10px ${computeNodeStatus(hoveredArea, gender, bodyStatus, measurements, latestPain).glow}`,
+                  }}
+                />
+                <div>
+                  <p className="font-medium text-white text-sm">{bodyAreaLabels[hoveredArea]}</p>
+                  <p className="text-white/40 text-xs mt-0.5">
+                    {computeNodeStatus(hoveredArea, gender, bodyStatus, measurements, latestPain).label}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Status readout — top-right HUD */}
+        <div className="absolute top-4 right-4 z-[7] text-right">
+          <p className="text-[8px] tracking-[0.3em] uppercase" style={{ color: `rgba(${accentRgb},0.4)` }}>
+            Bio-Scan {isMale ? "V-Taper" : "Hourglass"}
+          </p>
+          <motion.p
+            className="text-[8px] tracking-[0.2em] uppercase mt-1"
+            style={{ color: `rgba(${accentRgb},0.25)` }}
+            animate={{ opacity: [0.25, 0.6, 0.25] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            Diagnostico Ativo
+          </motion.p>
+        </div>
+
+        {/* Top-left classification */}
+        <div className="absolute top-4 left-4 z-[7]">
+          <p className="text-[8px] tracking-[0.3em] uppercase" style={{ color: `rgba(${accentRgb},0.3)` }}>
+            Atlas Specter
+          </p>
+          <p className="text-[8px] tracking-[0.15em] uppercase mt-1" style={{ color: `rgba(${accentRgb},0.2)` }}>
+            2036.sys
+          </p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-8 mt-6 text-[10px] tracking-wider uppercase">
+        {[
+          { label: "Forte", color: "bg-emerald-400", shadow: "shadow-[0_0_8px_rgba(52,211,153,0.6)]" },
+          { label: "Foco", color: "bg-red-500", shadow: "shadow-[0_0_8px_rgba(239,68,68,0.6)]" },
+          { label: "Risco", color: "bg-amber-400", shadow: "shadow-[0_0_8px_rgba(251,191,36,0.6)]" },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${item.color} ${item.shadow}`} />
+            <span className="text-white/30">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ========== VISAO 360 VIEW ==========
 function Visao360View() {
   const {
@@ -1035,184 +1489,21 @@ function Visao360View() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* ── Hologram ──────────────────────────────────────── */}
-        <div className="relative bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8 overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(to bottom, rgba(${accentRgb},0.04) 0%, transparent 60%)`,
-            }}
-          />
-
-          <h3 className="relative text-sm tracking-[0.2em] uppercase text-white/40 mb-6">Holograma de Governanca</h3>
-
-          <div
-            className={`relative w-full h-[440px] bg-black rounded-2xl overflow-hidden transition-all duration-300 ${isGenderSwitching ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
-          >
-            {/* Scan lines */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(${accentRgb},0.02) 2px, rgba(${accentRgb},0.02) 4px)`,
-              }}
-            />
-
-            {/* Scanning sweep animation */}
-            <motion.div
-              className="absolute left-0 right-0 h-px pointer-events-none"
-              style={{
-                background: `linear-gradient(90deg, transparent, rgba(${accentRgb},0.5), transparent)`,
-                boxShadow: `0 0 20px rgba(${accentRgb},0.3)`,
-              }}
-              animate={{ top: ["0%", "100%", "0%"] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            />
-
-            {/* Body silhouette */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-48 h-[340px]">
-                <svg
-                  viewBox="0 0 120 240"
-                  className="w-full h-full"
-                  style={{ filter: `drop-shadow(0 0 24px rgba(${accentRgb},0.35))` }}
-                >
-                  <defs>
-                    <linearGradient id="bodyGradV360" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor={`rgba(${accentRgb},0.35)`} />
-                      <stop offset="50%" stopColor={`rgba(${accentRgb},0.18)`} />
-                      <stop offset="100%" stopColor={`rgba(${accentRgb},0.06)`} />
-                    </linearGradient>
-                    <linearGradient id="bodyStrokeV360" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor={`rgba(${accentRgb},0.8)`} />
-                      <stop offset="100%" stopColor={`rgba(${accentRgb},0.2)`} />
-                    </linearGradient>
-                  </defs>
-                  {isMale ? (
-                    /* V-Taper Male: wide shoulders, narrow waist, straight legs */
-                    <path
-                      d="M60 12 C64 12 67 16 67 22 C67 26 66 28 66 30
-                         C74 34 82 42 84 52 L84 56 C84 60 82 62 80 63
-                         L79 64 C78 66 76 72 76 78 L76 80 C76 84 74 86 72 86
-                         L72 88 C76 88 78 85 78 80 L78 72 C78 62 80 58 82 56 L84 56
-                         M36 56 C38 58 40 62 40 72 L40 80 C40 85 42 88 46 88
-                         L46 86 C44 86 42 84 42 80 L42 78 C42 72 40 66 39 64
-                         L38 63 C36 62 34 60 34 56 L34 52 C36 42 44 34 52 30
-                         C52 28 51 26 51 22 C51 16 54 12 60 12 Z
-                         M46 88 L46 100 C46 102 47 106 48 110
-                         L49 120 C50 130 50 140 50 148
-                         L50 180 C50 190 48 200 46 210
-                         L45 228 L51 228 L54 210 C55 200 56 190 56 180
-                         L56 148 C56 140 56 130 56 120
-                         L60 120
-                         L62 120 C62 130 62 140 62 148
-                         L62 180 C62 190 63 200 64 210
-                         L67 228 L73 228 L72 210 C70 200 68 190 68 180
-                         L68 148 C68 140 68 130 69 120
-                         L70 110 C71 106 72 102 72 100
-                         L72 88"
-                      fill="url(#bodyGradV360)"
-                      stroke="url(#bodyStrokeV360)"
-                      strokeWidth="0.6"
-                    />
-                  ) : (
-                    /* Hourglass Female: narrow shoulders, cinched waist, wide hips */
-                    <path
-                      d="M60 12 C63 12 66 16 66 22 C66 26 65 28 65 30
-                         C70 34 76 42 78 50 L78 58 C78 62 76 64 74 65
-                         L73 66 C72 68 70 72 70 78 L70 80 C70 84 68 86 66 86
-                         L66 88 C70 88 72 85 72 80 L72 72 C72 64 74 60 76 58 L78 58
-                         M40 58 C42 60 44 64 44 72 L44 80 C44 85 46 88 50 88
-                         L50 86 C48 86 46 84 46 80 L46 78 C46 72 44 68 43 66
-                         L42 65 C40 64 38 62 38 58 L38 50 C40 42 46 34 51 30
-                         C51 28 50 26 50 22 C50 16 53 12 60 12 Z
-                         M50 88 L48 96 C46 102 44 108 44 114
-                         C44 120 46 128 50 134
-                         L51 148 C51 160 50 170 49 180
-                         L48 200 C47 210 46 218 45 228
-                         L51 228 L53 210 C54 200 55 190 55 180
-                         L56 160 L60 160 L62 180
-                         C63 190 64 200 65 210
-                         L67 228 L73 228 C72 218 71 210 70 200
-                         L69 180 C68 170 67 160 67 148
-                         L68 134 C72 128 74 120 74 114
-                         C74 108 72 102 70 96
-                         L68 88"
-                      fill="url(#bodyGradV360)"
-                      stroke="url(#bodyStrokeV360)"
-                      strokeWidth="0.6"
-                    />
-                  )}
-                </svg>
-              </div>
-            </div>
-
-            {/* Smart Nodes (proportion-aware) */}
-            {(Object.keys(bodyStatus) as BodyAreaKey[]).map((area) => {
-              const nodeInfo = computeNodeStatus(area, gender, bodyStatus, measurements, latestPain)
-              const pos = hotspotPos[area]
-
-              return (
-                <motion.div
-                  key={`${area}-${gender}`}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.05 * Object.keys(bodyStatus).indexOf(area) }}
-                  className="absolute cursor-pointer -translate-x-1/2 -translate-y-1/2 group"
-                  style={{ top: pos.top, left: pos.left }}
-                  onMouseEnter={() => setHoveredArea(area)}
-                  onMouseLeave={() => setHoveredArea(null)}
-                >
-                  {/* Outer pulse */}
-                  <div
-                    className={`absolute inset-[-8px] rounded-full animate-ping opacity-25 ${nodeInfo.color}`}
-                    style={{ animationDuration: nodeInfo.priority === "focus" ? "1.5s" : "2.5s" }}
-                  />
-                  {/* Inner glow */}
-                  <div className={`absolute inset-[-4px] rounded-full blur-sm ${nodeInfo.color} opacity-40`} />
-                  {/* Core */}
-                  <div
-                    className={`relative w-4 h-4 rounded-full ${nodeInfo.color} transition-transform duration-200 ${hoveredArea === area ? "scale-[1.6]" : ""}`}
-                    style={{ boxShadow: `0 0 15px ${nodeInfo.glow}` }}
-                  />
-                </motion.div>
-              )
-            })}
-
-            {/* Tooltip */}
-            <AnimatePresence>
-              {hoveredArea && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute bottom-6 left-6 right-6 bg-black/70 backdrop-blur-xl rounded-xl p-4 border border-white/10"
-                >
-                  <p className="font-medium text-white text-sm">{bodyAreaLabels[hoveredArea]}</p>
-                  <p className="text-white/50 text-xs mt-1">
-                    {computeNodeStatus(hoveredArea, gender, bodyStatus, measurements, latestPain).label}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-8 mt-6 text-[10px] tracking-wider uppercase">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-              <span className="text-white/30">Forte</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-              <span className="text-white/30">Foco</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              <span className="text-white/30">Risco</span>
-            </div>
-          </div>
-        </div>
+        {/* ── Bio-Synthetic 3D Hologram ──────────────────── */}
+        <BioSyntheticHologram
+          gender={gender}
+          isMale={isMale}
+          accentRgb={accentRgb}
+          accentHex={accentHex}
+          accentText={accentText}
+          isGenderSwitching={isGenderSwitching}
+          bodyStatus={bodyStatus}
+          measurements={measurements}
+          latestPain={latestPain}
+          hotspotPos={hotspotPos}
+          hoveredArea={hoveredArea}
+          setHoveredArea={setHoveredArea}
+        />
 
         {/* ── Metric Chips + Inputs ─────────────────────────── */}
         <div className="bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8">
