@@ -151,15 +151,88 @@ const bodyAreaLabels: Record<BodyAreaKey, string> = {
   calves: "Panturrilhas",
 }
 
-const hotspotPositions: Record<BodyAreaKey, { top: string; left: string }> = {
-  shoulders: { top: "12%", left: "50%" },
-  chest: { top: "22%", left: "50%" },
-  back: { top: "28%", left: "50%" },
-  arms: { top: "32%", left: "20%" },
-  core: { top: "38%", left: "50%" },
-  hips: { top: "48%", left: "50%" },
-  legs: { top: "65%", left: "50%" },
-  calves: { top: "82%", left: "50%" },
+// Hotspot positions vary by gender (V-Taper vs Hourglass silhouette)
+const hotspotPositionsMale: Record<BodyAreaKey, { top: string; left: string }> = {
+  shoulders: { top: "14%", left: "50%" },
+  chest: { top: "24%", left: "50%" },
+  back: { top: "30%", left: "75%" },
+  arms: { top: "30%", left: "22%" },
+  core: { top: "40%", left: "50%" },
+  hips: { top: "49%", left: "50%" },
+  legs: { top: "66%", left: "40%" },
+  calves: { top: "82%", left: "42%" },
+}
+const hotspotPositionsFemale: Record<BodyAreaKey, { top: string; left: string }> = {
+  shoulders: { top: "15%", left: "50%" },
+  chest: { top: "24%", left: "50%" },
+  back: { top: "30%", left: "75%" },
+  arms: { top: "28%", left: "22%" },
+  core: { top: "39%", left: "50%" },
+  hips: { top: "50%", left: "50%" },
+  legs: { top: "67%", left: "42%" },
+  calves: { top: "83%", left: "43%" },
+}
+
+// Proportion science helpers
+function computeNodeStatus(
+  area: BodyAreaKey,
+  gender: "male" | "female",
+  bodyStatus: Record<BodyAreaKey, BodyAreaStatus>,
+  measurements: BodyMeasurements,
+  latestPainLevel: number,
+): { color: string; glow: string; label: string; priority: "focus" | "risk" | "strong" | "neutral" } {
+  const shoulders = measurements.shoulders ?? 0
+  const waist = measurements.waist ?? 0
+  const hips = measurements.hips ?? 0
+
+  // Pain override — any pain > 0 turns the "core" region yellow (risk)
+  if (latestPainLevel > 0 && (area === "core" || area === "back")) {
+    return {
+      color: "bg-amber-400",
+      glow: "rgba(251,191,36,0.7)",
+      label: "Risco (Dor detectada)",
+      priority: "risk",
+    }
+  }
+
+  // Proportion-based focus nodes
+  if (gender === "male" && area === "shoulders" && shoulders > 0 && waist > 0) {
+    const ratio = shoulders / waist
+    if (ratio < 1.6)
+      return {
+        color: "bg-red-500",
+        glow: "rgba(239,68,68,0.7)",
+        label: `Foco (Razao ${ratio.toFixed(2)} < 1.6)`,
+        priority: "focus",
+      }
+  }
+  if (gender === "female" && (area === "hips" || area === "core") && waist > 0 && hips > 0) {
+    const ratio = waist / hips
+    if (ratio > 0.75)
+      return {
+        color: "bg-red-500",
+        glow: "rgba(239,68,68,0.7)",
+        label: `Foco (Razao ${ratio.toFixed(2)} > 0.75)`,
+        priority: "focus",
+      }
+  }
+
+  // Fall back to bodyStatus from context
+  const status = bodyStatus[area]
+  if (status === "injury")
+    return { color: "bg-amber-400", glow: "rgba(251,191,36,0.7)", label: "Risco / Lesao", priority: "risk" }
+  if (status === "needs_improvement")
+    return { color: "bg-red-500", glow: "rgba(239,68,68,0.7)", label: "Foco estetico", priority: "focus" }
+  return { color: "bg-emerald-400", glow: "rgba(52,211,153,0.6)", label: "Ponto forte", priority: "strong" }
+}
+
+// Sanitize measurement input — positive numbers only
+function sanitizeMeasurement(raw: string): number | null {
+  const cleaned = raw.replace(/[^0-9.]/g, "")
+  if (cleaned === "") return null
+  const num = Number.parseFloat(cleaned)
+  if (Number.isNaN(num) || num < 0) return null
+  return Math.round(num * 10) / 10
 }
 
 // ========== DASHBOARD VIEW ==========
@@ -746,8 +819,12 @@ function Visao360View() {
   const [isGenderSwitching, setIsGenderSwitching] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const [checkinSuccess, setCheckinSuccess] = useState(false)
+  const [showProportionGrid, setShowProportionGrid] = useState<Record<string, boolean>>({
+    front: false,
+    side: false,
+    back: false,
+  })
 
-  // Check-in form state
   const [checkinForm, setCheckinForm] = useState({
     trainedToday: false,
     restDay: false,
@@ -759,11 +836,32 @@ function Visao360View() {
     notes: "",
   })
 
-  // Mock 30-day trend data for sparklines
-  const getMockTrendData = (key: string) => {
-    const base = measurements[key as keyof BodyMeasurements] || 40
-    return Array.from({ length: 30 }, (_, i) => base + Math.sin(i * 0.3) * 2 + Math.random() * 1.5)
-  }
+  // Theme: Cyan for male, Violet/Amethyst for female (Mewtwo aesthetic)
+  const isMale = gender === "male"
+  const accent = isMale ? "cyan" : "violet"
+  const accentRgb = isMale ? "0,242,255" : "167,139,250"
+  const accentHex = isMale ? "#00F2FF" : "#A78BFA"
+  const accentClass = isMale ? "cyan-400" : "violet-400"
+  const accentBorder = isMale ? "border-cyan-500/30" : "border-violet-500/30"
+  const accentBg = isMale ? "bg-cyan-500" : "bg-violet-500"
+  const accentText = isMale ? "text-cyan-400" : "text-violet-400"
+  const accentGlow = isMale
+    ? "shadow-[0_0_20px_rgba(0,242,255,0.3)]"
+    : "shadow-[0_0_20px_rgba(167,139,250,0.3)]"
+
+  // Latest pain from check-ins
+  const latestPain = checkins.length > 0 ? checkins[checkins.length - 1].painLevel : checkinForm.painLevel
+
+  // Hotspot positions based on gender
+  const hotspotPos = isMale ? hotspotPositionsMale : hotspotPositionsFemale
+
+  const getMockTrendData = useCallback(
+    (key: string) => {
+      const base = (measurements[key as keyof BodyMeasurements] as number) || 40
+      return Array.from({ length: 30 }, (_, i) => base + Math.sin(i * 0.3) * 2 + Math.random() * 1.5)
+    },
+    [measurements],
+  )
 
   const handleGenderSwitch = (newGender: "male" | "female") => {
     if (gender === newGender) return
@@ -774,9 +872,7 @@ function Visao360View() {
     }, 150)
   }
 
-  const handleSaveMeasurements = () => {
-    saveMeasurements(measurements)
-  }
+  const handleSaveMeasurements = () => saveMeasurements(measurements)
 
   const handleCheckinSubmit = () => {
     const checkin: DailyCheckin = {
@@ -804,56 +900,75 @@ function Visao360View() {
     setPhotos({ ...photos, [type]: url })
   }
 
-  // Get energy gradient color
-  const getEnergyGradient = (value: number) => {
-    if (value <= 2) return "from-blue-500 to-cyan-400"
-    if (value <= 3) return "from-cyan-400 to-emerald-400"
-    if (value <= 4) return "from-emerald-400 to-yellow-400"
+  // Gradient helpers for sliders
+  const getDietGradient = (v: number) => {
+    if (v <= 30) return "from-red-500 to-orange-500"
+    if (v <= 60) return "from-orange-400 to-amber-400"
+    if (v <= 85) return "from-amber-400 to-emerald-400"
+    return "from-emerald-400 to-cyan-400"
+  }
+  const getPainGradient = (v: number) => {
+    if (v <= 3) return "from-emerald-500 to-emerald-400"
+    if (v <= 6) return "from-amber-400 to-orange-500"
+    return "from-orange-500 to-red-500"
+  }
+  const getEnergyGradient = (v: number) => {
+    if (v <= 2) return "from-blue-500 to-cyan-400"
+    if (v <= 3) return "from-cyan-400 to-emerald-400"
+    if (v <= 4) return "from-emerald-400 to-yellow-400"
     return "from-yellow-400 to-emerald-500"
   }
-
-  // Get stress gradient color
-  const getStressGradient = (value: number) => {
-    if (value <= 2) return "from-blue-500 to-cyan-400"
-    if (value <= 3) return "from-cyan-400 to-amber-400"
-    if (value <= 4) return "from-amber-400 to-orange-500"
+  const getStressGradient = (v: number) => {
+    if (v <= 2) return "from-blue-500 to-cyan-400"
+    if (v <= 3) return "from-cyan-400 to-amber-400"
+    if (v <= 4) return "from-amber-400 to-orange-500"
     return "from-orange-500 to-red-500"
   }
 
   const measurementFields = [
-    { key: "shoulders", label: "Ombros", icon: "S" },
-    { key: "chest", label: "Peitoral", icon: "P" },
-    { key: "waist", label: "Cintura", icon: "C" },
-    { key: "hips", label: "Quadril", icon: "Q" },
-    { key: "rightArm", label: "Braco D", icon: "BD" },
-    { key: "leftArm", label: "Braco E", icon: "BE" },
-    { key: "rightThigh", label: "Coxa D", icon: "CD" },
-    { key: "leftThigh", label: "Coxa E", icon: "CE" },
-    { key: "rightCalf", label: "Pant D", icon: "PD" },
-    { key: "leftCalf", label: "Pant E", icon: "PE" },
-    { key: "neck", label: "Pescoco", icon: "N" },
+    { key: "shoulders", label: "Ombros" },
+    { key: "chest", label: "Peitoral" },
+    { key: "waist", label: "Cintura" },
+    { key: "hips", label: "Quadril" },
+    { key: "rightArm", label: "Braco D" },
+    { key: "leftArm", label: "Braco E" },
+    { key: "rightThigh", label: "Coxa D" },
+    { key: "leftThigh", label: "Coxa E" },
+    { key: "rightCalf", label: "Pant D" },
+    { key: "leftCalf", label: "Pant E" },
+    { key: "neck", label: "Pescoco" },
   ]
+
+  // Proportion ratios for display
+  const shoulderWaistRatio =
+    measurements.shoulders && measurements.waist ? (measurements.shoulders / measurements.waist).toFixed(2) : null
+  const waistHipRatio =
+    measurements.waist && measurements.hips ? (measurements.waist / measurements.hips).toFixed(2) : null
 
   return (
     <div className="space-y-10 pb-8">
-      {/* Header - Minimal */}
+      {/* ── Header ──────────────────────────────────────────── */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 mb-2">
-          <Target className="w-6 h-6 text-cyan-400" />
+        <div
+          className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-2 border ${
+            isMale ? "bg-cyan-500/10 border-cyan-500/20" : "bg-violet-500/10 border-violet-500/20"
+          }`}
+        >
+          <Target className={`w-6 h-6 ${accentText}`} />
         </div>
-        <h2 className="text-2xl font-extralight tracking-tight text-white">Visao 360</h2>
+        <h2 className="text-2xl font-extralight tracking-tight text-white">Ativos Biometricos</h2>
         <p className="text-sm text-white/40 max-w-md mx-auto font-light">
-          Bioengenharia corporal. Medidas, pontos fortes, vulnerabilidades e historico.
+          Bioengenharia corporal. Medidas, proporcoes, vulnerabilidades e historico.
         </p>
       </div>
 
-      {/* Gender Swap - Futuristic Toggle */}
+      {/* ── Gender Toggle ───────────────────────────────────── */}
       <div className="flex justify-center">
-        <div className="inline-flex bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5">
+        <div className="inline-flex bg-black/40 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-1.5">
           <button
             onClick={() => handleGenderSwitch("male")}
             className={`px-8 py-3 rounded-xl text-sm tracking-wide transition-all duration-300 ${
-              gender === "male"
+              isMale
                 ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30"
                 : "text-white/40 hover:text-white/60"
             }`}
@@ -863,8 +978,8 @@ function Visao360View() {
           <button
             onClick={() => handleGenderSwitch("female")}
             className={`px-8 py-3 rounded-xl text-sm tracking-wide transition-all duration-300 ${
-              gender === "female"
-                ? "bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30"
+              !isMale
+                ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/30"
                 : "text-white/40 hover:text-white/60"
             }`}
           >
@@ -873,85 +988,216 @@ function Visao360View() {
         </div>
       </div>
 
+      {/* ── Proportion Summary Chips ────────────────────────── */}
+      {(shoulderWaistRatio || waistHipRatio) && (
+        <div className="flex justify-center gap-4">
+          {isMale && shoulderWaistRatio && (
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+                Number(shoulderWaistRatio) >= 1.6
+                  ? "bg-emerald-500/10 border-emerald-500/20"
+                  : "bg-red-500/10 border-red-500/20"
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${Number(shoulderWaistRatio) >= 1.6 ? "bg-emerald-400" : "bg-red-500 animate-pulse"}`}
+              />
+              <span className="text-[10px] tracking-wider uppercase text-white/50">
+                Ombro/Cintura:{" "}
+                <span className={Number(shoulderWaistRatio) >= 1.6 ? "text-emerald-400" : "text-red-400"}>
+                  {shoulderWaistRatio}
+                </span>
+                <span className="text-white/25 ml-1">(ideal {">"} 1.6)</span>
+              </span>
+            </div>
+          )}
+          {!isMale && waistHipRatio && (
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+                Number(waistHipRatio) <= 0.75
+                  ? "bg-emerald-500/10 border-emerald-500/20"
+                  : "bg-red-500/10 border-red-500/20"
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${Number(waistHipRatio) <= 0.75 ? "bg-emerald-400" : "bg-red-500 animate-pulse"}`}
+              />
+              <span className="text-[10px] tracking-wider uppercase text-white/50">
+                Cintura/Quadril:{" "}
+                <span className={Number(waistHipRatio) <= 0.75 ? "text-emerald-400" : "text-red-400"}>
+                  {waistHipRatio}
+                </span>
+                <span className="text-white/25 ml-1">(ideal {"<"} 0.75)</span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Hologram of Governance */}
-        <div className="relative bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent" />
-          
+        {/* ── Hologram ──────────────────────────────────────── */}
+        <div className="relative bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom, rgba(${accentRgb},0.04) 0%, transparent 60%)`,
+            }}
+          />
+
           <h3 className="relative text-sm tracking-[0.2em] uppercase text-white/40 mb-6">Holograma de Governanca</h3>
-          
-          <div className={`relative w-full h-[420px] bg-gradient-to-b from-slate-900/50 to-black rounded-2xl overflow-hidden transition-all duration-300 ${isGenderSwitching ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            {/* Scan lines effect */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,242,255,0.03) 2px, rgba(0,242,255,0.03) 4px)',
-            }} />
-            
-            {/* Hologram body */}
+
+          <div
+            className={`relative w-full h-[440px] bg-black rounded-2xl overflow-hidden transition-all duration-300 ${isGenderSwitching ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
+          >
+            {/* Scan lines */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(${accentRgb},0.02) 2px, rgba(${accentRgb},0.02) 4px)`,
+              }}
+            />
+
+            {/* Scanning sweep animation */}
+            <motion.div
+              className="absolute left-0 right-0 h-px pointer-events-none"
+              style={{
+                background: `linear-gradient(90deg, transparent, rgba(${accentRgb},0.5), transparent)`,
+                boxShadow: `0 0 20px rgba(${accentRgb},0.3)`,
+              }}
+              animate={{ top: ["0%", "100%", "0%"] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            {/* Body silhouette */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-48 h-80">
-                {/* Body silhouette SVG */}
-                <svg viewBox="0 0 100 200" className="w-full h-full" style={{ filter: 'drop-shadow(0 0 20px rgba(0,242,255,0.3))' }}>
+              <div className="relative w-48 h-[340px]">
+                <svg
+                  viewBox="0 0 120 240"
+                  className="w-full h-full"
+                  style={{ filter: `drop-shadow(0 0 24px rgba(${accentRgb},0.35))` }}
+                >
                   <defs>
-                    <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor={gender === "male" ? "rgba(0,242,255,0.4)" : "rgba(236,72,153,0.4)"} />
-                      <stop offset="50%" stopColor={gender === "male" ? "rgba(0,242,255,0.2)" : "rgba(236,72,153,0.2)"} />
-                      <stop offset="100%" stopColor={gender === "male" ? "rgba(0,242,255,0.1)" : "rgba(236,72,153,0.1)"} />
+                    <linearGradient id="bodyGradV360" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor={`rgba(${accentRgb},0.35)`} />
+                      <stop offset="50%" stopColor={`rgba(${accentRgb},0.18)`} />
+                      <stop offset="100%" stopColor={`rgba(${accentRgb},0.06)`} />
+                    </linearGradient>
+                    <linearGradient id="bodyStrokeV360" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor={`rgba(${accentRgb},0.8)`} />
+                      <stop offset="100%" stopColor={`rgba(${accentRgb},0.2)`} />
                     </linearGradient>
                   </defs>
-                  {gender === "male" ? (
-                    <path d="M50 10 C60 10 65 20 65 30 L65 35 C70 40 75 45 75 55 L75 90 C75 95 70 100 65 100 L65 150 C65 160 60 170 55 180 L55 195 L45 195 L45 180 C40 170 35 160 35 150 L35 100 C30 100 25 95 25 90 L25 55 C25 45 30 40 35 35 L35 30 C35 20 40 10 50 10" fill="url(#bodyGradient)" stroke="rgba(0,242,255,0.6)" strokeWidth="0.5" />
+                  {isMale ? (
+                    /* V-Taper Male: wide shoulders, narrow waist, straight legs */
+                    <path
+                      d="M60 12 C64 12 67 16 67 22 C67 26 66 28 66 30
+                         C74 34 82 42 84 52 L84 56 C84 60 82 62 80 63
+                         L79 64 C78 66 76 72 76 78 L76 80 C76 84 74 86 72 86
+                         L72 88 C76 88 78 85 78 80 L78 72 C78 62 80 58 82 56 L84 56
+                         M36 56 C38 58 40 62 40 72 L40 80 C40 85 42 88 46 88
+                         L46 86 C44 86 42 84 42 80 L42 78 C42 72 40 66 39 64
+                         L38 63 C36 62 34 60 34 56 L34 52 C36 42 44 34 52 30
+                         C52 28 51 26 51 22 C51 16 54 12 60 12 Z
+                         M46 88 L46 100 C46 102 47 106 48 110
+                         L49 120 C50 130 50 140 50 148
+                         L50 180 C50 190 48 200 46 210
+                         L45 228 L51 228 L54 210 C55 200 56 190 56 180
+                         L56 148 C56 140 56 130 56 120
+                         L60 120
+                         L62 120 C62 130 62 140 62 148
+                         L62 180 C62 190 63 200 64 210
+                         L67 228 L73 228 L72 210 C70 200 68 190 68 180
+                         L68 148 C68 140 68 130 69 120
+                         L70 110 C71 106 72 102 72 100
+                         L72 88"
+                      fill="url(#bodyGradV360)"
+                      stroke="url(#bodyStrokeV360)"
+                      strokeWidth="0.6"
+                    />
                   ) : (
-                    <path d="M50 10 C58 10 62 20 62 30 L62 35 C67 40 72 48 72 58 L72 75 C72 85 68 95 62 100 L62 105 C65 110 68 120 68 135 L68 150 C68 165 60 175 55 185 L55 195 L45 195 L45 185 C40 175 32 165 32 150 L32 135 C32 120 35 110 38 105 L38 100 C32 95 28 85 28 75 L28 58 C28 48 33 40 38 35 L38 30 C38 20 42 10 50 10" fill="url(#bodyGradient)" stroke="rgba(236,72,153,0.6)" strokeWidth="0.5" />
+                    /* Hourglass Female: narrow shoulders, cinched waist, wide hips */
+                    <path
+                      d="M60 12 C63 12 66 16 66 22 C66 26 65 28 65 30
+                         C70 34 76 42 78 50 L78 58 C78 62 76 64 74 65
+                         L73 66 C72 68 70 72 70 78 L70 80 C70 84 68 86 66 86
+                         L66 88 C70 88 72 85 72 80 L72 72 C72 64 74 60 76 58 L78 58
+                         M40 58 C42 60 44 64 44 72 L44 80 C44 85 46 88 50 88
+                         L50 86 C48 86 46 84 46 80 L46 78 C46 72 44 68 43 66
+                         L42 65 C40 64 38 62 38 58 L38 50 C40 42 46 34 51 30
+                         C51 28 50 26 50 22 C50 16 53 12 60 12 Z
+                         M50 88 L48 96 C46 102 44 108 44 114
+                         C44 120 46 128 50 134
+                         L51 148 C51 160 50 170 49 180
+                         L48 200 C47 210 46 218 45 228
+                         L51 228 L53 210 C54 200 55 190 55 180
+                         L56 160 L60 160 L62 180
+                         C63 190 64 200 65 210
+                         L67 228 L73 228 C72 218 71 210 70 200
+                         L69 180 C68 170 67 160 67 148
+                         L68 134 C72 128 74 120 74 114
+                         C74 108 72 102 70 96
+                         L68 88"
+                      fill="url(#bodyGradV360)"
+                      stroke="url(#bodyStrokeV360)"
+                      strokeWidth="0.6"
+                    />
                   )}
                 </svg>
               </div>
             </div>
 
-            {/* Pulsating Hotspots */}
+            {/* Smart Nodes (proportion-aware) */}
             {(Object.keys(bodyStatus) as BodyAreaKey[]).map((area) => {
-              const status = bodyStatus[area]
-              const color = status === "strength" ? "bg-emerald-400" : status === "aesthetic_focus" ? "bg-red-500" : "bg-yellow-400"
-              const glowColor = status === "strength" ? "rgba(52,211,153,0.6)" : status === "aesthetic_focus" ? "rgba(239,68,68,0.6)" : "rgba(250,204,21,0.6)"
-              
+              const nodeInfo = computeNodeStatus(area, gender, bodyStatus, measurements, latestPain)
+              const pos = hotspotPos[area]
+
               return (
-                <div
-                  key={area}
-                  className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 group"
-                  style={{
-                    top: hotspotPositions[area].top,
-                    left: hotspotPositions[area].left,
-                  }}
+                <motion.div
+                  key={`${area}-${gender}`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.05 * Object.keys(bodyStatus).indexOf(area) }}
+                  className="absolute cursor-pointer -translate-x-1/2 -translate-y-1/2 group"
+                  style={{ top: pos.top, left: pos.left }}
                   onMouseEnter={() => setHoveredArea(area)}
                   onMouseLeave={() => setHoveredArea(null)}
                 >
-                  {/* Outer pulse ring */}
-                  <div 
-                    className={`absolute inset-[-8px] rounded-full animate-ping opacity-30 ${color}`}
-                    style={{ animationDuration: '2s' }}
+                  {/* Outer pulse */}
+                  <div
+                    className={`absolute inset-[-8px] rounded-full animate-ping opacity-25 ${nodeInfo.color}`}
+                    style={{ animationDuration: nodeInfo.priority === "focus" ? "1.5s" : "2.5s" }}
                   />
                   {/* Inner glow */}
-                  <div 
-                    className={`absolute inset-[-4px] rounded-full blur-sm ${color} opacity-50`}
+                  <div className={`absolute inset-[-4px] rounded-full blur-sm ${nodeInfo.color} opacity-40`} />
+                  {/* Core */}
+                  <div
+                    className={`relative w-4 h-4 rounded-full ${nodeInfo.color} transition-transform duration-200 ${hoveredArea === area ? "scale-[1.6]" : ""}`}
+                    style={{ boxShadow: `0 0 15px ${nodeInfo.glow}` }}
                   />
-                  {/* Core dot */}
-                  <div 
-                    className={`relative w-4 h-4 rounded-full ${color} transition-transform duration-200 ${hoveredArea === area ? 'scale-150' : ''}`}
-                    style={{ boxShadow: `0 0 15px ${glowColor}` }}
-                  />
-                </div>
+                </motion.div>
               )
             })}
 
-            {/* Tooltip Card with Glassmorphism */}
-            {hoveredArea && (
-              <div className="absolute bottom-6 left-6 right-6 bg-black/60 backdrop-blur-xl rounded-xl p-4 border border-white/10 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                <p className="font-medium text-white text-sm">{bodyAreaLabels[hoveredArea]}</p>
-                <p className="text-white/50 text-xs mt-1">{getStatusLabel(bodyStatus[hoveredArea])}</p>
-              </div>
-            )}
+            {/* Tooltip */}
+            <AnimatePresence>
+              {hoveredArea && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bottom-6 left-6 right-6 bg-black/70 backdrop-blur-xl rounded-xl p-4 border border-white/10"
+                >
+                  <p className="font-medium text-white text-sm">{bodyAreaLabels[hoveredArea]}</p>
+                  <p className="text-white/50 text-xs mt-1">
+                    {computeNodeStatus(hoveredArea, gender, bodyStatus, measurements, latestPain).label}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Legend - Ultra minimal */}
+          {/* Legend */}
           <div className="flex items-center justify-center gap-8 mt-6 text-[10px] tracking-wider uppercase">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
@@ -962,55 +1208,54 @@ function Visao360View() {
               <span className="text-white/30">Foco</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+              <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
               <span className="text-white/30">Risco</span>
             </div>
           </div>
         </div>
 
-        {/* Metric Chips - Apple Style */}
-        <div className="bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8">
+        {/* ── Metric Chips + Inputs ─────────────────────────── */}
+        <div className="bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm tracking-[0.2em] uppercase text-white/40">Medidas Corporais</h3>
             <button
               onClick={() => setShowMeasureGuide(true)}
-              className="text-[10px] tracking-wider uppercase text-cyan-400/60 hover:text-cyan-400 flex items-center gap-1.5 transition-colors"
+              className={`text-[10px] tracking-wider uppercase ${accentText} opacity-60 hover:opacity-100 flex items-center gap-1.5 transition-opacity`}
             >
               <HelpCircle className="w-3 h-3" />
               Guia
             </button>
           </div>
 
-          {/* Metric Chips Grid */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             {measurementFields.map((field) => {
               const value = measurements[field.key as keyof BodyMeasurements]
               const isSelected = selectedMetric === field.key
-              
+              const chipBorder = isSelected
+                ? isMale
+                  ? "bg-cyan-500/10 border-cyan-500/30"
+                  : "bg-violet-500/10 border-violet-500/30"
+                : "bg-white/[0.03] border-white/[0.04] hover:border-white/10"
+
               return (
                 <button
                   key={field.key}
                   onClick={() => setSelectedMetric(isSelected ? null : field.key)}
-                  className={`relative p-4 rounded-2xl border transition-all duration-300 text-left ${
-                    isSelected 
-                      ? 'bg-cyan-500/10 border-cyan-500/30' 
-                      : 'bg-white/5 border-white/5 hover:border-white/10'
-                  }`}
+                  className={`relative p-4 rounded-2xl border transition-all duration-300 text-left ${chipBorder}`}
                 >
                   <p className="text-[9px] tracking-[0.15em] uppercase text-white/30 mb-1">{field.label}</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-extralight text-white">{value || "--"}</span>
+                    <span className="text-xl font-extralight text-white">{typeof value === "number" ? value : "--"}</span>
                     <span className="text-[10px] text-white/30">cm</span>
                   </div>
-                  
-                  {/* Mini Sparkline on selection */}
+
                   {isSelected && (
                     <div className="mt-3 h-8 animate-in fade-in duration-300">
                       <svg viewBox="0 0 100 30" className="w-full h-full">
                         <defs>
-                          <linearGradient id={`spark-${field.key}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="rgba(0,242,255,0.3)" />
-                            <stop offset="100%" stopColor="rgba(0,242,255,0)" />
+                          <linearGradient id={`spark360-${field.key}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={`rgba(${accentRgb},0.3)`} />
+                            <stop offset="100%" stopColor={`rgba(${accentRgb},0)`} />
                           </linearGradient>
                         </defs>
                         {(() => {
@@ -1018,12 +1263,13 @@ function Visao360View() {
                           const min = Math.min(...data)
                           const max = Math.max(...data)
                           const range = max - min || 1
-                          const points = data.map((v, i) => `${(i / 29) * 100},${30 - ((v - min) / range) * 25}`).join(' ')
-                          const areaPoints = `0,30 ${points} 100,30`
+                          const points = data
+                            .map((v, i) => `${(i / 29) * 100},${30 - ((v - min) / range) * 25}`)
+                            .join(" ")
                           return (
                             <>
-                              <polygon points={areaPoints} fill={`url(#spark-${field.key})`} />
-                              <polyline points={points} fill="none" stroke="#00F2FF" strokeWidth="1.5" />
+                              <polygon points={`0,30 ${points} 100,30`} fill={`url(#spark360-${field.key})`} />
+                              <polyline points={points} fill="none" stroke={accentHex} strokeWidth="1.5" />
                             </>
                           )
                         })()}
@@ -1036,33 +1282,55 @@ function Visao360View() {
             })}
           </div>
 
-          {/* Inline Input for Selected Metric */}
-          {selectedMetric && (
-            <div className="bg-white/5 rounded-2xl p-4 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-[10px] tracking-wider uppercase text-white/40 mb-2 block">
-                Atualizar {measurementFields.find(f => f.key === selectedMetric)?.label}
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={measurements[selectedMetric as keyof BodyMeasurements] || ""}
-                  onChange={(e) =>
-                    setMeasurements({
-                      ...measurements,
-                      [selectedMetric]: e.target.value ? Number.parseFloat(e.target.value) : null,
-                    })
-                  }
-                  className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white text-lg font-light placeholder:text-white/20 focus:outline-none focus:border-cyan-500/50 transition-colors"
-                />
-                <span className="text-sm text-white/30">cm</span>
-              </div>
-            </div>
-          )}
+          {/* Inline Input — sanitized, positive-only */}
+          <AnimatePresence>
+            {selectedMetric && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-white/[0.03] rounded-2xl p-4 mb-4">
+                  <label className="text-[10px] tracking-wider uppercase text-white/40 mb-2 block">
+                    Atualizar {measurementFields.find((f) => f.key === selectedMetric)?.label}
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.0"
+                      value={
+                        measurements[selectedMetric as keyof BodyMeasurements] != null
+                          ? String(measurements[selectedMetric as keyof BodyMeasurements])
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const sanitized = sanitizeMeasurement(e.target.value)
+                        setMeasurements({ ...measurements, [selectedMetric]: sanitized })
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault()
+                      }}
+                      className={`flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white text-lg font-light placeholder:text-white/20 focus:outline-none transition-colors ${
+                        isMale ? "focus:border-cyan-500/50" : "focus:border-violet-500/50"
+                      }`}
+                    />
+                    <span className="text-sm text-white/30">cm</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <button
             onClick={handleSaveMeasurements}
-            className="w-full py-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 text-cyan-400/80 font-light tracking-wider text-sm rounded-2xl hover:border-cyan-500/40 hover:text-cyan-400 transition-all duration-300 flex items-center justify-center gap-3"
+            className={`w-full py-4 border font-light tracking-wider text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 ${
+              isMale
+                ? "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/20 text-cyan-400/80 hover:border-cyan-500/40 hover:text-cyan-400"
+                : "bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-violet-500/20 text-violet-400/80 hover:border-violet-500/40 hover:text-violet-400"
+            }`}
           >
             <Save className="w-4 h-4" />
             Salvar Medidas
@@ -1070,14 +1338,21 @@ function Visao360View() {
         </div>
       </div>
 
-      {/* Command Console - Check-in */}
-      <div className="relative bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5" />
-        
+      {/* ── Command Console — Check-in ──────────────────────── */}
+      <div className="relative bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(135deg, rgba(${accentRgb},0.04) 0%, transparent 60%)` }}
+        />
+
         <div className="relative">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-cyan-400" />
+            <div
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+                isMale ? "bg-cyan-500/10 border-cyan-500/20" : "bg-violet-500/10 border-violet-500/20"
+              }`}
+            >
+              <Shield className={`w-5 h-5 ${accentText}`} />
             </div>
             <div>
               <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Console de Comando</h3>
@@ -1085,12 +1360,19 @@ function Visao360View() {
             </div>
           </div>
 
-          {checkinSuccess && (
-            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Check className="w-5 h-5 text-emerald-400" />
-              <span className="text-emerald-400 text-sm">Check-in registrado com sucesso</span>
-            </div>
-          )}
+          <AnimatePresence>
+            {checkinSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3"
+              >
+                <Check className="w-5 h-5 text-emerald-400" />
+                <span className="text-emerald-400 text-sm">Check-in registrado com sucesso</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Training Status */}
@@ -1099,20 +1381,20 @@ function Visao360View() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setCheckinForm({ ...checkinForm, trainedToday: true, restDay: false })}
-                  className={`flex-1 py-3 px-4 rounded-xl border text-sm transition-all duration-300 ${
+                  className={`flex-1 py-3.5 px-4 rounded-xl border text-sm transition-all duration-300 ${
                     checkinForm.trainedToday
                       ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
-                      : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                      : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/15"
                   }`}
                 >
                   Treinei
                 </button>
                 <button
                   onClick={() => setCheckinForm({ ...checkinForm, trainedToday: false, restDay: true })}
-                  className={`flex-1 py-3 px-4 rounded-xl border text-sm transition-all duration-300 ${
+                  className={`flex-1 py-3.5 px-4 rounded-xl border text-sm transition-all duration-300 ${
                     checkinForm.restDay
                       ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
-                      : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                      : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/15"
                   }`}
                 >
                   Descanso
@@ -1120,58 +1402,86 @@ function Visao360View() {
               </div>
             </div>
 
-            {/* Diet Adherence - Gradient Slider */}
+            {/* Diet Slider — enhanced UX */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] tracking-[0.15em] uppercase text-white/30">Dieta</label>
+                <label
+                  className={`text-[10px] tracking-[0.15em] uppercase transition-all duration-300 ${
+                    checkinForm.followedDiet <= 10 || checkinForm.followedDiet >= 95
+                      ? `${accentText} font-medium`
+                      : "text-white/30"
+                  }`}
+                  style={
+                    checkinForm.followedDiet <= 10 || checkinForm.followedDiet >= 95
+                      ? { textShadow: `0 0 12px rgba(${accentRgb},0.5)` }
+                      : undefined
+                  }
+                >
+                  Dieta
+                  {checkinForm.followedDiet >= 95 && " (Elite)"}
+                  {checkinForm.followedDiet <= 10 && " (Critico)"}
+                </label>
                 <span className="text-lg font-extralight text-white">{checkinForm.followedDiet}%</span>
               </div>
-              <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
-                <div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-300"
-                  style={{ width: `${checkinForm.followedDiet}%` }}
+              <div className="relative group">
+                <div className="h-3 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${getDietGradient(checkinForm.followedDiet)} rounded-full transition-all duration-300`}
+                    style={{ width: `${checkinForm.followedDiet}%` }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={checkinForm.followedDiet}
+                  onChange={(e) => setCheckinForm({ ...checkinForm, followedDiet: Number.parseInt(e.target.value) })}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={checkinForm.followedDiet}
-                onChange={(e) => setCheckinForm({ ...checkinForm, followedDiet: Number.parseInt(e.target.value) })}
-                className="w-full opacity-0 absolute cursor-pointer"
-                style={{ marginTop: '-18px', height: '18px' }}
-              />
             </div>
 
-            {/* Sleep Hours */}
+            {/* Sleep */}
             <div className="space-y-3">
               <label className="text-[10px] tracking-[0.15em] uppercase text-white/30">Horas de Sono</label>
               <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="12"
-                value={checkinForm.sleepHours}
-                onChange={(e) => setCheckinForm({ ...checkinForm, sleepHours: Number.parseFloat(e.target.value) })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-lg font-light focus:outline-none focus:border-cyan-500/50 transition-colors"
+                type="text"
+                inputMode="decimal"
+                placeholder="7.0"
+                value={checkinForm.sleepHours || ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, "")
+                  const num = Number.parseFloat(val)
+                  if (val === "" || val === ".") {
+                    setCheckinForm({ ...checkinForm, sleepHours: 0 })
+                  } else if (!Number.isNaN(num) && num >= 0 && num <= 16) {
+                    setCheckinForm({ ...checkinForm, sleepHours: Math.round(num * 2) / 2 })
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "-") e.preventDefault()
+                }}
+                className={`w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white text-lg font-light focus:outline-none transition-colors ${
+                  isMale ? "focus:border-cyan-500/50" : "focus:border-violet-500/50"
+                }`}
               />
             </div>
 
-            {/* Energy Level - Dynamic Gradient */}
+            {/* Energy */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] tracking-[0.15em] uppercase text-white/30">Energia</label>
                 <div className={`w-16 h-1.5 rounded-full bg-gradient-to-r ${getEnergyGradient(checkinForm.energy)}`} />
               </div>
               <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map((n) => (
+                {([1, 2, 3, 4, 5] as const).map((n) => (
                   <button
                     key={n}
                     onClick={() => setCheckinForm({ ...checkinForm, energy: n as EnergyScore })}
-                    className={`flex-1 py-3 rounded-xl border text-sm font-light transition-all duration-300 ${
+                    className={`flex-1 py-3.5 rounded-xl border text-sm font-light transition-all duration-300 ${
                       checkinForm.energy === n
                         ? `bg-gradient-to-r ${getEnergyGradient(n)} border-transparent text-white`
-                        : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                        : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/15"
                     }`}
                   >
                     {n}
@@ -1180,21 +1490,21 @@ function Visao360View() {
               </div>
             </div>
 
-            {/* Stress Level - Dynamic Gradient */}
+            {/* Stress */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] tracking-[0.15em] uppercase text-white/30">Estresse</label>
                 <div className={`w-16 h-1.5 rounded-full bg-gradient-to-r ${getStressGradient(checkinForm.stressLevel)}`} />
               </div>
               <div className="flex gap-1.5">
-                {[1, 2, 3, 4, 5].map((n) => (
+                {([1, 2, 3, 4, 5] as const).map((n) => (
                   <button
                     key={n}
                     onClick={() => setCheckinForm({ ...checkinForm, stressLevel: n as EnergyScore })}
-                    className={`flex-1 py-3 rounded-xl border text-sm font-light transition-all duration-300 ${
+                    className={`flex-1 py-3.5 rounded-xl border text-sm font-light transition-all duration-300 ${
                       checkinForm.stressLevel === n
                         ? `bg-gradient-to-r ${getStressGradient(n)} border-transparent text-white`
-                        : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                        : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:border-white/15"
                     }`}
                   >
                     {n}
@@ -1203,30 +1513,47 @@ function Visao360View() {
               </div>
             </div>
 
-            {/* Pain Level */}
+            {/* Pain Slider — enhanced UX with glowing extremes */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] tracking-[0.15em] uppercase text-white/30">Dor</label>
-                <span className="text-lg font-extralight text-white">{checkinForm.painLevel}</span>
-              </div>
-              <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
-                <div 
-                  className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${
-                    checkinForm.painLevel <= 3 ? 'bg-emerald-500' : 
-                    checkinForm.painLevel <= 6 ? 'bg-yellow-500' : 'bg-red-500'
+                <label
+                  className={`text-[10px] tracking-[0.15em] uppercase transition-all duration-300 ${
+                    checkinForm.painLevel === 0
+                      ? "text-emerald-400 font-medium"
+                      : checkinForm.painLevel >= 8
+                        ? "text-red-400 font-medium"
+                        : "text-white/30"
                   }`}
-                  style={{ width: `${checkinForm.painLevel * 10}%` }}
+                  style={
+                    checkinForm.painLevel === 0
+                      ? { textShadow: "0 0 10px rgba(52,211,153,0.5)" }
+                      : checkinForm.painLevel >= 8
+                        ? { textShadow: "0 0 10px rgba(239,68,68,0.5)" }
+                        : undefined
+                  }
+                >
+                  Dor
+                  {checkinForm.painLevel === 0 && " (Livre)"}
+                  {checkinForm.painLevel >= 8 && " (Severa)"}
+                </label>
+                <span className="text-lg font-extralight text-white">{checkinForm.painLevel}/10</span>
+              </div>
+              <div className="relative group">
+                <div className="h-3 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${getPainGradient(checkinForm.painLevel)} rounded-full transition-all duration-300`}
+                    style={{ width: `${checkinForm.painLevel * 10}%` }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value={checkinForm.painLevel}
+                  onChange={(e) => setCheckinForm({ ...checkinForm, painLevel: Number.parseInt(e.target.value) })}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                value={checkinForm.painLevel}
-                onChange={(e) => setCheckinForm({ ...checkinForm, painLevel: Number.parseInt(e.target.value) })}
-                className="w-full opacity-0 absolute cursor-pointer"
-                style={{ marginTop: '-18px', height: '18px' }}
-              />
             </div>
           </div>
 
@@ -1237,13 +1564,17 @@ function Visao360View() {
               value={checkinForm.notes}
               onChange={(e) => setCheckinForm({ ...checkinForm, notes: e.target.value })}
               placeholder="Observacoes taticas do dia..."
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white/80 text-sm font-light placeholder:text-white/20 focus:outline-none focus:border-cyan-500/50 transition-colors h-20 resize-none"
+              className={`w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white/80 text-sm font-light placeholder:text-white/20 focus:outline-none transition-colors h-20 resize-none ${
+                isMale ? "focus:border-cyan-500/50" : "focus:border-violet-500/50"
+              }`}
             />
           </div>
 
           <button
             onClick={handleCheckinSubmit}
-            className="w-full mt-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-light tracking-wider text-sm rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3"
+            className={`w-full mt-6 py-4 text-white font-light tracking-wider text-sm rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3 ${
+              isMale ? "bg-gradient-to-r from-cyan-500 to-blue-500" : "bg-gradient-to-r from-violet-500 to-purple-500"
+            }`}
           >
             <Shield className="w-4 h-4" />
             Confirmar Check-in
@@ -1251,120 +1582,169 @@ function Visao360View() {
         </div>
       </div>
 
-      {/* Intelligence Archives - Progress Photos */}
-      <div className="bg-black/30 backdrop-blur-xl border border-white/5 rounded-3xl p-8">
+      {/* ── Intelligence Archives — Photos with Proportion Grid ── */}
+      <div className="bg-black/30 backdrop-blur-xl border border-white/[0.04] rounded-3xl p-8">
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-            <Camera className="w-5 h-5 text-indigo-400" />
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+              isMale ? "bg-cyan-500/10 border-cyan-500/20" : "bg-violet-500/10 border-violet-500/20"
+            }`}
+          >
+            <Camera className={`w-5 h-5 ${accentText}`} />
           </div>
           <div>
             <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Arquivos de Inteligencia</h3>
-            <p className="text-[10px] text-white/30 mt-0.5">Registro Visual de Progresso</p>
+            <p className="text-[10px] text-white/30 mt-0.5">Registro Visual + Linhas de Proporcao</p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">
-          {(["front", "side", "back"] as const).map((type) => (
-            <div key={type} className="relative group">
-              <label
-                className={`block aspect-[3/4] rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 overflow-hidden ${
-                  photos[type] 
-                    ? "border-cyan-500/30" 
-                    : "border-white/10 hover:border-white/20"
-                }`}
-              >
-                {photos[type] ? (
-                  <div className="relative w-full h-full">
-                    <img src={photos[type] || "/placeholder.svg"} alt={type} className="w-full h-full object-cover" />
-                    {/* Alignment Grid Overlay */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                      {/* Vertical lines */}
-                      <div className="absolute left-1/4 top-0 bottom-0 w-px bg-cyan-500/40" />
-                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-cyan-500/60" />
-                      <div className="absolute left-3/4 top-0 bottom-0 w-px bg-cyan-500/40" />
-                      {/* Horizontal lines */}
-                      <div className="absolute top-1/4 left-0 right-0 h-px bg-cyan-500/40" />
-                      <div className="absolute top-1/2 left-0 right-0 h-px bg-cyan-500/60" />
-                      <div className="absolute top-3/4 left-0 right-0 h-px bg-cyan-500/40" />
-                      {/* Center crosshair */}
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <div className="w-6 h-6 border border-cyan-500/80 rounded-full" />
-                        <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-cyan-500/80 rounded-full transform -translate-x-1/2 -translate-y-1/2" />
-                      </div>
-                      {/* Label */}
-                      <div className="absolute bottom-3 left-3 right-3 text-center">
-                        <span className="text-[9px] tracking-wider uppercase text-cyan-400 bg-black/60 px-2 py-1 rounded">
-                          Grade de Alinhamento
-                        </span>
+          {(["front", "side", "back"] as const).map((type) => {
+            const hasPhoto = !!photos[type]
+            const gridActive = showProportionGrid[type]
+
+            return (
+              <div key={type} className="relative group">
+                <label
+                  className={`block aspect-[3/4] rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 overflow-hidden ${
+                    hasPhoto ? accentBorder : "border-white/[0.06] hover:border-white/15"
+                  }`}
+                >
+                  {hasPhoto ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={photos[type] || "/placeholder.svg"}
+                        alt={`Foto ${type}`}
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                      />
+
+                      {/* Proportion Grid Overlay — always visible on photos, toggleable for full analysis */}
+                      <div
+                        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
+                          gridActive ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                        }`}
+                      >
+                        {/* Thirds grid */}
+                        <div className="absolute left-1/3 top-0 bottom-0 w-px" style={{ background: `rgba(${accentRgb},0.3)` }} />
+                        <div className="absolute left-2/3 top-0 bottom-0 w-px" style={{ background: `rgba(${accentRgb},0.3)` }} />
+                        <div className="absolute top-1/3 left-0 right-0 h-px" style={{ background: `rgba(${accentRgb},0.3)` }} />
+                        <div className="absolute top-2/3 left-0 right-0 h-px" style={{ background: `rgba(${accentRgb},0.3)` }} />
+                        {/* Center lines */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-px" style={{ background: `rgba(${accentRgb},0.6)` }} />
+                        <div className="absolute top-1/2 left-0 right-0 h-px" style={{ background: `rgba(${accentRgb},0.6)` }} />
+                        {/* Golden ratio lines at ~38% and ~62% */}
+                        <div className="absolute top-[38%] left-0 right-0 h-px border-dashed" style={{ background: `rgba(${accentRgb},0.15)` }} />
+                        <div className="absolute top-[62%] left-0 right-0 h-px border-dashed" style={{ background: `rgba(${accentRgb},0.15)` }} />
+                        {/* Crosshair */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                          <div className="w-8 h-8 border rounded-full" style={{ borderColor: `rgba(${accentRgb},0.5)` }} />
+                          <div
+                            className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2"
+                            style={{ background: `rgba(${accentRgb},0.7)` }}
+                          />
+                        </div>
+                        {/* Label */}
+                        <div className="absolute bottom-2 left-2 right-2 text-center">
+                          <span
+                            className={`text-[8px] tracking-wider uppercase px-2 py-0.5 rounded ${accentText} bg-black/70`}
+                          >
+                            Linhas de Proporcao
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-white/30 bg-white/5">
-                    <Camera className="w-8 h-8 mb-3 opacity-50" />
-                    <span className="text-[10px] tracking-wider uppercase">
-                      {type === "front" ? "Frente" : type === "side" ? "Lateral" : "Costas"}
-                    </span>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-white/30 bg-white/[0.02]">
+                      <Camera className="w-8 h-8 mb-3 opacity-40" />
+                      <span className="text-[10px] tracking-wider uppercase">
+                        {type === "front" ? "Frente" : type === "side" ? "Lateral" : "Costas"}
+                      </span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handlePhotoUpload(type, e.target.files[0])}
+                  />
+                </label>
+
+                {/* Toggle grid button */}
+                {hasPhoto && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setShowProportionGrid((prev) => ({ ...prev, [type]: !prev[type] }))
+                    }}
+                    className={`absolute top-3 right-3 z-10 w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-300 ${
+                      gridActive
+                        ? `${isMale ? "bg-cyan-500/20 border-cyan-500/40" : "bg-violet-500/20 border-violet-500/40"}`
+                        : "bg-black/50 border-white/10 opacity-0 group-hover:opacity-100"
+                    }`}
+                  >
+                    <Scan className={`w-3.5 h-3.5 ${gridActive ? accentText : "text-white/50"}`} strokeWidth={1.5} />
+                  </button>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handlePhotoUpload(type, e.target.files[0])}
-                />
-              </label>
-              {/* Type label */}
-              <p className="text-center text-[10px] tracking-wider uppercase text-white/30 mt-3">
-                {type === "front" ? "Arquivo A-01" : type === "side" ? "Arquivo A-02" : "Arquivo A-03"}
-              </p>
-            </div>
-          ))}
+
+                <p className="text-center text-[10px] tracking-wider uppercase text-white/30 mt-3">
+                  {type === "front" ? "Arquivo A-01" : type === "side" ? "Arquivo A-02" : "Arquivo A-03"}
+                </p>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* Measure guide modal */}
-      {showMeasureGuide && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl"
-          onClick={() => setShowMeasureGuide(false)}
-        >
-          <div
-            className="bg-black/90 border border-white/10 rounded-3xl p-8 max-w-md mx-4 animate-in fade-in zoom-in-95 duration-300"
-            onClick={(e) => e.stopPropagation()}
+      {/* ── Measure Guide Modal ─────────────────────────────── */}
+      <AnimatePresence>
+        {showMeasureGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl"
+            onClick={() => setShowMeasureGuide(false)}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Protocolo de Medicao</h3>
-              <button
-                onClick={() => setShowMeasureGuide(false)}
-                className="text-white/30 hover:text-white/60 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <ul className="space-y-4 text-sm">
-              {[
-                { label: "Ombros", desc: "Parte mais larga, de deltoide a deltoide" },
-                { label: "Peitoral", desc: "Linha do mamilo, fita nivelada" },
-                { label: "Cintura", desc: "Ponto mais fino acima do quadril" },
-                { label: "Quadril", desc: "Ponto mais largo do gluteo" },
-                { label: "Bracos", desc: "Parte mais larga com contracao leve" },
-                { label: "Coxa", desc: "Parte mais larga, logo abaixo do gluteo" },
-                { label: "Panturrilha", desc: "Parte mais larga em contracao" },
-                { label: "Pescoco", desc: "Logo abaixo do pomo de Adao" },
-              ].map((item) => (
-                <li key={item.label} className="flex gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-2 shrink-0" />
-                  <div>
-                    <span className="text-white/70 font-medium">{item.label}:</span>
-                    <span className="text-white/40 ml-2">{item.desc}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-black/90 border border-white/10 rounded-3xl p-8 max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm tracking-[0.2em] uppercase text-white/50">Protocolo de Medicao</h3>
+                <button onClick={() => setShowMeasureGuide(false)} className="text-white/30 hover:text-white/60 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <ul className="space-y-4 text-sm">
+                {[
+                  { label: "Ombros", desc: "Parte mais larga, de deltoide a deltoide" },
+                  { label: "Peitoral", desc: "Linha do mamilo, fita nivelada" },
+                  { label: "Cintura", desc: "Ponto mais fino acima do quadril" },
+                  { label: "Quadril", desc: "Ponto mais largo do gluteo" },
+                  { label: "Bracos", desc: "Parte mais larga com contracao leve" },
+                  { label: "Coxa", desc: "Parte mais larga, logo abaixo do gluteo" },
+                  { label: "Panturrilha", desc: "Parte mais larga em contracao" },
+                  { label: "Pescoco", desc: "Logo abaixo do pomo de Adao" },
+                ].map((item) => (
+                  <li key={item.label} className="flex gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full ${accentBg} mt-2 shrink-0`} />
+                    <div>
+                      <span className="text-white/70 font-medium">{item.label}:</span>
+                      <span className="text-white/40 ml-2">{item.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
